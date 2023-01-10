@@ -1,0 +1,1007 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>排错笔记 on Li Duo</title>
+        <link>https://lizonglingo.github.io/tags/%E6%8E%92%E9%94%99%E7%AC%94%E8%AE%B0/</link>
+        <description>Recent content in 排错笔记 on Li Duo</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-CN</language>
+        <lastBuildDate>Mon, 01 Aug 2022 18:10:59 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/%E6%8E%92%E9%94%99%E7%AC%94%E8%AE%B0/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>cri-dockerd，在kubernetes1.24后继续使用Docker作为容器运行时</title>
+        <link>https://lizonglingo.github.io/p/cri-dockerd%E5%9C%A8kubernetes1.24%E5%90%8E%E7%BB%A7%E7%BB%AD%E4%BD%BF%E7%94%A8docker%E4%BD%9C%E4%B8%BA%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6/</link>
+        <pubDate>Mon, 01 Aug 2022 18:10:59 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/cri-dockerd%E5%9C%A8kubernetes1.24%E5%90%8E%E7%BB%A7%E7%BB%AD%E4%BD%BF%E7%94%A8docker%E4%BD%9C%E4%B8%BA%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;为体验Kubernetes以及Cilium组合在一起产生的新特性，我计划将Kubernetes升级到1.24+，并使用最新的稳定版cilium1.12来作集群网络。&lt;/p&gt;
+&lt;p&gt;我所看重的最大改变：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;kubernetes1.24+正式移除dockershim，关于“kubernetes弃用Docker”这一话题也算是尘埃落定，kubernetes正式拥抱纯净的CRI。&lt;/li&gt;
+&lt;li&gt;cilium1.12后正式支持kubernetes1.24.0，并且其重大的新特性cilium service mesh引起了我的兴趣，“multi control plan”、“sidercar/sidercar-free”等亮点让我很想尝试，是不是基于eBPF的service mesh在性能开销、指标粒度上能够给云上可观测性带来更好的体验。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;所以，第一个问题来了，移除dockershim后，我们怎样继续使用docker engine作为底层的容器管理以及运行时管理者呢？&lt;/p&gt;
+&lt;h2 id=&#34;dockershim和容器运行时&#34;&gt;Dockershim和容器运行时&lt;/h2&gt;
+&lt;p&gt;我们知道，提供服务的终点是Pod中运行的容器，kubernetes本身并不提供这种能力，而是依赖CRI去接入其他容器运行时，实现这样的能力的。我们最直接的体会就是kubernetes可以按照声明文件自动拉取、运行容器，其实这都是容器运行时的工作。例如docker，它就有这样的能力，并且在k8s发展初期，Docker甚至比k8s更有知名度，同时Docker比k8s CRI这样概念要早，docker engine也就没有实现CRI接口这一说，所以k8s使用&lt;code&gt;dockershim&lt;/code&gt;作为支撑docker这一容器运行时的过渡。因此在k8s早期版本，就针对docker这个容器运行时做了适配。&lt;/p&gt;
+&lt;p&gt;每个节点上的kubelet在dockershim的能力下，可以与节点上的docker engine进行交互，去使用docker的能力。&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220730233109830.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220730233109830&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;从上图中可以看出，dockershim的作用与一个CRI实现是一样的。尽管目前docker底层也是使用了&lt;code&gt;containerd&lt;/code&gt;，但是我们还需要多一个中间环节，用docker调用containerd。&lt;/p&gt;
+&lt;p&gt;而k8s中CRI之一&lt;code&gt;containerd&lt;/code&gt;则为k8s提供了直接调用containerd的能力。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;目前主要的CRI实现有：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;containerd&lt;/li&gt;
+&lt;li&gt;cri-o&lt;/li&gt;
+&lt;li&gt;cri-dockerd&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;正因如此，k8s不必局限于docker这一种运行时，CRI的能力可以让k8s使用特性不同的容器运行时。&lt;/p&gt;
+&lt;h3 id=&#34;弃用dockershim后docker还有用吗&#34;&gt;弃用dockershim后，Docker还有用吗？&lt;/h3&gt;
+&lt;p&gt;当然。&lt;/p&gt;
+&lt;p&gt;在我的印象里，docker仍然是目前使用最多的容器打包构建、镜像管理和运行工具。docker hub有丰富镜像资源、有很多开发者在使用docker去构建自己应用镜像。使用&lt;code&gt;docker build&lt;/code&gt;打包的镜像依然符合CRI的标准（因为已经容器运行时以及有标准化组织OCI为其制定规范了）。&lt;/p&gt;
+&lt;p&gt;只不过，原来为docker engine做适配工作现在已经不属于k8s社区的管辖范围，需要其他社区自己去按照CRI的标准，为docker engine编写接入k8s的“转接头”。因此，就有了&lt;code&gt;cri-dockerd&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;如果我们想继续使用在k8s中使用docker，就必须使用&lt;code&gt;cri-dockerd&lt;/code&gt;作为适配器，它让我们可以通过CRI来使用docker engine。&lt;/p&gt;
+&lt;h2 id=&#34;在新版本集群中使用cri-dockerd&#34;&gt;在新版本集群中使用cri-dockerd&lt;/h2&gt;
+&lt;p&gt;之前的博客中我们分享到，搭建集群只需要节点上有docker engine就可以，然后按照&lt;code&gt;kubeadm&lt;/code&gt;，&lt;code&gt;kubelet&lt;/code&gt;，&lt;code&gt;kubectl&lt;/code&gt;就可以了，不会去刻意、显式的配置容器运行时。那是因为k8s内置的dockershim自动帮我们完成了这个工作。&lt;/p&gt;
+&lt;p&gt;在1.24.0之后，我们在创建集群之前，也要像安装CNI那样先配置我们的容器运行时，才可以正常初始化k8s集群。&lt;/p&gt;
+&lt;h3 id=&#34;安装并配置cri-dockerd&#34;&gt;安装并配置cri-dockerd&lt;/h3&gt;
+&lt;p&gt;:warning:这需要节点上有正常运行的docker engine。同时要在所有节点上安装cri-dockerd。&lt;/p&gt;
+&lt;p&gt;我们这里使用Ubuntu22.04作为环境，直接在&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd/releases&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;release&lt;/a&gt;下载构建好的对应Ubuntu版本的&lt;code&gt;.deb&lt;/code&gt;安装文件。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202207311437400.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220731143731223&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;然后，进行安装：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; dpkg -i cri-dockerd_0.2.3.3-0.ubuntu-jammy_amd64.deb
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Selecting previously unselected package cri-dockerd.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Reading database ... &lt;span style=&#34;color:#ae81ff&#34;&gt;212454&lt;/span&gt; files and directories currently installed.&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Preparing to unpack cri-dockerd_0.2.3.3-0.ubuntu-jammy_amd64.deb ...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Unpacking cri-dockerd &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;0.2.3~3-0~ubuntu-jammy&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; ...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Setting up cri-dockerd &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;0.2.3~3-0~ubuntu-jammy&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; ...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Created symlink /etc/systemd/system/multi-user.target.wants/cri-docker.service → /lib/systemd/system/cri-docker.service.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Created symlink /etc/systemd/system/sockets.target.wants/cri-docker.socket → /lib/systemd/system/cri-docker.socket.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;安装log里有两个很重要的信息点：&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;Created symlink /etc/systemd/system/multi-user.target.wants/cri-docker.service → /lib/systemd/system/cri-docker.service.&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;Created symlink /etc/systemd/system/sockets.target.wants/cri-docker.socket → /lib/systemd/system/cri-docker.socket.&lt;/code&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;sysmlink&lt;/code&gt;是Linux中的一种文件类型，称为“符号链接”、“软链接”，指向计算机上另一个文件或者文件夹。类似于Windows中的快捷方式。这种链接文件记录了被链接文件的路径，更方便的访问某些文件。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;在安装cri-dockerd时，为&lt;code&gt;cri-docker.service&lt;/code&gt;，和&lt;code&gt;cri-docker.socket&lt;/code&gt;创建了软链接。&lt;/p&gt;
+&lt;p&gt;安装后，我们执行&lt;code&gt;cri-dockerd -h&lt;/code&gt; 了解一下基本信息：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; cri-dockerd -h
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;CRI that connects to the Docker Daemon
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Usage:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  cri-dockerd &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;flags&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Flags:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --buildinfo                               Prints the build information about cri-dockerd
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --cni-bin-dir string                      &amp;lt;Warning: Alpha feature&amp;gt; A comma-separated list of full paths of directories in which to search &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; CNI plugin binaries. &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/opt/cni/bin&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --cni-cache-dir string                    &amp;lt;Warning: Alpha feature&amp;gt; The full path of the directory in which CNI should store cache files. &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/var/lib/cni/cache&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --cni-conf-dir string                     &amp;lt;Warning: Alpha feature&amp;gt; The full path of the directory in which to search &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; CNI config files &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/etc/cni/net.d&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --container-runtime-endpoint string       The endpoint of backend runtime service. Currently unix socket and tcp endpoints are supported on Linux, &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; npipe and tcp endpoints are supported on windows.  Examples:&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;unix:///var/run/cri-dockerd.sock&amp;#39;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;npipe:////./pipe/cri-dockerd&amp;#39;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;unix:///var/run/cri-dockerd.sock&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --cri-dockerd-root-directory string       Path to the cri-dockerd root directory. &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/var/lib/cri-dockerd&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --docker-endpoint string                  Use this &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; the docker endpoint to communicate with. &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;unix:///var/run/docker.sock&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --hairpin-mode HairpinMode                &amp;lt;Warning: Alpha feature&amp;gt; The mode of hairpin to use. &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default none&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  -h, --help                                    Help &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; cri-dockerd
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --image-pull-progress-deadline duration   If no pulling progress is made before this deadline, the image pulling will be cancelled. &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default 1m0s&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --ipv6-dual-stack                         Enable IPv6 dual stack support
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --log-level string                        The log level &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; cri-docker &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;info&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --network-plugin string                   &amp;lt;Warning: Alpha feature&amp;gt; The name of the network plugin to be invoked &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; various events in kubelet/pod lifecycle.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --network-plugin-mtu int32                &amp;lt;Warning: Alpha feature&amp;gt; The MTU to be passed to the network plugin, to override the default. Set to &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt; to use the default &lt;span style=&#34;color:#ae81ff&#34;&gt;1460&lt;/span&gt; MTU.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --pod-cidr string                         The CIDR to use &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; pod IP addresses, only used in standalone mode.  In cluster mode, this is obtained from the master. For IPv6, the maximum number of IP&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&amp;#39;&lt;/span&gt;s allocated is &lt;span style=&#34;color:#ae81ff&#34;&gt;65536&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --pod-infra-container-image string        The image whose network/ipc namespaces containers in each pod will use &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;k8s.gcr.io/pause:3.6&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --runtime-cgroups string                  Optional absolute name of cgroups to create and run the runtime in.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --version                                 Prints the version of cri-dockerd
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;从“CRI that connects to the Docker Daemon”中看到，cri-dockerd的作用是连接节点上的docker daemon的，然后k8s再连接cri-dockerd，就能使用docker作为容器运行时了。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;--cni-bin-dir string&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--cni-cache-dir string&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--cni-conf-dir string&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;上面三个参数是关于容器网络的，暂时在alpha阶段。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;--container-runtime-endpoint&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这个参数需要我们注意，它指定了k8s需要连接CRI端点，默认是&lt;code&gt;unix:///var/run/cri-dockerd.sock&lt;/code&gt;，在后面配置kubeadm config时需要用到。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;--docker-endpoint string&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这个参数就是cri-dockerd要去连接的docker daemon的端点，来使用docker的能力。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;--pod-cidr string&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;该参数只有在单节点部署时才会用到，在集群环境下cri-dockerd通过获取master node的信息知晓pod的cidr划分。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;--pod-infra-container-image&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;该参数可以用来设置Pod中的pause容器的镜像版本，默认使用&lt;code&gt;k8s.gcr.io/pause:3.6&lt;/code&gt;这个镜像。但是在k8s1.24中，应该使用3.7版本，并且要换成aliyun镜像，在后面需要设置。&lt;/p&gt;
+&lt;h3 id=&#34;修改kubeadm-config文件&#34;&gt;修改kubeadm config文件&lt;/h3&gt;
+&lt;p&gt;我先导出&lt;code&gt;kubeadm&lt;/code&gt;默认的启动配置文件。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;kubeadm config print init-defaults &amp;gt; kubeadm1.24.conf&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;然后做一些修改，我的修改如下：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;apiVersion: kubeadm.k8s.io/v1beta3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;bootstrapTokens:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;- groups:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - system:bootstrappers:kubeadm:default-node-token
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  token: abcdef.0123456789abcdef
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  ttl: 24h0m0s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  usages:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - signing
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - authentication
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kind: InitConfiguration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;localAPIEndpoint:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  advertiseAddress: 192.168.153.21
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  bindPort: &lt;span style=&#34;color:#ae81ff&#34;&gt;6443&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nodeRegistration:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  criSocket: unix:///var/run/cri-dockerd.sock
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  imagePullPolicy: IfNotPresent
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  name: nm
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  taints: null
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;---
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;apiServer:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  timeoutForControlPlane: 4m0s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;apiVersion: kubeadm.k8s.io/v1beta3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;certificatesDir: /etc/kubernetes/pki
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;clusterName: kubernetes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;controllerManager: &lt;span style=&#34;color:#f92672&#34;&gt;{}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;dns: &lt;span style=&#34;color:#f92672&#34;&gt;{}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;etcd:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  local:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    dataDir: /var/lib/etcd
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;imageRepository: registry.aliyuncs.com/google_containers
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kind: ClusterConfiguration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kubernetesVersion: 1.24.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;networking:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  dnsDomain: cluster.local
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  serviceSubnet: 10.96.0.0/12
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  podSubnet: 10.5.0.0/16
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;scheduler: &lt;span style=&#34;color:#f92672&#34;&gt;{}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;需要注意的几个点有：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;advertiseAddress: 192.168.153.21&lt;/code&gt;：设置控制平面API Server的地址和端口。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;criSocket: unix:///var/run/cri-dockerd.sock&lt;/code&gt;：这需要特别注意，criSocket就是上面我们说的cri-dockerd中的&lt;code&gt;--container-runtime-endpoint&lt;/code&gt;参数，如果使用了别的容器运行时这里也要相应修改。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;name: nm&lt;/code&gt;：本机的hostname。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;imageRepository: registry.aliyuncs.com/google_containers&lt;/code&gt;：国内用aliyun的镜像。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;podSubnet: 10.5.0.0/16&lt;/code&gt;：Pod cidr信息。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;启动集群启动失败&#34;&gt;启动集群(启动失败)&lt;/h3&gt;
+&lt;p&gt;然后我们尝试启动集群：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# kubeadm init --config ../create-cluster/kubeadm1.24.conf &lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;init&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Using Kubernetes version: v1.24.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Running pre-flight checks
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;WARNING SystemVerification&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;: missing optional cgroups: blkio
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;error execution phase preflight: &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Some fatal errors occurred:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR CRI&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;: container runtime is not running: output: time&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;2022-07-31T15:41:42+08:00&amp;#34;&lt;/span&gt; level&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;debug msg&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;get runtime connection&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;time&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;2022-07-31T15:41:42+08:00&amp;#34;&lt;/span&gt; level&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;fatal msg&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;unable to determine runtime API version: rpc error: code = Unavailable desc = connection error: desc = \&amp;#34;transport: Error while dialing dial unix /var/run/cri-dockerd.sock: connect: connection refused\&amp;#34;&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;, error: exit status &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; If you know what you are doing, you can make a check non-fatal with &lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;--ignore-preflight-errors&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;...&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;To see the stack trace of this error execute with --v&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;5&lt;/span&gt; or higher
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;发现报错了&lt;code&gt;level=fatal msg=&amp;quot;unable to determine runtime API version: rpc error: code = Unavailable desc = connection error: desc = \&amp;quot;transport: Error while dialing dial unix /var/run/cri-dockerd.sock: connect: connection refused\&amp;quot;&lt;/code&gt;。我们的socket没有连上。&lt;/p&gt;
+&lt;p&gt;原因就是，&lt;strong&gt;我们安装了cri-dockerd后，它并不会像systemctl所管理的service，或者守护进程那样自动驻留在本机上。我们必须手动的启动cri-dockerd。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;所以，需要手动运行cri-dockerd，并且添加&lt;code&gt;--pod-infra-container-image&lt;/code&gt;参数。（使用&lt;code&gt;kubeadm config images list --config kubeadm1.24.conf&lt;/code&gt;可以知道需要的镜像版本）&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; cri-dockerd --pod-infra-container-image&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;registry.aliyuncs.com/google_containers/pause:3.7
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Connecting to docker on the Endpoint unix:///var/run/docker.sock 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Start docker client with request timeout 0s  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Hairpin mode is set to none                  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker cri networking managed by network plugin kubernetes.io/no-op 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker Info: &amp;amp;&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:HEPZ:PXCZ:XHZR:SKBX:TJL5:EG5L:U6P3:PI5A:PVZZ:ASKB:QJUC:QEDR Containers:2 ContainersRunning:1 ContainersPaused:0 ContainersStopped:1 Images:13 Driver:overlay2 DriverStatus:&lt;span style=&#34;color:#f92672&#34;&gt;[[&lt;/span&gt;Backing Filesystem extfs&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Supports d_type true&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Native Overlay Diff true&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;userxattr false&lt;span style=&#34;color:#f92672&#34;&gt;]]&lt;/span&gt; SystemStatus:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; Plugins:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Volume:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;local&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Network:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;bridge host ipvlan macvlan null overlay&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Authorization:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; Log:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;awslogs fluentd gcplogs gelf journald json-file local logentries splunk syslog&lt;span style=&#34;color:#f92672&#34;&gt;]}&lt;/span&gt; MemoryLimit:true SwapLimit:true KernelMemory:false KernelMemoryTCP:false CPUCfsPeriod:true CPUCfsQuota:true CPUShares:true CPUSet:true PidsLimit:true IPv4Forwarding:true BridgeNfIptables:true BridgeNfIP6tables:true Debug:false NFd:31 OomKillDisable:false NGoroutines:39 SystemTime:2022-07-31T15:49:40.481000763+08:00 LoggingDriver:json-file CgroupDriver:systemd NEventsListener:0 KernelVersion:5.15.0-41-generic OperatingSystem:Ubuntu 22.04 LTS OSType:linux Architecture:x86_64 IndexServerAddress:https://index.docker.io/v1/ RegistryConfig:0xc0001de540 NCPU:4 MemTotal:8302116864 GenericResources:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; DockerRootDir:/var/lib/docker HTTPProxy: HTTPSProxy: NoProxy: Name:nm Labels:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; ExperimentalBuild:false ServerVersion:20.10.17 ClusterStore: ClusterAdvertise: Runtimes:map&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;io.containerd.runc.v2:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Path:runc Args:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; io.containerd.runtime.v1.linux:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Path:runc Args:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; runc:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Path:runc Args:&lt;span style=&#34;color:#f92672&#34;&gt;[]}]&lt;/span&gt; DefaultRuntime:runc Swarm:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;NodeID: NodeAddr: LocalNodeState:inactive ControlAvailable:false Error: RemoteManagers:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; Nodes:0 Managers:0 Cluster:&amp;lt;nil&amp;gt; Warnings:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; LiveRestoreEnabled:false Isolation: InitBinary:docker-init ContainerdCommit:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:10c12954828e7c7c9b6e0ea9b0c02b01407d3ae1 Expected:10c12954828e7c7c9b6e0ea9b0c02b01407d3ae1&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; RuncCommit:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:v1.1.2-0-ga916309 Expected:v1.1.2-0-ga916309&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; InitCommit:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:de40ad0 Expected:de40ad0&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; SecurityOptions:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;apparmor name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;seccomp,profile&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;default name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cgroupns&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ProductLicense: Warnings:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Setting cgroupDriver systemd                 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker cri received runtime config &amp;amp;RuntimeConfig&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;NetworkConfig:&amp;amp;NetworkConfig&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;PodCidr:,&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;,&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Starting the GRPC backend &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; the Docker CRI interface. 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Start cri-dockerd grpc backend
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我们看到，它已经连上了docker的endpoint。&lt;/p&gt;
+&lt;p&gt;这时我们再另起一个终端，启动集群。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;需要注意，在清理集群时，要添加一个socket参数，如&lt;code&gt;kubeadm reset --cri-socket unix:///var/run/cri-dockerd.sock&lt;/code&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubeadm init --config kubeadm1.24.3.conf 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;init&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Using Kubernetes version: v1.24.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Running pre-flight checks
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;WARNING SystemVerification&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;: missing optional cgroups: blkio
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Pulling images required &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; setting up a Kubernetes cluster
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; This might take a minute or two, depending on the speed of your internet connection
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; You can also perform this action in beforehand using &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;kubeadm config images pull&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;certs&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Using certificateDir folder &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/etc/kubernetes/pki&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;...
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;在cri-dockerd的终端中，有了新的输出：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Start cri-dockerd grpc backend               
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0157&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Will attempt to re-write config file /var/lib/docker/containers/000f099fa98530c39e69458881c051f25200feb4f25dfd3d8f02f7444e6763ac/resolv.conf as &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;nameserver 192.168.153.2 nameserver 192.168.153.2 search &lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0157&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Will attempt to re-write config file /var/lib/docker/containers/ed0aa34e77adbf4ff444998b75e2365f1ebe44e831cdf4c55d3eecd4b6582958/resolv.conf as &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;nameserver 192.168.153.2 nameserver 192.168.153.2 search &lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0157&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Will attempt to re-write config file /var/lib/docker/containers/3431d46d839451adc30f1c44994990daed5b24899959aae34b5cfd3d5c695fc6/resolv.conf as &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;nameserver 192.168.153.2 nameserver 192.168.153.2 search &lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0157&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Will attempt to re-write config file /var/lib/docker/containers/50ae6ccb6e7c1420f58c1873bf2c17e291a26597a3b042b0df86a1ef2729470c/resolv.conf as &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;nameserver 192.168.153.2 nameserver 192.168.153.2 search &lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0167&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc00098ea80 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0168&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc00098f440 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0168&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc000791b00 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;然而这里还报出一些奇怪的错误。&lt;/p&gt;
+&lt;p&gt;我们查看docker容器：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; docker container ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;CONTAINER ID   IMAGE                                               COMMAND                  CREATED         STATUS         PORTS                                       NAMES
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;bbded4be83db   a4ca41631cc7                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/coredns -conf /etc…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_coredns_coredns-74586cf9b6-s6n6g_kube-system_68e930db-ac76-4995-bef2-a9f094b5cf88_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;173154bfdc43   a4ca41631cc7                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/coredns -conf /etc…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_coredns_coredns-74586cf9b6-wstwx_kube-system_178e7a4e-3c35-42e6-b78b-1053274d9d4d_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;fb2810fe84a3   77b49675beae                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/usr/local/bin/kube…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_kube-proxy_kube-proxy-fpfq7_kube-system_3a52d7e5-ffa8-4193-a2de-948861818bf0_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;640f6546ff97   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_coredns-74586cf9b6-s6n6g_kube-system_68e930db-ac76-4995-bef2-a9f094b5cf88_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;8933a7f18e54   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_coredns-74586cf9b6-wstwx_kube-system_178e7a4e-3c35-42e6-b78b-1053274d9d4d_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;c2319d389da4   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_kube-proxy-fpfq7_kube-system_3a52d7e5-ffa8-4193-a2de-948861818bf0_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;c441aae26e22   88784fb4ac2f                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-controller-man…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_kube-controller-manager_kube-controller-manager-nm_kube-system_0b57267fec9fa21f5d899c064341d122_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;c2251251c6be   e3ed7dee73e9                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-scheduler --au…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_kube-scheduler_kube-scheduler-nm_kube-system_4b1a2622b0a7caad68556441288e8374_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;90df81c294fc   aebe758cef4c                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;etcd --advertise-cl…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_etcd_etcd-nm_kube-system_c305f8ecb58a3de0b142aa31e3c6e6cc_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;d14f4a822e37   529072250ccc                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-apiserver --ad…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_kube-apiserver_kube-apiserver-nm_kube-system_a38fd4cf236ff9d9bba5bb8f006ffdfd_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;000f099fa985   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_kube-scheduler-nm_kube-system_4b1a2622b0a7caad68556441288e8374_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;50ae6ccb6e7c   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_kube-controller-manager-nm_kube-system_0b57267fec9fa21f5d899c064341d122_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ed0aa34e77ad   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_kube-apiserver-nm_kube-system_a38fd4cf236ff9d9bba5bb8f006ffdfd_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;3431d46d8394   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_etcd-nm_kube-system_c305f8ecb58a3de0b142aa31e3c6e6cc_0
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;系统的组件都启动了。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get cs
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Warning: v1 ComponentStatus is deprecated in v1.19+
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME                 STATUS    MESSAGE                         ERROR
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;scheduler            Healthy   ok                              
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;controller-manager   Healthy   ok                              
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;etcd-0               Healthy   &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;health&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;true&amp;#34;&lt;/span&gt;,&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;reason&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get pod -A
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAMESPACE     NAME                         READY   STATUS    RESTARTS   AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   coredns-74586cf9b6-vpdp5     1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          33s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   coredns-74586cf9b6-zdfpw     1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          33s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   etcd-nm                      1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          46s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-apiserver-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          49s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-controller-manager-nm   1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          49s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-proxy-gs9lq             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          33s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-scheduler-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          46s
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;加入工作节点。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubeadm join 192.168.153.21:6443 --token abcdef.0123456789abcdef &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;        --discovery-token-ca-cert-hash sha256:d1902aa47f486d6fd1d35f7fb92286ffaa39da0437ded9be8d2de5670d52a8ca
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Found multiple CRI endpoints on the host. Please define which one &lt;span style=&#34;color:#66d9ef&#34;&gt;do&lt;/span&gt; you wish to use by setting the &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;criSocket&amp;#39;&lt;/span&gt; field in the kubeadm configuration file: unix:///var/run/containerd/containerd.sock, unix:///var/run/cri-dockerd.sock
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我们发现这里出现了运行时冲突，需要指定，这里就直接在命令行指明，如下：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubeadm join 192.168.153.21:6443 --token abcdef.0123456789abcdef --discovery-token-ca-cert-hash sha256:d1902aa47f486d6fd1d35f7fb92286ffaa39da0437ded9be8d2de5670d52a8ca --cri-socket unix:///var/run/cri-dockerd.sock
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Running pre-flight checks
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;WARNING SystemVerification&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;: missing optional cgroups: blkio
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Reading configuration from the cluster...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; FYI: You can look at this config file with &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;kubectl -n kube-system get cm kubeadm-config -o yaml&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;kubelet-start&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Writing kubelet configuration to file &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/var/lib/kubelet/config.yaml&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;kubelet-start&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Writing kubelet environment file with flags to file &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/var/lib/kubelet/kubeadm-flags.env&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;kubelet-start&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Starting the kubelet
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;kubelet-start&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Waiting &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; the kubelet to perform the TLS Bootstrap...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;This node has joined the cluster:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;* Certificate signing request was sent to apiserver and a response was received.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;* The Kubelet was informed of the new secure connection details.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Run &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;kubectl get nodes&amp;#39;&lt;/span&gt; on the control-plane to see this node join the cluster.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;然后，我们看到节点已加入集群：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get nodes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME   STATUS   ROLES           AGE     VERSION
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;na     Ready    &amp;lt;none&amp;gt;          2m14s   v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nb     Ready    &amp;lt;none&amp;gt;          24s     v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nm     Ready    control-plane   7m33s   v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;这里我不解的是，之前设置CNI前，core-dns的状态是pending，而且节点状态也是Not Ready。但是现在却看似一切正常。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;我们先使用简单的flannel做集群网络，注意不要忘记修改cidr为集群创建时指定的。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get pods -A
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAMESPACE      NAME                         READY   STATUS    RESTARTS   AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-flannel   kube-flannel-ds-5v2vn        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          41s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-flannel   kube-flannel-ds-bcgwm        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          41s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-flannel   kube-flannel-ds-ctt4v        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          41s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    coredns-74586cf9b6-vpdp5     1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          14m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    coredns-74586cf9b6-zdfpw     1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          14m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    etcd-nm                      1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          15m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-apiserver-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          15m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-controller-manager-nm   1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          15m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-proxy-6px66             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          9m56s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-proxy-cc4fw             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          8m6s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-proxy-gs9lq             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          14m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-scheduler-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          15m
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;网络CNI也正常工作了。&lt;/p&gt;
+&lt;p&gt;然后我们部署一个简单的微服务应用试试。&lt;/p&gt;
+&lt;p&gt;看似一切正常，但是我发现集群网络出现问题，不能访问service的服务。而且通过&lt;code&gt;-o wide&lt;/code&gt;查看Pod发现他们并不在我所指定的CIDR网段，而是在一个奇怪的172网段。&lt;/p&gt;
+&lt;p&gt;结合上面的，“还没有部署CNI节点和core-dns就Ready”这个奇怪的现象。我认为cri-dockerd的网络配置有问题。于是我又详细查看的参考资料，发现有一个配置和参考资料中的不一样。&lt;/p&gt;
+&lt;p&gt;并且我们详细查看上面的cri-docker启动日志：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker cri networking managed by network plugin kubernetes.io/no-op
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;cri-dockerd的网络是由&lt;code&gt;network plugin kubernetes.io/no-op&lt;/code&gt;管理的，这是个啥？&lt;/p&gt;
+&lt;h3 id=&#34;cni&#34;&gt;CNI&lt;/h3&gt;
+&lt;p&gt;所以，这里就不得不讨论下kubernetes1.24之后的另一个重大改变：&lt;strong&gt;在 Kubernetes 1.24 之前，CNI 插件也可以由 kubelet 使用命令行参数 &lt;code&gt;cni-bin-dir&lt;/code&gt; 和 &lt;code&gt;network-plugin&lt;/code&gt; 管理。Kubernetes 1.24 移除了这些命令行参数， CNI 的管理不再是 kubelet 的工作。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;也就是说，kubelet已经从管理CNI中得到了解放。谁来管理cni呢？&lt;/p&gt;
+&lt;p&gt;容器运行时。&lt;/p&gt;
+&lt;p&gt;又回到参考资料中对cri-dockerd的配置，是这样写的：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ExecStart&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;/usr/bin/cri-dockerd --network-plugin&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cni --pod-infra-container-image&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;registry.aliyuncs.com/google_containers/pause:3.7
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;对&lt;code&gt;--network-plugin=cni&lt;/code&gt;进行了配置。上述cri-dockerd的启动参数中，有一句：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;--network-plugin string                   &amp;lt;Warning: Alpha feature&amp;gt; The name of the network plugin to be invoked &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; various events in kubelet/pod lifecycle.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;于是我按照这个提示找到一篇解读kubelet配置cni的博文，Warning这句话正是原来在kubelet代码中的（见&lt;a class=&#34;link&#34; href=&#34;https://www.cnblogs.com/lianngkyle/p/15171630.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;kubernetes/k8s CNI分析-容器网络接口分析&lt;/a&gt;）。&lt;/p&gt;
+&lt;p&gt;kubelet网络插件有下面三种类型：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;cni&lt;/li&gt;
+&lt;li&gt;kubenet&lt;/li&gt;
+&lt;li&gt;noop：不配置网络插件&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这样我们就明白了，在最初启动cri-dockerd的日志就表示我们并没有给cri-dockerd配置网络插件&lt;code&gt;INFO[0000] Docker cri networking managed by network plugin kubernetes.io/no-op&lt;/code&gt;，结合它的启动参数&lt;code&gt;--network-plugin&lt;/code&gt;，因此这个问题应该就是出于此。&lt;/p&gt;
+&lt;h3 id=&#34;再次启动集群&#34;&gt;再次启动集群&lt;/h3&gt;
+&lt;p&gt;我们先清除集群环境，包括flannel网络环境。&lt;/p&gt;
+&lt;p&gt;在启动cri-dockerd的命令中加上网络插件参数。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; cri-dockerd --pod-infra-container-image&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;registry.aliyuncs.com/google_containers/pause:3.7 --network-plugin&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cni
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Connecting to docker on the Endpoint unix:///var/run/docker.sock 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Start docker client with request timeout 0s  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Hairpin mode is set to none                  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Loaded network plugin cni                    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker cri networking managed by network plugin cni 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker Info: &amp;amp;&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:HEPZ:PXCZ:XHZR:SKBX:TJL5:EG5L:U6P3:PI5A:PVZZ:ASKB:QJUC:QEDR Containers:16 ContainersRunning:12 ContainersPaused:0 ContainersStopped:4 Images:15 Driver:overlay2 DriverStatus:&lt;span style=&#34;color:#f92672&#34;&gt;[[&lt;/span&gt;Backing Filesystem extfs&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Supports d_type true&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Native Overlay Diff true&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;userxattr false&lt;span style=&#34;color:#f92672&#34;&gt;]]&lt;/span&gt; SystemStatus:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; Plugins:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Volume:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;local&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Network:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;bridge host ipvlan macvlan null overlay&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Authorization:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; Log:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;awslogs fluentd gcplogs gelf journald json-file local logentries splunk syslog&lt;span style=&#34;color:#f92672&#34;&gt;]}&lt;/span&gt; MemoryLimit:true SwapLimit:true KernelMemory:false KernelMemoryTCP:false CPUCfsPeriod:true CPUCfsQuota:true CPUShares:true CPUSet:true PidsLimit:true IPv4Forwarding:true BridgeNfIptables:true BridgeNfIP6tables:true Debug:false NFd:89 OomKillDisable:false NGoroutines:83 SystemTime:2022-07-31T16:59:32.329402283+08:00 LoggingDriver:json-file CgroupDriver:systemd NEventsListener:0 KernelVersion:5.15.0-41-generic OperatingSystem:Ubuntu 22.04 LTS OSType:linux Architecture:x86_64 IndexServerAddress:https://index.docker.io/v1/ RegistryConfig:0xc000468a10 NCPU:4 MemTotal:8302116864 GenericResources:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; DockerRootDir:/var/lib/docker HTTPProxy: HTTPSProxy: NoProxy: Name:nm Labels:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; ExperimentalBuild:false ServerVersion:20.10.17 ClusterStore: ClusterAdvertise: Runtimes:map&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;io.containerd.runc.v2:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Path:runc Args:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; io.containerd.runtime.v1.linux:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Path:runc Args:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; runc:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Path:runc Args:&lt;span style=&#34;color:#f92672&#34;&gt;[]}]&lt;/span&gt; DefaultRuntime:runc Swarm:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;NodeID: NodeAddr: LocalNodeState:inactive ControlAvailable:false Error: RemoteManagers:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; Nodes:0 Managers:0 Cluster:&amp;lt;nil&amp;gt; Warnings:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; LiveRestoreEnabled:false Isolation: InitBinary:docker-init ContainerdCommit:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:10c12954828e7c7c9b6e0ea9b0c02b01407d3ae1 Expected:10c12954828e7c7c9b6e0ea9b0c02b01407d3ae1&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; RuncCommit:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:v1.1.2-0-ga916309 Expected:v1.1.2-0-ga916309&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; InitCommit:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:de40ad0 Expected:de40ad0&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; SecurityOptions:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;apparmor name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;seccomp,profile&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;default name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cgroupns&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ProductLicense: Warnings:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Setting cgroupDriver systemd                 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker cri received runtime config &amp;amp;RuntimeConfig&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;NetworkConfig:&amp;amp;NetworkConfig&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;PodCidr:,&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;,&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Starting the GRPC backend &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; the Docker CRI interface. 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Start cri-dockerd grpc backend     
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;可以看到&lt;code&gt;INFO[0000] Loaded network plugin cni&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;在另一个终端里，初始化集群，并安装flannel插件。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get pods -A
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAMESPACE     NAME                         READY   STATUS    RESTARTS   AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   coredns-74586cf9b6-2p28x     0/1     Pending   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          46s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   coredns-74586cf9b6-lkrn6     0/1     Pending   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          46s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   etcd-nm                      1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          58s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-apiserver-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          58s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-controller-manager-nm   1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          59s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-proxy-qcgfk             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          46s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-scheduler-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          58s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get node
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME   STATUS     ROLES           AGE     VERSION
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;na     NotReady   &amp;lt;none&amp;gt;          10s     v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nb     NotReady   &amp;lt;none&amp;gt;          13s     v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nm     NotReady   control-plane   2m34s   v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl apply -f ../network/flannel.yaml 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;namespace/kube-flannel created
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;clusterrole.rbac.authorization.k8s.io/flannel created
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;clusterrolebinding.rbac.authorization.k8s.io/flannel created
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;serviceaccount/flannel created
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;configmap/kube-flannel-cfg created
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;daemonset.apps/kube-flannel-ds created
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get pods -A
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAMESPACE      NAME                         READY   STATUS    RESTARTS   AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-flannel   kube-flannel-ds-2rcs4        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          19s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-flannel   kube-flannel-ds-9szxg        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          19s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-flannel   kube-flannel-ds-cxw5k        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          19s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    coredns-74586cf9b6-2p28x     1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m22s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    coredns-74586cf9b6-lkrn6     1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m22s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    etcd-nm                      1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m34s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-apiserver-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m34s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-controller-manager-nm   1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m35s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-proxy-7lsdq             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          77s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-proxy-fb96h             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          74s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-proxy-qcgfk             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m22s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-scheduler-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m34s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get node
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME   STATUS   ROLES           AGE     VERSION
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;na     Ready    &amp;lt;none&amp;gt;          76s     v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nb     Ready    &amp;lt;none&amp;gt;          79s     v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nm     Ready    control-plane   3m40s   v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;安装flannel前，core-dns为pending、节点为NotReady。安装后正常，这是符合预期的。&lt;/p&gt;
+&lt;p&gt;并且cri-dockerd中也打印了cni的信息：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3090&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Using CNI configuration file /etc/cni/net.d/10-flannel.conflist 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3095&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Using CNI configuration file /etc/cni/net.d/10-flannel.conflist
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;再次部署用于测试的服务，一切正常：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get pods -o wide -n cinema
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME                            READY   STATUS    RESTARTS   AGE   IP         NODE   NOMINATED NODE   READINESS GATES
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;bookings-78c77d68f9-j5jzf       1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          17s   10.5.2.2   na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mongo-deploy-57dc8c8f49-n6psq   1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          17s   10.5.1.6   nb     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;movies-6fbc5986b9-vs6j8         1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          17s   10.5.2.3   na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;showtimes-56fc847b7-4bq87       1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          17s   10.5.1.4   nb     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;users-6996b995d4-5l5tq          1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          17s   10.5.2.4   na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;website-867ff4b9dd-5zz49        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          17s   10.5.1.5   nb     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get svc -o wide -n cinema
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;S&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;          AGE   SELECTOR
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;bookings      ClusterIP   10.110.129.6    &amp;lt;none&amp;gt;        8080/TCP         27s   app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;bookings
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mongodb-svc   ClusterIP   10.103.92.132   &amp;lt;none&amp;gt;        27017/TCP        27s   app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;mongodb
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;movies        ClusterIP   10.103.102.97   &amp;lt;none&amp;gt;        8080/TCP         27s   app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;movies
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;showtimes     ClusterIP   10.96.139.99    &amp;lt;none&amp;gt;        8080/TCP         27s   app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;showtimes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;users         ClusterIP   10.106.152.98   &amp;lt;none&amp;gt;        8080/TCP         27s   app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;users
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;website       NodePort    10.96.103.3     &amp;lt;none&amp;gt;        8080:30021/TCP   27s   app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;website
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202207311754304.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220731175441143&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;到这里，1.24.0版本的集群就正常部署Pod并提供服务了。&lt;/p&gt;
+&lt;h2 id=&#34;一些问题&#34;&gt;一些问题&lt;/h2&gt;
+&lt;h3 id=&#34;cri-dockerd报错&#34;&gt;cri-dockerd报错&lt;/h3&gt;
+&lt;p&gt;虽然目前功能上看来没啥问题，但是cri-dockerd一直打印错误信息：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3404&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc0003c8900 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3404&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc0005dcb00 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3404&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc0003c9c40 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3404&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc0005dd700 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3404&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc0007be540 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我尝试在当前版本的源码中需要这句日志的输出位置，结果没有发现。然后在社区中提了&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd/issues/98&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;这个issue&lt;/a&gt;。这个问题和社区中&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd/issues/85&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Lots of obscure error logging #85&lt;/a&gt;问题大概是一样的，可能是一些测试中的遗留，被误合并到主分支上去了。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220801181830962.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220801181830962&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;好在容器运行时的功能貌似没有受影响。&lt;/p&gt;
+&lt;h3 id=&#34;cri-dockerd常驻一个终端&#34;&gt;cri-dockerd常驻一个终端&lt;/h3&gt;
+&lt;p&gt;这种方法在安装cri-dockerd时将其视为一个软件，必须手动启动它，才可以让它监听socket实现和k8s以及docker的通信。博文&lt;a class=&#34;link&#34; href=&#34;https://www.modb.pro/db/428370&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;基于docker和cri-dockerd部署Kubernetes 1.24&lt;/a&gt;中则是使用了另一种方法，并且为我本次的测试提供了很大的帮助。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;当然也可以按照cri-dockerd的文档，手动编译、部署。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;在博文&lt;a class=&#34;link&#34; href=&#34;https://www.modb.pro/db/428370&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;基于docker和cri-dockerd部署Kubernetes 1.24&lt;/a&gt;中，作者的思路与&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;官方的安装思路&lt;/a&gt;思路是一样的，即，创建一个可以被systemctl管理的service和socket对。让cri-dockerd在后台启动，不用显式启动并占用一个终端。&lt;/p&gt;
+&lt;p&gt;其中，关键部分如下。&lt;/p&gt;
+&lt;p&gt;首先，出于系统通用性，使用&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd/releases&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;cri-dockerd的release&lt;/a&gt;中的&lt;code&gt;.amd64.tgz&lt;/code&gt;版本。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220730234545013.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220730234545013&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;将文件解压，并将里面的可执行文件移动到&lt;code&gt;/usr/bin/&lt;/code&gt;下面。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; tar -xf cri-dockerd-0.2.3.amd64.tgz 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; cp cri-dockerd/cri-dockerd /usr/bin/
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; chmod +x /usr/bin/cri-dockerd 
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;然后很重要的一步，配置cri-dockerd的启动文件。在&lt;code&gt;/usr/lib/systemd/system/cri-docker.service&lt;/code&gt;中写入以下内容：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Unit&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Description&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;CRI Interface &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; Docker Application Container Engine
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Documentation&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;https://docs.mirantis.com
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;After&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;network-online.target firewalld.service docker.service
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Wants&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;network-online.target
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Requires&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cri-docker.socket
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Service&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Type&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;notify
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ExecStart&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;/usr/bin/cri-dockerd --network-plugin&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cni --pod-infra-container-image&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;registry.aliyuncs.com/google_containers/pause:3.7
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ExecReload&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;/bin/kill -s HUP $MAINPID
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;TimeoutSec&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;RestartSec&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Restart&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;always
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;StartLimitBurst&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;StartLimitInterval&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;60s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;LimitNOFILE&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;infinity
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;LimitNPROC&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;infinity
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;LimitCORE&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;infinity
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;TasksMax&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;infinity
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Delegate&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;yes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;KillMode&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;process
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Install&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;WantedBy&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;multi-user.target
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;在&lt;code&gt;/usr/lib/systemd/system/cri-docker.socket&lt;/code&gt;写入下面内容：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Unit&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Description&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;CRI Docker Socket &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; the API
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;PartOf&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cri-docker.service
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Socket&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ListenStream&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;%t/cri-dockerd.sock
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;SocketMode&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;0660&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;SocketUser&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;root
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;SocketGroup&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;docker
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Install&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;WantedBy&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;sockets.target
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;关于这两个配置文件，可以参考&lt;a class=&#34;link&#34; href=&#34;https://www.cnblogs.com/ggzhangxiaochao/p/15039617.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Linux配置service服务&lt;/a&gt;，&lt;a class=&#34;link&#34; href=&#34;http://www.jinbuguo.com/systemd/systemd.socket.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;systemd.socket 中文手册&lt;/a&gt;，这篇文章。&lt;/p&gt;
+&lt;p&gt;然后我们启动这个服务，这样cri-dockerd实际上就有我们刚才创建的名叫cri-docker的service所管理：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code class=&#34;language-she&#34; data-lang=&#34;she&#34;&gt;systemctl daemon-reload
+systemctl start cri-docker
+systemctl enable cri-docker
+systemctl status cri-docker
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这样一来，在每次启动集群前，就不要手动的配置运行cri-dockerd，systemd就帮我们完成这些操作了。&lt;/p&gt;
+&lt;h2 id=&#34;参考资料&#34;&gt;参考资料&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.modb.pro/db/428370&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;基于docker和cri-dockerd部署Kubernetes 1.24&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.qikqiak.com/post/containerd-usage/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;一文搞懂容器运行时 Containerd&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://opencontainers.org/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Open Container Initiative&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/migrating-from-dockershim/migrate-dockershim-dockerd/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;将 Docker Engine 节点从 dockershim 迁移到 cri-dockerd&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/blog/2022/02/17/dockershim-faq/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;更新：移除 Dockershim 的常见问题&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/migrating-from-dockershim/check-if-dockershim-removal-affects-you/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;检查移除 Dockershim 是否对你有影响&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/migrating-from-dockershim/troubleshooting-cni-plugin-related-errors/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;排查 CNI 插件相关的错误&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/setup/production-environment/container-runtimes/#cri-versions&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;容器运行时&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;网络插件&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/kubernetes-sigs&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;kubernetes-sigs&lt;/a&gt;/&lt;strong&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/kubernetes-sigs/cri-tools&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;cri-tools&lt;/a&gt;&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Mirantis&lt;/a&gt;/&lt;strong&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;cri-dockerd&lt;/a&gt;&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://blog.51cto.com/liuzhengwei521/2382257&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;k8s卸载flannel网络&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.cnblogs.com/lianngkyle/p/15171630.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;kubernetes/k8s CNI分析-容器网络接口分析&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.cnblogs.com/ggzhangxiaochao/p/15039617.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Linux配置service服务&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>记一次Kubernetes使用Cilium，coredns健康检查失败的排错</title>
+        <link>https://lizonglingo.github.io/p/%E8%AE%B0%E4%B8%80%E6%AC%A1kubernetes%E4%BD%BF%E7%94%A8ciliumcoredns%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E5%A4%B1%E8%B4%A5%E7%9A%84%E6%8E%92%E9%94%99/</link>
+        <pubDate>Fri, 15 Jul 2022 14:35:19 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E8%AE%B0%E4%B8%80%E6%AC%A1kubernetes%E4%BD%BF%E7%94%A8ciliumcoredns%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E5%A4%B1%E8%B4%A5%E7%9A%84%E6%8E%92%E9%94%99/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;该问题最后在Github的Cilium项目中提了issue，被大佬解决了。&lt;/p&gt;
+&lt;p&gt;issue地址：https://github.com/cilium/cilium/issues/20498&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;问题描述&#34;&gt;问题描述&lt;/h2&gt;
+&lt;p&gt;由于后面打算学习eBPF，将原来用的CNI组件从flannel换成cilium。Cilium作为基于eBPF的CNI实现，比起flannel有了更多的功能，包括但不限于高度定制化的网络策略、安全加固。&lt;/p&gt;
+&lt;p&gt;但是，我在使用cilium时，出现如下问题，以下是集群部署的过程，及问题发现和问题描述。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;版本信息如下：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Kubernetes 1.23.0 （kubelet/kubeadm/kubectl都对应集群版本）&lt;/li&gt;
+&lt;li&gt;Cilium 1.11.6&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;使用&lt;code&gt;kubeadm --config kubeadm.conf&lt;/code&gt; 初始化集群，初始化的配置文件如下。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kind: InitConfiguration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;localAPIEndpoint:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  advertiseAddress: 192.168.153.21
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  bindPort: &lt;span style=&#34;color:#ae81ff&#34;&gt;6443&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nodeRegistration:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  criSocket: /var/run/dockershim.sock
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  imagePullPolicy: IfNotPresent
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  name: nm
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  taints: null
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;---
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;apiServer:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  timeoutForControlPlane: 4m0s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;apiVersion: kubeadm.k8s.io/v1beta3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;certificatesDir: /etc/kubernetes/pki
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;clusterName: kubernetes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;controllerManager: &lt;span style=&#34;color:#f92672&#34;&gt;{}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;dns: &lt;span style=&#34;color:#f92672&#34;&gt;{}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;etcd:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  local:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    dataDir: /var/lib/etcd
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;imageRepository: registry.aliyuncs.com/google_containers
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kind: ClusterConfiguration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kubernetesVersion: 1.23.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;networking:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  dnsDomain: cluster.local
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  serviceSubnet: 10.96.0.0/12
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  podSubnet: 10.5.0.0/16
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;scheduler: &lt;span style=&#34;color:#f92672&#34;&gt;{}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;---
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;apiVersion: kubelet.config.k8s.io/v1beta1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kind: KubeletConfiguration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;resolvConf: /run/systemd/resolve/resolv.conf
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;2&#34;&gt;
+&lt;li&gt;然后像往常一样加入工作节点，测试集群使用1Master和2Worker，其IP如下。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;master: 192.168.153.21&lt;/li&gt;
+&lt;li&gt;worker1: 192.168.153.22&lt;/li&gt;
+&lt;li&gt;worker2: 192.168.153.23&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol start=&#34;3&#34;&gt;
+&lt;li&gt;安装网络组件，使用&lt;code&gt;cilium install&lt;/code&gt;进行安装，其中一些cilium的配置保持默认。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# kubectl get pods -A -o wide
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAMESPACE     NAME                               READY   STATUS             RESTARTS        AGE   IP               NODE   NOMINATED NODE   READINESS GATES
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   cilium-99lxc                       1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               18m   192.168.153.22   na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   cilium-ct5s7                       1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               18m   192.168.153.21   nm     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   cilium-drtlh                       1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               18m   192.168.153.23   nb     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   cilium-operator-5d67fc458d-zxgdd   1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               18m   192.168.153.22   na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   coredns-6d8c4cb4d-jkssb            0/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;2m55s ago&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;   19m   10.0.0.240       na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   coredns-6d8c4cb4d-psxvw            0/1     CrashLoopBackOff   &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;83s ago&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;     19m   10.0.2.176       nb     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   etcd-nm                            1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;               25m   192.168.153.21   nm     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-apiserver-nm                  1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;               25m   192.168.153.21   nm     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-controller-manager-nm         1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;               25m   192.168.153.21   nm     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-proxy-hv5nc                   1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               24m   192.168.153.22   na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-proxy-pbzlx                   1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               24m   192.168.153.23   nb     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-proxy-rqpxw                   1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               25m   192.168.153.21   nm     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-scheduler-nm                  1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;               25m   192.168.153.21   nm     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;安装cilium之前，我已经清理的之前的CNI配置，将&lt;code&gt;/etc/cni/net.d/&lt;/code&gt;下面的网络配置全部清除。但是出现了上述情况，两个&lt;code&gt;coredns&lt;/code&gt;的Pod虽然处于&lt;code&gt;Running&lt;/code&gt;状态但是始终不&lt;code&gt;Ready&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;然后我查看了&lt;code&gt;coredns&lt;/code&gt;的&lt;code&gt;log&lt;/code&gt;以及&lt;code&gt;describe&lt;/code&gt;。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# kubectl logs  coredns-6d8c4cb4d-jkssb -n kube-system
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;WARNING&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/kubernetes: starting server with unsynced Kubernetes API
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;.:53
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/reload: Running configuration MD5 &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; db32ca3650231d74073ff4cf814959a7
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;CoreDNS-1.8.6
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;linux/amd64, go1.17.1, 13a9191
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:39983-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:53240-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:49802-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:54428-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:43974-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:37821-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:36545-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:56785-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:47913-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:38162-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; SIGTERM: Shutting down servers &lt;span style=&#34;color:#66d9ef&#34;&gt;then&lt;/span&gt; terminating
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/health: Going into lameduck mode &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; 5s
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;coredns&lt;/code&gt;对其上游的网关UDP服务不可达，这里的&lt;code&gt;192.168.153.2&lt;/code&gt;是我虚拟机网络的网关。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# kubectl describe pod  coredns-6d8c4cb4d-jkssb -n kube-system
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Name:                 coredns-6d8c4cb4d-jkssb
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Namespace:            kube-system
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Priority:             &lt;span style=&#34;color:#ae81ff&#34;&gt;2000000000&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Priority Class Name:  system-cluster-critical
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Node:                 na/192.168.153.22
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Start Time:           Wed, &lt;span style=&#34;color:#ae81ff&#34;&gt;13&lt;/span&gt; Jul &lt;span style=&#34;color:#ae81ff&#34;&gt;2022&lt;/span&gt; 00:37:51 +0800
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Labels:               k8s-app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;kube-dns
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                      pod-template-hash&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;6d8c4cb4d
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Annotations:          &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Status:               Running
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;IP:                   10.0.0.240
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;IPs:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  IP:           10.0.0.240
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Controlled By:  ReplicaSet/coredns-6d8c4cb4d
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Containers:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  coredns:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Container ID:  docker://cc35b97903b120cb54765641da47c69ea8c833e6c72958407c7e605a5aa001b4
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Image:         registry.aliyuncs.com/google_containers/coredns:v1.8.6
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Image ID:      docker-pullable://registry.aliyuncs.com/google_containers/coredns@sha256:5b6ec0d6de9baaf3e92d0f66cd96a25b9edbce8716f5f15dcd1a616b3abd590e
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Ports:         53/UDP, 53/TCP, 9153/TCP
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Host Ports:    0/UDP, 0/TCP, 0/TCP
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Args:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      -conf
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      /etc/coredns/Corefile
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    State:          Waiting
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      Reason:       CrashLoopBackOff
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Last State:     Terminated
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      Reason:       Completed
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      Exit Code:    &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      Started:      Wed, &lt;span style=&#34;color:#ae81ff&#34;&gt;13&lt;/span&gt; Jul &lt;span style=&#34;color:#ae81ff&#34;&gt;2022&lt;/span&gt; 00:57:12 +0800
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      Finished:     Wed, &lt;span style=&#34;color:#ae81ff&#34;&gt;13&lt;/span&gt; Jul &lt;span style=&#34;color:#ae81ff&#34;&gt;2022&lt;/span&gt; 00:59:06 +0800
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Ready:          False
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Restart Count:  &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Limits:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      memory:  170Mi
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Requests:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      cpu:        100m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      memory:     70Mi
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Liveness:     http-get http://:8080/health delay&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;60s timeout&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;5s period&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;10s &lt;span style=&#34;color:#75715e&#34;&gt;#success=1 #failure=5&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Readiness:    http-get http://:8181/ready delay&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;0s timeout&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;1s period&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;10s &lt;span style=&#34;color:#75715e&#34;&gt;#success=1 #failure=3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Environment:  &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Mounts:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      /etc/coredns from config-volume &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;ro&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-v8hzn &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;ro&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Conditions:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Type              Status
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Initialized       True 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Ready             False 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  ContainersReady   False 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  PodScheduled      True 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Volumes:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  config-volume:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Type:      ConfigMap &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;a volume populated by a ConfigMap&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Name:      coredns
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Optional:  false
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  kube-api-access-v8hzn:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Type:                    Projected &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;a volume that contains injected data from multiple sources&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    TokenExpirationSeconds:  &lt;span style=&#34;color:#ae81ff&#34;&gt;3607&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    ConfigMapName:           kube-root-ca.crt
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    ConfigMapOptional:       &amp;lt;nil&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    DownwardAPI:             true
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;QoS Class:                   Burstable
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Node-Selectors:              kubernetes.io/os&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;linux
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Tolerations:                 CriticalAddonsOnly op&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;Exists
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                             node-role.kubernetes.io/control-plane:NoSchedule
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                             node-role.kubernetes.io/master:NoSchedule
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                             node.kubernetes.io/not-ready:NoExecute op&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;Exists &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; 300s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                             node.kubernetes.io/unreachable:NoExecute op&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;Exists &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; 300s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Events:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Type     Reason                  Age   From               Message
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  ----     ------                  ----  ----               -------
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Normal   Scheduled               21m   default-scheduler  Successfully assigned kube-system/coredns-6d8c4cb4d-jkssb to na
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Warning  FailedCreatePodSandBox  20m   kubelet            Failed to create pod sandbox: rpc error: code &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Unknown desc &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; failed to set up sandbox container &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;8ae4c118e4c3ff1c0bd2c601c808cae2c17cbc27552fb148b755b7d798f0bb71&amp;#34;&lt;/span&gt; network &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; pod &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;coredns-6d8c4cb4d-jkssb&amp;#34;&lt;/span&gt;: networkPlugin cni failed to set up pod &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;coredns-6d8c4cb4d-jkssb_kube-system&amp;#34;&lt;/span&gt; network: unable to connect to Cilium daemon: failed to create cilium agent client after 30.000000 seconds timeout: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http:///var/run/cilium/cilium.sock/v1/config&amp;#34;&lt;/span&gt;: dial unix /var/run/cilium/cilium.sock: connect: no such file or directory
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Is the agent running?
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Normal   SandboxChanged  20m                   kubelet  Pod sandbox changed, it will be killed and re-created.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Normal   Pulled          20m                   kubelet  Container image &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;registry.aliyuncs.com/google_containers/coredns:v1.8.6&amp;#34;&lt;/span&gt; already present on machine
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Normal   Created         20m                   kubelet  Created container coredns
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Normal   Started         20m                   kubelet  Started container coredns
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Warning  Unhealthy       20m &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;x2 over 20m&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;     kubelet  Readiness probe failed: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http://10.0.0.240:8181/ready&amp;#34;&lt;/span&gt;: dial tcp 10.0.0.240:8181: i/o timeout &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Client.Timeout exceeded &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; awaiting headers&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Warning  Unhealthy       18m &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;x13 over 20m&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;    kubelet  Readiness probe failed: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http://10.0.0.240:8181/ready&amp;#34;&lt;/span&gt;: context deadline exceeded &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Client.Timeout exceeded &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; awaiting headers&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Warning  Unhealthy       15m &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;x12 over 19m&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;    kubelet  Liveness probe failed: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http://10.0.0.240:8080/health&amp;#34;&lt;/span&gt;: context deadline exceeded &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Client.Timeout exceeded &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; awaiting headers&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Normal   Killing         14m                   kubelet  Container coredns failed liveness probe, will be restarted
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;而&lt;code&gt;describe&lt;/code&gt;给出的信息则是健康检查失败。奇怪的是，cilium的组件的状态则正常，但由于&lt;code&gt;coredns&lt;/code&gt;状态异常，显然集群网络无法正常工作。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# cilium status
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    /¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt; /¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\ &lt;/span&gt;   Cilium:         &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; errors
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/    Operator:       OK
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; /¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\ &lt;/span&gt;   Hubble:         disabled
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/    ClusterMesh:    disabled
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;DaemonSet         cilium             Desired: 3, Ready: 3/3, Available: 3/3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Deployment        cilium-operator    Desired: 1, Ready: 1/1, Available: 1/1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Containers:       cilium             Running: &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                  cilium-operator    Running: &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Cluster Pods:     2/2 managed by Cilium
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Image versions    cilium-operator    quay.io/cilium/operator-generic:v1.11.6@sha256:9f6063c7bcaede801a39315ec7c166309f6a6783e98665f6693939cf1701bc17: &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                  cilium             quay.io/cilium/cilium:v1.11.6@sha256:f7f93c26739b6641a3fa3d76b1e1605b15989f25d06625260099e01c8243f54c: &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Errors:           cilium             cilium-hn9g5    controller cilium-health-ep is failing since 27s &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;21x&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http://10.0.2.134:4240/hello&amp;#34;&lt;/span&gt;: context deadline exceeded &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Client.Timeout exceeded &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; awaiting headers&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                  cilium             cilium-7l6br    controller cilium-health-ep is failing since 27s &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;21x&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http://10.0.0.36:4240/hello&amp;#34;&lt;/span&gt;: context deadline exceeded &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Client.Timeout exceeded &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; awaiting headers&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                  cilium             cilium-rzkb6    controller cilium-health-ep is failing since 27s &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;21x&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http://10.0.1.222:4240/hello&amp;#34;&lt;/span&gt;: context deadline exceeded &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Client.Timeout exceeded &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; awaiting headers&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;补充信息&#34;&gt;补充信息&lt;/h2&gt;
+&lt;p&gt;另外，一些关键组件的补充信息如下。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;cilium sysdump&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# cilium sysdump
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting sysdump with cilium-cli version: v0.11.11, args: &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;sysdump&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes nodes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collect Kubernetes nodes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes events
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collect Kubernetes version
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes namespaces
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes services
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes pods summary
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes endpoints
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes network policies
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium cluster-wide network policies
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium network policies
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium local redirect policies
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium egress NAT policies
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium endpoints
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium identities
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium nodes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Ingresses
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting CiliumEnvoyConfigs
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting CiliumClusterwideEnvoyConfigs
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium etcd secret
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Cilium configuration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Cilium daemonset&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;s&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Hubble daemonset
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Hubble Relay deployment
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Hubble Relay configuration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Hubble UI deployment
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Cilium operator deployment
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the CNI configuration files from Cilium pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ Deployment &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;hubble-ui&amp;#34;&lt;/span&gt; not found in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt; - this is expected &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; Hubble UI is not enabled
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the CNI configmap
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;clustermesh-apiserver&amp;#39;&lt;/span&gt; deployment
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ Deployment &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;hubble-relay&amp;#34;&lt;/span&gt; not found in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt; - this is expected &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; Hubble is not enabled
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting gops stats from Cilium pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting gops stats from Hubble pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting gops stats from Hubble Relay pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;cilium-bugtool&amp;#39;&lt;/span&gt; output from Cilium pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting logs from Cilium pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting logs from Cilium operator pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ Deployment &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;clustermesh-apiserver&amp;#34;&lt;/span&gt; not found in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt; - this is expected &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;clustermesh-apiserver&amp;#39;&lt;/span&gt; isn&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;t enabled
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;🔍 Collecting logs from &amp;#39;&lt;/span&gt;clustermesh-apiserver&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39; pods
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;🔍 Collecting logs from Hubble pods
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;🔍 Collecting logs from Hubble Relay pods
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;🔍 Collecting logs from Hubble UI pods
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;🔍 Collecting platform-specific data
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;🔍 Collecting Hubble flows from Cilium pods
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ The following tasks failed, the sysdump may be incomplete:
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ [11] Collecting Cilium egress NAT policies: failed to collect Cilium egress NAT policies: the server could not find the requested resource (get ciliumegressnatpolicies.cilium.io)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ [12] Collecting Cilium local redirect policies: failed to collect Cilium local redirect policies: the server could not find the requested resource (get ciliumlocalredirectpolicies.cilium.io)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ [17] Collecting CiliumClusterwideEnvoyConfigs: failed to collect CiliumClusterwideEnvoyConfigs: the server could not find the requested resource (get ciliumclusterwideenvoyconfigs.cilium.io)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ [18] Collecting CiliumEnvoyConfigs: failed to collect CiliumEnvoyConfigs: the server could not find the requested resource (get ciliumenvoyconfigs.cilium.io)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ [23] Collecting the Hubble Relay configuration: failed to collect the Hubble Relay configuration: configmaps &amp;#34;hubble-relay-config&amp;#34; not found
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ cniconflist-cilium-7l6br: error dialing backend: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ cniconflist-cilium-hn9g5: command terminated with exit code 1
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ cniconflist-cilium-rzkb6: command terminated with exit code 1
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ gops-cilium-7l6br-memstats: failed to list processes &amp;#34;cilium-7l6br&amp;#34; (&amp;#34;cilium-agent&amp;#34;) in namespace &amp;#34;kube-system&amp;#34;: error dialing backend: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ gops-cilium-7l6br-stack: failed to list processes &amp;#34;cilium-7l6br&amp;#34; (&amp;#34;cilium-agent&amp;#34;) in namespace &amp;#34;kube-system&amp;#34;: error dialing backend: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ gops-cilium-7l6br-stats: failed to list processes &amp;#34;cilium-7l6br&amp;#34; (&amp;#34;cilium-agent&amp;#34;) in namespace &amp;#34;kube-system&amp;#34;: error dialing backend: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ cilium-bugtool-cilium-7l6br: failed to collect &amp;#39;&lt;/span&gt;cilium-bugtool&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&amp;#39;&lt;/span&gt; output &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-7l6br&amp;#34;&lt;/span&gt; in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt;: error dialing backend: dial tcp 192.168.153.23:10250: connect: no route to host: 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ logs-cilium-7l6br-cilium-agent: failed to collect logs &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-7l6br&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-agent&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://192.168.153.23:10250/containerLogs/kube-system/cilium-7l6br/cilium-agent?limitBytes=1073741824&amp;amp;sinceTime=2021-07-13T08%3A20%3A54Z&amp;amp;timestamps=true&amp;#34;&lt;/span&gt;: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ logs-cilium-operator-5d67fc458d-gjdc6-cilium-operator: failed to collect logs &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-operator-5d67fc458d-gjdc6&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-operator&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://192.168.153.23:10250/containerLogs/kube-system/cilium-operator-5d67fc458d-gjdc6/cilium-operator?limitBytes=1073741824&amp;amp;sinceTime=2021-07-13T08%3A20%3A55Z&amp;amp;timestamps=true&amp;#34;&lt;/span&gt;: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ logs-cilium-7l6br-mount-cgroup: failed to collect logs &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-7l6br&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;mount-cgroup&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://192.168.153.23:10250/containerLogs/kube-system/cilium-7l6br/mount-cgroup?limitBytes=1073741824&amp;amp;sinceTime=2021-07-13T08%3A20%3A54Z&amp;amp;timestamps=true&amp;#34;&lt;/span&gt;: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ logs-cilium-7l6br-clean-cilium-state: failed to collect logs &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-7l6br&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;clean-cilium-state&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://192.168.153.23:10250/containerLogs/kube-system/cilium-7l6br/clean-cilium-state?limitBytes=1073741824&amp;amp;sinceTime=2021-07-13T08%3A20%3A54Z&amp;amp;timestamps=true&amp;#34;&lt;/span&gt;: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ hubble-flows-cilium-7l6br: failed to collect hubble flows &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-7l6br&amp;#34;&lt;/span&gt; in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt;: error dialing backend: dial tcp 192.168.153.23:10250: connect: no route to host: 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ Please note that depending on your Cilium version and installation options, this may be expected
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🗳 Compiling sysdump
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;✅ The sysdump has been saved to /work-place/kubernetes/create-cluster/cilium-sysdump-20220713-162053.zip
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;coredns&lt;/code&gt;的&lt;code&gt;configMap&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;root@nm:/work-place/kubernetes/create-cluster# kubectl describe cm coredns -n kube-system
+Name:         coredns
+Namespace:    kube-system
+Labels:       &amp;lt;none&amp;gt;
+Annotations:  &amp;lt;none&amp;gt;
+
+Data
+====
+Corefile:
+----
+.:53 {
+    errors
+    health {
+       lameduck 5s
+    }
+    ready
+    kubernetes cluster.local in-addr.arpa ip6.arpa {
+       pods insecure
+       fallthrough in-addr.arpa ip6.arpa
+       ttl 30
+    }
+    prometheus :9153
+    forward . /etc/resolv.conf {
+       max_concurrent 1000
+    }
+    cache 30
+    loop
+    reload
+    loadbalance
+}
+
+
+BinaryData
+====
+
+Events:  &amp;lt;none&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;kubelet&lt;/code&gt;的&lt;code&gt;config&lt;/code&gt;信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;root@nm:/home/lzl# cat /var/lib/kubelet/config.yaml 
+apiVersion: kubelet.config.k8s.io/v1beta1
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    cacheTTL: 0s
+    enabled: true
+  x509:
+    clientCAFile: /etc/kubernetes/pki/ca.crt
+authorization:
+  mode: Webhook
+  webhook:
+    cacheAuthorizedTTL: 0s
+    cacheUnauthorizedTTL: 0s
+cgroupDriver: systemd
+clusterDNS:
+- 10.96.0.10
+clusterDomain: cluster.local
+cpuManagerReconcilePeriod: 0s
+evictionPressureTransitionPeriod: 0s
+fileCheckFrequency: 0s
+healthzBindAddress: 127.0.0.1
+healthzPort: 10248
+httpCheckFrequency: 0s
+imageMinimumGCAge: 0s
+kind: KubeletConfiguration
+logging:
+  flushFrequency: 0
+  options:
+    json:
+      infoBufferSize: &amp;#34;0&amp;#34;
+  verbosity: 0
+memorySwap: {}
+nodeStatusReportFrequency: 0s
+nodeStatusUpdateFrequency: 0s
+resolvConf: /run/systemd/resolve/resolv.conf
+rotateCertificates: true
+runtimeRequestTimeout: 0s
+shutdownGracePeriod: 0s
+shutdownGracePeriodCriticalPods: 0s
+staticPodPath: /etc/kubernetes/manifests
+streamingConnectionIdleTimeout: 0s
+syncFrequency: 0s
+volumeStatsAggPeriod: 0s
+&lt;/code&gt;&lt;/pre&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;kubeadm&lt;/code&gt;对&lt;code&gt;kubelet&lt;/code&gt;添加的flag&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;root@nm:/home/lzl# cat /var/lib/kubelet/kubeadm-flags.env 
+KUBELET_KUBEADM_ARGS=&amp;#34;--network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.6&amp;#34;
+&lt;/code&gt;&lt;/pre&gt;&lt;ul&gt;
+&lt;li&gt;OS信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ cat /etc/os-release
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;PRETTY_NAME&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Ubuntu 22.04 LTS&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Ubuntu&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;VERSION_ID&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;22.04&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;VERSION&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;22.04 LTS (Jammy Jellyfish)&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;VERSION_CODENAME&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;jammy
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;ubuntu
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID_LIKE&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;debian
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;HOME_URL&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://www.ubuntu.com/&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;SUPPORT_URL&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://help.ubuntu.com/&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;BUG_REPORT_URL&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://bugs.launchpad.net/ubuntu/&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;PRIVACY_POLICY_URL&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://www.ubuntu.com/legal/terms-and-policies/privacy-policy&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;UBUNTU_CODENAME&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;jammy
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ uname -a
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Linux nm 5.15.0-41-generic &lt;span style=&#34;color:#75715e&#34;&gt;#44-Ubuntu SMP Wed Jun 22 14:20:53 UTC 2022 x86_64 x86_64 x86_64 GNU/Linux&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;sysctl -a | grep -w rp_filter&lt;/code&gt;信息如下&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# sysctl -a | grep -w rp_filter
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.all.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.cilium_host.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.cilium_net.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.cilium_vxlan.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.default.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.docker0.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.ens33.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.lo.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.lxc_health.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;此外，补充一点，在我使用flannel做集群网络时，一切都是正常的。&lt;/p&gt;
+&lt;h2 id=&#34;我所做的尝试&#34;&gt;我所做的尝试&lt;/h2&gt;
+&lt;p&gt;在大佬指点之前，我按照下面的链接做出一些调整。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;coredns在k8s集群中的troubleshooting：https://github.com/coredns/coredns/blob/master/plugin/loop/README.md#troubleshooting-loops-in-kubernetes-clusters&lt;/li&gt;
+&lt;li&gt;和我这个问题比较相似的plugin/loop导致的集群网络异常：https://github.com/coredns/coredns/issues/2790&lt;/li&gt;
+&lt;li&gt;本次排错中也出现的coredns [ERROR] plugin/errors: 2 read udp上游不可达：https://github.com/kubernetes/kubernetes/issues/86762&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;然后我又通过&lt;code&gt;busybox&lt;/code&gt;进到容器里面，分别在正常的使用flannel的网络环境和异常的使用cilium的网络环境下去尝试&lt;code&gt;ping&lt;/code&gt;我的网关。&lt;/p&gt;
+&lt;p&gt;在使用flannel的网络中，一切正常：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@master:/home/lzl/work-place/kubernetes/deploy-k8s# kubectl run -it --rm --restart&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;Never busybox --image&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;docker.io/library/busybox sh
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;If you don&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&amp;#39;&lt;/span&gt;t see a command prompt, try pressing enter.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/ &lt;span style=&#34;color:#75715e&#34;&gt;# ping 10.96.0.10&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;PING 10.96.0.10 &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;10.96.0.10&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;56&lt;/span&gt; data bytes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;^C
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;--- 10.96.0.10 ping statistics ---
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt; packets transmitted, &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt; packets received, 100% packet loss
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/ &lt;span style=&#34;color:#75715e&#34;&gt;# ping 192.168.153.2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;PING 192.168.153.2 &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;192.168.153.2&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;56&lt;/span&gt; data bytes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;64&lt;/span&gt; bytes from 192.168.153.2: seq&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt; ttl&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;127&lt;/span&gt; time&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;0.458 ms
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;64&lt;/span&gt; bytes from 192.168.153.2: seq&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; ttl&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;127&lt;/span&gt; time&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;0.405 ms
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;64&lt;/span&gt; bytes from 192.168.153.2: seq&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; ttl&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;127&lt;/span&gt; time&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;1.041 ms
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;^C
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;--- 192.168.153.2 ping statistics ---
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; packets transmitted, &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; packets received, 0% packet loss
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;round-trip min/avg/max &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; 0.405/0.634/1.041 ms
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;而使用cilium中异常网络，则无法&lt;code&gt;ping&lt;/code&gt;通：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# kubectl run -it --rm --restart&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;Never busybox --image&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;docker.io/library/busybox sh
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;If you don&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&amp;#39;&lt;/span&gt;t see a command prompt, try pressing enter.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/ &lt;span style=&#34;color:#75715e&#34;&gt;# ping 192.168.153.2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;PING 192.168.153.2 &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;192.168.153.2&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;56&lt;/span&gt; data bytes
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我所做的尝试都没有用。&lt;/p&gt;
+&lt;h2 id=&#34;问题解决&#34;&gt;问题解决&lt;/h2&gt;
+&lt;p&gt;最终的解决办法是&lt;a class=&#34;link&#34; href=&#34;https://github.com/vincentmli&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;vincentmli&lt;/a&gt;给出的，如下。&lt;/p&gt;
+&lt;p&gt;手工在 &lt;code&gt;/etc/sysctl.d/&lt;/code&gt; 中写入下面的文件，然后重启节点。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;cat /etc/sysctl.d/99-zzz-override_cilium.conf
+# Disable rp_filter on Cilium interfaces since it may cause mangled packets to be dropped
+net.ipv4.conf.lxc*.rp_filter = 0
+net.ipv4.conf.cilium_*.rp_filter = 0
+# The kernel uses max(conf.all, conf.{dev}) as its value, so we need to set .all. to 0 as well.
+# Otherwise it will overrule the device specific settings.
+net.ipv4.conf.all.rp_filter = 0
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;所有节点执行上面的工作后，&lt;code&gt;coredns&lt;/code&gt;终于正常了，而且我尝试部署了测试应用，可以通过网络访问。&lt;/p&gt;
+&lt;p&gt;关于为什么这样做请看这条issue：https://github.com/cilium/cilium/pull/20072&lt;/p&gt;
+&lt;p&gt;另外，其他信息请查看：https://github.com/cilium/cilium/issues/20498&lt;/p&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

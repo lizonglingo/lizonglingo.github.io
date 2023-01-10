@@ -1,0 +1,1510 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>安全 on Li Duo</title>
+        <link>https://lizonglingo.github.io/categories/%E5%AE%89%E5%85%A8/</link>
+        <description>Recent content in 安全 on Li Duo</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-CN</language>
+        <lastBuildDate>Thu, 24 Feb 2022 19:25:41 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/categories/%E5%AE%89%E5%85%A8/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Service-Level Fault Injection Testing</title>
+        <link>https://lizonglingo.github.io/p/service-level-fault-injection-testing/</link>
+        <pubDate>Thu, 24 Feb 2022 19:25:41 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/service-level-fault-injection-testing/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源：ACM SoCC&#39;21&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://acmsocc.org/2021/accepted-papers.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://acmsocc.org/2021/accepted-papers.html&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;摘要为什么需要服务级别的故障注入测试&#34;&gt;摘要——为什么需要服务级别的故障注入测试&lt;/h2&gt;
+&lt;p&gt;由于微服务架构的特点，负责每个模块的工程师只需专注自己的部分而不需要过多关注整个应用系统。这些应用程序的开发人员不一定都是分布式系统工程师，因此无法预计系统出现部分故障：一旦部署到生产环境中，他们的服务会面临一个或多个依赖项不可用的问题。&lt;/p&gt;
+&lt;p&gt;作者提出了一种称为服务级故障注入测试的方法和一种称为 Filibuster 的原型实现，可用于在微服务应用程序开发的早期系统地识别弹性问题。&lt;/p&gt;
+&lt;p&gt;Filibuster 将静态分析和 concolic-style 执行与一种新颖的动态缩减算法相结合，以扩展现有的功能测试套件，以最少的开发人员工作量覆盖故障场景。&lt;/p&gt;
+&lt;p&gt;并使用 4 个真实工业微服务应用程序的语料库来进行实验。&lt;/p&gt;
+&lt;h2 id=&#34;贡献&#34;&gt;贡献&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;一种测试微服务应用程序弹性的方法：服务级故障注入测试 (SFIT) &lt;strong&gt;结合了静态分析和 concolic 测试&lt;/strong&gt;，以探索微服务之间所有可能的故障，从现有的通过功能测试套件开始。&lt;/li&gt;
+&lt;li&gt;一种新颖的动态缩减算法： SFIT 使用一种算法，通过利用将应用程序分解为独立的微服务来&lt;strong&gt;减少搜索空间的组合爆炸&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;实现了SFIT的原型Filibuster：这个基于 Python 的工具可用于测试与 HTTP 通信的服务。我们的原型允许在本地测试服务的弹性，并证明它可以在 Amazon CodeBuild CI/CD 环境中运行，以便在问题进入生产之前检测它们。&lt;/li&gt;
+&lt;li&gt;用 Python 实现的微服务应用程序和错误的语料库：该语料库包含 8 个小型微服务应用程序，每个应用程序都展示了微服务应用程序中使用的单一模式；和 4 个从公开会议演讲中重新实现的行业示例：Audible、Expedia、Mailchimp 和 Netflix。&lt;/li&gt;
+&lt;li&gt;在该语料库上对Filibuster进行评价：证明 Filibuster 可用于识别语料库中的所有错误。我们展示了通过动态缩减可能进行的优化，并提供了有关如何最好地设计微服务应用程序以实现可测试性的见解。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;难点&#34;&gt;难点&lt;/h2&gt;
+&lt;p&gt;缺乏开源微服务工业应用程序及其相关的错误报告（这两个主要的语料库通常有助于软件测试领域的研究），回答这些错误是否可以在开发过程的早期检测到的问题并不简单。&lt;/p&gt;
+&lt;p&gt;最终作者构建了4个案例语料库。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Audible：一家提供有声读物流媒体移动应用程序的公司。在他们的演示文稿中，他们描述了一个错误，即应用程序服务器在从 Amazon S3 读取数据时不会收到 NotFound 错误。此错误在代码中未处理，并通过一般错误消息传播回移动客户端。他们使用混沌工程发现了这个错误。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Expedia：一家提供旅行预订的公司。他们讨论了使用混沌工程来验证如果他们的应用程序服务器尝试从基于相关性对它们进行排序的服务中检索酒店评论，并且该服务不可用，他们将回退到另一个提供按时间排序的评论。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Mailchimp：一款用于电子邮件通讯管理的产品。在他们的演示中，他们讨论了两个错误。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;遗留代码无法处理其数据库服务器返回的指示其为只读情况的错误代码。&lt;/li&gt;
+&lt;li&gt;一项服务变得不可用并将未处理的错误返回给应用程序。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Netflix：讨论了他们使用混沌工程基础设施发现的几个错误。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;错误配置的超时，某个服务调用不正确配置，导致请求花费比预期更长的时间，但保持在超时间隔内。&lt;/li&gt;
+&lt;li&gt;服务配置了回退指向错误的服务。&lt;/li&gt;
+&lt;li&gt;关键的为服务没有配置回退。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;架构概述&#34;&gt;架构概述&lt;/h2&gt;
+&lt;p&gt;SFIT 采用开发人员优先的方法，尽早将故障注入测试集成到开发过程中，而无需开发人员使用特定的规范语言编写规范。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;SFIT 建立在开发微服务应用程序的以下三个关键点上。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;微服务独立开发：由于微服务之间可以通过约定的API进行通信，负责其他模块的个别团队成员通常不能很好地理解超出其控制范围的服务的状态或内部结构，无法编写应用程序的详细规范以使用模型检查器自动验证它。&lt;/li&gt;
+&lt;li&gt;Mock测试可以防止问题出现：虽然编写模拟测试可以查出一些问题，但是由于这费时费力，对开发来说效益太少，所以开发人员很少进行测试。&lt;/li&gt;
+&lt;li&gt;功能测试的重要性：开发人员编写多个验证应用程序行为的端到端功能测试，而不是编写规范。任何成功的故障注入方法都应该从功能测试开始。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;sfit的实现思路&#34;&gt;SFIT的实现思路&lt;/h3&gt;
+&lt;p&gt;基于上述三个关键点及下面的两个简单假设：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;服务通过HTTP进行通信。&lt;/li&gt;
+&lt;li&gt;一个单一的功能测试可以实现所有应用程序行为。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;测试流程概述&#34;&gt;测试流程概述&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;假设从一个通过的功能测试开始，该测试由开发人员编写，在一些未失败的场景下执行应用程序，并验证一些应用程序行为。我们假设通过测试已经排除了逻辑错误。&lt;/li&gt;
+&lt;li&gt;在该测试点注入故障。如果请求出现多种错误，则为每一个错误安排一次测试。这些后续执行被放置在堆栈上，并递归地应用该策略，直到所有路径都被探索。这种算法的灵感来自于DART的concolic测试算法[28]。&lt;/li&gt;
+&lt;li&gt;以Audible App的例子来说，第一个请求发现内容分发服务出现了&lt;em&gt;Timeout or ConnectionError&lt;/em&gt;。然后我们向堆栈中追加两次测试执行。&lt;/li&gt;
+&lt;li&gt;接着对内容分发服务进行堆栈中的测试，如果测试中暴露出新的问题，就可以寻找新的错误路径，内容交付引擎的故障可能会导致另一条路径暴露给日志服务。我们继续探索，直到所有的道路都被充分探索。（如：内容交付引擎的故障可能是由于日志服务暴露出的问题，因此搜索到日志服务路径。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在本例中，多个服务具有相互依赖关系；例如，音频下载服务与所有权服务、激活服务和统计服务对话。在这种情况下，我们必须安排覆盖整个失败空间的执行——每个服务可能独立失败的所有方式，以及由于微服务相互影响而导致失败的所有组合。在第4节中，我们将讨论如何减少冗余的路径搜索。&lt;/p&gt;
+&lt;p&gt;此外，在进行故障注入测试时，需要根据故障情况调整功能测试。为此作者开发了帮助组件使得开发者可以编写条件断言来判断错误的出现。还提供了一个机制来重现错误。&lt;/p&gt;
+&lt;h4 id=&#34;故障注入&#34;&gt;故障注入&lt;/h4&gt;
+&lt;p&gt;该注入方法可以对远程调用继续注入，并通过远程库改变响应。例如一些HTTP、gRPC的库。故障注入的设计思路如下：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;不返回远程服务的实际响应&lt;/li&gt;
+&lt;li&gt;基于注入的故障返回故障响应（通过修改远程服务响应）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;故障识别&#34;&gt;故障识别&lt;/h4&gt;
+&lt;p&gt;故障识别主要包含&lt;strong&gt;识别具体的故障&lt;/strong&gt;和&lt;strong&gt;识别故障发生于哪一个微服务&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;注入的故障类型都源自于微服务可能发生的故障类型。通常有以下两种错误：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;服务调用端故障。如Python的&lt;em&gt;request&lt;/em&gt;库在发出请求时会有23中意外情况。可以通过指定包含异常的模块或者配置中手动指定这些问题，依此识别故障。这里作者将该类请求中的&lt;em&gt;Timeout&lt;/em&gt;和&lt;em&gt;ConnectionError&lt;/em&gt;作为主要考虑的错误类型。&lt;/li&gt;
+&lt;li&gt;被调用端故障。被调用的服务也可能返回一个错误响应。例如一个服务依赖的另一个微服务抛出了&lt;em&gt;Timeout&lt;/em&gt;，那这个服务就可能返回&lt;em&gt;500&lt;/em&gt;。作者通过对程序源码使用静态分析技术对类似的响应进行识别。例如在Flask框架中查找&lt;em&gt;return&lt;/em&gt;或&lt;em&gt;raise&lt;/em&gt;语句。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但还存在一个问题：在使用HTTP做请求时，&lt;strong&gt;请求的URL并不能作为识别服务本体的标识&lt;/strong&gt;。为解决这个问题，使用额外的工具记录调用的服务。该工具放置在接收服务请求的Web框架上，因此可以在被调用之前记录被调用者的服务信息。在获取该被调用者的信息后，将信息传给中台，以便进行后续的测试。&lt;/p&gt;
+&lt;h4 id=&#34;注入故障后对功能的调整&#34;&gt;注入故障后对功能的调整&lt;/h4&gt;
+&lt;p&gt;开发者需要根据故障注入的结果去调整功能，修复没有考虑到的问题。作者提供了一个帮助模块去编写故障断言，例如：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;a&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;fault&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;was&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;injected&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;on&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Service&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;A&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;...&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;对系统行为在失败的情况下进行捕获和处理。开发人员应将这些条件断言添加到现有的功能测试中。&lt;/p&gt;
+&lt;p&gt;一个典型的流程如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;开发者进行功能测试并通过。&lt;/li&gt;
+&lt;li&gt;注入故障&lt;/li&gt;
+&lt;li&gt;原有的功能测试因为故障的注入出现问题&lt;/li&gt;
+&lt;li&gt;开发者通过提供的帮助工具，可以对新出现的故障进行断言，从而捕获因故障注入出现的故障。例如：Audible会报出&lt;code&gt;if a fault was injected on the stats ser- vice, the service should still play the audiobook.&lt;/code&gt;。基于此，开发者可以使用反例来重现先前的测试，以证明这些断言。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;故障搜索路径动态缩减&#34;&gt;故障搜索路径动态缩减&lt;/h2&gt;
+&lt;p&gt;为了识别尽可能多的错误，必须理想地探索服务失败的组合。为了实现故障空间的最大覆盖所需的测试执行次数是非常多的。&lt;/p&gt;
+&lt;p&gt;但是，可将应用分解成多个独立的微服务来显著减少搜索空间并且保证完整性。以下图为例：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220224122453207.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220224122453207&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h3 id=&#34;对于ads服务&#34;&gt;对于ADS服务&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;先只考虑服务子集的故障，如ADS下载服务和CDS内容分发服务以及他们的依赖项。&lt;/li&gt;
+&lt;li&gt;对于ADS可能产生的故障，需要考虑三种依赖类别：
+&lt;ol&gt;
+&lt;li&gt;Ownership：验证某个用户是否拥有某本书的所有权；&lt;/li&gt;
+&lt;li&gt;Activation：验证用户的请求；&lt;/li&gt;
+&lt;li&gt;Stats：对本次事件改变的状态进行记录；&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;如果上面三个依赖服务中的任何一个出现失败，那么ADS服务就会返回错误。但需要注意，Stats的失败不会影响这次请求的结果（因为“where stats failures are ignored”）。&lt;/li&gt;
+&lt;li&gt;因此，Ownership和Activation的失败会导致ADS返回&lt;em&gt;500&lt;/em&gt;，但Stats的失败不会影响ADS，如果Ownership和Activation成功而Stats失败，ADS仍返回&lt;em&gt;200&lt;/em&gt;。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;对于cds服务&#34;&gt;对于CDS服务&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;CDS服务依赖的微服务子集是Asset Metadata和Audio Assets，我们需要考虑这两个服务会发生的故障以及他们组合起来会发生的故障。&lt;/li&gt;
+&lt;li&gt;但是，由于ADS的请求URL&lt;code&gt;/user/&amp;lt;uesr_id&amp;gt;/books/&amp;lt;book_id&amp;gt;&lt;/code&gt;与Stats的URL相同，又因为CDS服务依赖于ADS服务，所以也应当将Stats服务考虑进去。&lt;/li&gt;
+&lt;li&gt;所以实际包含的CDS子服务应是：Asset Metadata+Audio Asset+Stats。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;三条准则&#34;&gt;三条准则&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;充分考虑服务依赖项的所有失败方式，让我们知道每个服务和多个依赖服务失败时会发生什么行为，返回什么结果。&lt;/li&gt;
+&lt;li&gt;我们需要明确将故障注入后会对服务产生什么样的影响，并依据此简化注入。例如我们已经知道CDS的某个依赖项在发生错误时会返回&lt;em&gt;500&lt;/em&gt;，那么就可以直接在CDS中注入&lt;em&gt;500&lt;/em&gt;错误响应。&lt;/li&gt;
+&lt;li&gt;如果已经在服务中注入了故障，那么就不用进行测试了，因为已经观察到了程序的行为。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;动态缩减算法&#34;&gt;动态缩减算法&lt;/h3&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;该算法将测试的搜索空间指数级缩小，基本思路是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;缩减前：数量级是&lt;strong&gt;服务请求总数&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;缩减后：数量级变成&lt;strong&gt;给定服务最大能发出的请求数&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;具体来说如图2：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;缩减前：最大有8条边需要处理，整个应用有8个请求路径&lt;/li&gt;
+&lt;li&gt;缩减后：最大仅需要处理3条边，因为ADS是依赖项最多的服务，有3个请求发送路径&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;另外依据的一个前提是，&lt;strong&gt;微服务调用链拓扑结构上深度优先比广度优先更为明显&lt;/strong&gt;。&lt;/p&gt;
+&lt;h2 id=&#34;原型实现filibuster&#34;&gt;原型实现：Filibuster&lt;/h2&gt;
+&lt;p&gt;使用Python及相关的开源组件，如使用opentelemetry来实现请求链路追踪、识别服务依赖关系。&lt;/p&gt;
+&lt;h3 id=&#34;组件功能&#34;&gt;组件功能&lt;/h3&gt;
+&lt;p&gt;系统的组件可以实现服务请求识别、服务依赖关系分析，并于Filibuster通信。服务器负责在本地进程、Docker Compose 或 Kubernetes 中启动与应用程序关联的所有服务。&lt;strong&gt;运行功能测试、记录和维护要执行的测试执行堆栈、执行功能测试断言、报告测试失败并聚合测试覆盖率&lt;/strong&gt;。服务器提供了一个 API，&lt;strong&gt;功能测试可以使用该 API 来编写条件断言，并使用反例文件允许测试重放&lt;/strong&gt;。测试覆盖率由服务器从每个单独的服务中聚合而成。&lt;/p&gt;
+&lt;h3 id=&#34;静态分析&#34;&gt;静态分析&lt;/h3&gt;
+&lt;p&gt;Filibuster需要进行静态分析，以识别每个服务可以返回的错误类型。&lt;strong&gt;作者使用词法分析技术，遍历源代码的抽象语法树来识别错误&lt;/strong&gt;。Flask中的&lt;em&gt;raise&lt;/em&gt;语句可以被分析道，然后捕获这些语句要发送的HTTP错误响应及状态码。&lt;/p&gt;
+&lt;h3 id=&#34;注入故障&#34;&gt;注入故障&lt;/h3&gt;
+&lt;p&gt;Filibuster可以注入下面类型的故障；&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;调用端异常：这些异常由&lt;em&gt;request&lt;/em&gt;库抛出，如指示&lt;code&gt;Timeout&lt;/code&gt;的等错误。&lt;/li&gt;
+&lt;li&gt;响应异常：来自被调用端返回异常。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;应用语料库&#34;&gt;应用语料库&lt;/h2&gt;
+&lt;p&gt;一个包含8种变体示例的电影订票程序，每个示例都展示了微服务应用程序中观察到的特定模式。还有 4 个行业示例：Audible、Expedia、Mailchimp 和 Netflix。&lt;/p&gt;
+&lt;p&gt;每个示例都包含单元测试以及验证应用程序功能行为的功能测试。这些示例可以在Docker或K8s环境中运行。&lt;/p&gt;
+&lt;h3 id=&#34;电影院订票应用示例&#34;&gt;电影院订票应用示例&lt;/h3&gt;
+&lt;p&gt;该应用由4个微服务组成：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Showtimes: returns the show times for movies;&lt;/li&gt;
+&lt;li&gt;Movies: returns information for a given movie;&lt;/li&gt;
+&lt;li&gt;Bookings: given a username, returns information about the bookings for that user;&lt;/li&gt;
+&lt;li&gt;Users: 存储用户信息并处理用户订票请求，并在过程中为用户展示电影信息。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;它的另外7个变体有：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;bookings talks directly to the movies;&lt;/li&gt;
+&lt;li&gt;same as 1, but the users service has a retry loop around its calls to the bookings service;&lt;/li&gt;
+&lt;li&gt;same as 1, but each service talks to &lt;strong&gt;an external service before issuing any requests&lt;/strong&gt;, the users service makes a request to IMDB, the bookings service makes a request to Fandango, the movies service makes a request to Rotten Tomatoes;&lt;/li&gt;
+&lt;li&gt;all requests happen regardless of failure; in the event of failure, a hardcoded, default, response is used;&lt;/li&gt;
+&lt;li&gt;adds a second replica of bookings, that is contacted in the event of failure of the primary replica;&lt;/li&gt;
+&lt;li&gt;same as 5, but the users service makes a call to a health check endpoint on the primary bookings replica before issuing the actual request;&lt;/li&gt;
+&lt;li&gt;example is collapsed into monolith（单体结构） where an API server makes requests to the it with a retry loop.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;工业级应用&#34;&gt;工业级应用&lt;/h3&gt;
+&lt;h4 id=&#34;audible&#34;&gt;Audible&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220224122453207.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220224122453207&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;架构如上图2所示。包含如下服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Content Delivery Service (CDS):
+&lt;ul&gt;
+&lt;li&gt;IN： book_id 和 user_id&lt;/li&gt;
+&lt;li&gt;OUT：（在验证之后） 音频内容和元数据&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Content Delivery Engine (CDE):
+&lt;ul&gt;
+&lt;li&gt;IN： book_id 和 user_id&lt;/li&gt;
+&lt;li&gt;OUT：相关CDS的URL&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Audible App：模拟移动应用
+&lt;ul&gt;
+&lt;li&gt;首先向CDE请求获得内容的URL&lt;/li&gt;
+&lt;li&gt;再根据URL请求CDS&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Audible Download Service: 鉴权、授权并记录日志
+&lt;ul&gt;
+&lt;li&gt;IN： book_id 和 user_id&lt;/li&gt;
+&lt;li&gt;OUT：权限鉴别结果&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Ownership: 验证读者对图书的所有权
+&lt;ul&gt;
+&lt;li&gt;IN：book_id 和 user_id&lt;/li&gt;
+&lt;li&gt;OUT：鉴权结果&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Activation：为用户激活DRM许可证
+&lt;ul&gt;
+&lt;li&gt;IN：book_id&lt;/li&gt;
+&lt;li&gt;OUT：DRM Access&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Stats：记录读者和图书许可的信息
+&lt;ul&gt;
+&lt;li&gt;IN：book_id 和 user_id&lt;/li&gt;
+&lt;li&gt;OUT：记录结果&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Asset Metadata：存储音频元数据，如章节信息
+&lt;ul&gt;
+&lt;li&gt;IN：book_id 和 license&lt;/li&gt;
+&lt;li&gt;OUT：检索到的音频XML信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Audio Assets：提供音频存储服务
+&lt;ul&gt;
+&lt;li&gt;IN：book_id 和 license&lt;/li&gt;
+&lt;li&gt;OUT：检索到的音频文件&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;作者在实际部署上进行了一些调整：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Asset Metadata和Audio Assets是 AWS S3 存储桶。为了模拟这一点创建 HTTP 服务，如果可用，则返回包含资产的 200 OK，如果资产不存在，则返回 404 Not Found。&lt;/li&gt;
+&lt;li&gt;Ownership和Activation是 AWS RDS 实例。为了模拟这一点创建了实现 REST 模式的 HTTP 服务：如果用户不拥有该书，则返回 403 Forbidden，如果该书不存在，则返回 404 Not Found，否则返回 200 OK。&lt;/li&gt;
+&lt;li&gt;Stats 服务是一个 AWS DynamoDB 实例。为了模拟这一点，我们创建了一个返回 200 OK 的 HTTP 服务。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;对于功能测试的尝试是为用户下载有声读物的测试。如果缺少图书的章节信息，Asset Metadata可以返回 404 Not Found 响应：这是 Audible 演示中讨论的错误，会导致在移动应用程序中向用户显示一般错误。&lt;/p&gt;
+&lt;h4 id=&#34;expedia&#34;&gt;Expedia&lt;/h4&gt;
+&lt;p&gt;包含如下三个微服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Review ML：按相关性顺序返回评论&lt;/li&gt;
+&lt;li&gt;Review Time：按时间顺序返回评论&lt;/li&gt;
+&lt;li&gt;API Gateway：根据服务可用性，从 Review ML 或 Review Time 将评论返回给用户&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;mailchimp&#34;&gt;Mailchimp&lt;/h4&gt;
+&lt;p&gt;包含五个微服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Requestmapper：将电子邮件活动中的 URL 映射到实际资源&lt;/li&gt;
+&lt;li&gt;DB Primary：数据库的主要副本&lt;/li&gt;
+&lt;li&gt;DB Secondary：数据库次要副本&lt;/li&gt;
+&lt;li&gt;App Server：向 Requestmapper 服务发出请求以解析 URL，然后对数据库执行读后写请求，并在主数据库不可用的情况下回退到辅助数据库副本&lt;/li&gt;
+&lt;li&gt;Load Balancer：对请求进行负载均衡&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;同样的，在实际部署时做出一些调整：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;DB Primary 和 Secondary 服务是 MySQL 实例。为了模拟这一点创建一个 HTTP 服务，该服务要么在成功读取或写入时返回 200 OK，要么在数据库为只读时返回 403 Forbidden。&lt;/li&gt;
+&lt;li&gt;负载均衡器服务是一个 HAProxy 实例。为了模拟这一点创建一个 HTTP 代理做负载均衡。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;故障信息有两个：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;MySQL instance is read-only：当 MySQL 实例为只读时，数据库会返回一个在代码的一个区域中未处理的错误。由于 Mailchimp 使用 PHP，这个错误会直接呈现到页面的输出中，我们通过将 403 Forbidden 响应转换为直接插入页面的输出来模拟这一点。&lt;/li&gt;
+&lt;li&gt;Requestmapper is unavailable：当 Requestmapper 服务不可用时，App Server 无法正确处理错误，向负载均衡器返回 500 Internal Server Error。但是，负载均衡器仅配置为通过返回格式化的错误页面来处理 503 Service Unavailable 错误。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;netflix&#34;&gt;Netflix&lt;/h4&gt;
+&lt;p&gt;包含十个微服务。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Client：模拟移动客户端&lt;/li&gt;
+&lt;li&gt;API Gateway：展示用户主页&lt;/li&gt;
+&lt;li&gt;User Profile：返回用户信息&lt;/li&gt;
+&lt;li&gt;Bookmarks：返回最后查看的位置&lt;/li&gt;
+&lt;li&gt;My List：返回用户的电影列表&lt;/li&gt;
+&lt;li&gt;User Recs.：返回用户推荐的电影&lt;/li&gt;
+&lt;li&gt;Ratings：返回用户的评分&lt;/li&gt;
+&lt;li&gt;Telemetry： 记录日志信息&lt;/li&gt;
+&lt;li&gt;Trending：返回电影观看趋势&lt;/li&gt;
+&lt;li&gt;Global Recs.：返回推荐电影&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;对于功能测试，我们有一个尝试为用户加载 Netflix 主页的功能测试。&lt;/p&gt;
+&lt;p&gt;故障信息有三个：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Misconfigured timeouts：User Profile服务以 10 秒的超时时间调用日志服务；但是，API Gateway会以 1 秒的超时时间调用用户配置文件服务。&lt;/li&gt;
+&lt;li&gt;Fallbacks to the same server：如果我My List服务不可用，系统将重试。&lt;/li&gt;
+&lt;li&gt;Critical services with no fallbacks：User Profile服务没配置回退。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;实验评估&#34;&gt;实验评估&lt;/h2&gt;
+&lt;p&gt;在具有 15 GB 内存和 8 个 vCPU 的 AWS CodeBuild 实例上运行了所有示例。在 Filibuster 运行开始时，启动了每个示例的所有服务，等待这些服务上线并在测试结束时终止它们，不会在测试执行之间重新启动服务。&lt;/p&gt;
+&lt;h3 id=&#34;tests-generated-and-increased-coverage&#34;&gt;Tests Generated and Increased Coverage&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Test Gen/DR Gen：表示 Filibuster 生成和执行的测试数量。由于每个示例只有一个功能测试，因此这些数字包括该测试的总数，因为 Filibuster 必须首先执行初始通过的功能测试，以确定在哪里注入故障。在语料库中包含错误的所有示例中，可以使用Filibuster 识别错误。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Coverage After：表示报表覆盖率的增加。通过生成涵盖可能故障的测试，我们能够增加应用程序的覆盖率。这些数字仅用于功能测试。生成的测试增加了与未经修改的功能测试未执行的错误处理代码相关的覆盖率。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Time w/DR：表示启用动态缩减的执行时间。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;TG Overhead：表示生成测试的总开销时间。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220224182652863.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220224182652863&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h3 id=&#34;dynamic-reduction&#34;&gt;Dynamic Reduction&lt;/h3&gt;
+&lt;p&gt;当应用程序以服务图的深度而不是广度的方式构建时，应用程序可以从动态缩减中显着受益，例如Audible就是服务调用关系具有一定的深度。&lt;/p&gt;
+&lt;h3 id=&#34;mocks&#34;&gt;Mocks&lt;/h3&gt;
+&lt;p&gt;实现语料库时，作者为每个示例中的每个服务编写了单元测试，使用模拟来解释可能的远程服务故障。 在编写这些测试时，只测试了独立的故障。&lt;/p&gt;
+&lt;p&gt;如图 2 的 Audible 下载服务，其单元测试包含一个模拟三个依赖项的失败：Ownership、Active和State。在这里省略了服务特定故障的列表，请读者参考图表获取列表。&lt;/p&gt;
+&lt;p&gt;同时为&lt;em&gt;Timeout&lt;/em&gt;和&lt;em&gt;ConnectionError&lt;/em&gt;这两个异常分别编写了一个模拟。&lt;/p&gt;
+&lt;h2 id=&#34;不足和未来工作&#34;&gt;不足和未来工作&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;语料库中的示例用HTTP 服务取代了真实云服务和数据库的使用，但在实际生产环境中，服务间的通信方式还包括如gRPC等多种服务通信。作者已经开始努力通过 gRPC 支持和对 AWS DynamoDB 和 AWS RDS 等云服务的支持来扩展系统原型。&lt;/li&gt;
+&lt;li&gt;该设计不考虑服务响应的损坏，而是关注假设的响应或指示失败的响应。&lt;/li&gt;
+&lt;li&gt;系统中将返回错误码就看作请求失败，但是在生产环境中，往往对一些错误响应会给出处理。在某些情况下，可能会提示开发人员编写异常处理程序和其他条件错误处理，以处理实际上可能不会在生产中发生的故障。&lt;/li&gt;
+&lt;li&gt;动态缩减在微服务依赖呈现更大的调用深度时表现更好，广度更大时难以起到明显的作用。&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>笔记 &gt; Service-Level Fault Injection Testing</title>
+        <link>https://lizonglingo.github.io/p/%E7%AC%94%E8%AE%B0-service-level-fault-injection-testing/</link>
+        <pubDate>Sat, 18 Dec 2021 15:35:42 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E7%AC%94%E8%AE%B0-service-level-fault-injection-testing/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源：SoCC&#39;21&lt;/p&gt;
+&lt;p&gt;Meiklejohn C S, Estrada A, Song Y, et al. Service-Level Fault Injection Testing[C]//Proceedings of the ACM Symposium on Cloud Computing. 2021: 388-402.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;摘要&#34;&gt;摘要&lt;/h2&gt;
+&lt;p&gt;越来越多的企业使用微服务架构发布他们的大规模的移动或是Web应用。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;问题在于&lt;/strong&gt;，并非所有系统开发人员都有分布式系统的管理经验，由于这些大规模的应用多是部署与分布式系统中，所以在生产环境中的故障很有可能在开发环境中不会出现。一旦这些微服务部署在分布式系统中，就有可能出现故障。所以，一种好的解决方法就是尽早找出这些问题：在测试环境或者在代码交付生产前就将其解决。&lt;/p&gt;
+&lt;p&gt;本文提出&lt;strong&gt;服务级别故障注入测试&lt;/strong&gt;，并实现一个原型“filibuster”，用来系统的识别开发环境中微服务的弹性问题。“Filibuster”使用静态分析及并发风格的执行，还有新颖的动态缩减算法，来扩展现有功能测试的套件，减少开发人员的工作。&lt;/p&gt;
+&lt;p&gt;为了证明工具的适用性，文章展示了4个包含错误的真实工业微服务应用程序的语料库。数据来自大公司生产中运行的实验公开信息。文章展示了实验如何在开发过程中运行，并在投入生产环境之前就检测到错误。&lt;/p&gt;
+&lt;h2 id=&#34;前置知识&#34;&gt;前置知识&lt;/h2&gt;
+&lt;h3 id=&#34;1-混沌工程&#34;&gt;1. 混沌工程&lt;/h3&gt;
+&lt;p&gt;在本文中，多次讲到“chaos engineering”，在我个人理解，混沌工程是本文的“服务级故障注入测试”的基础，或者说是“上一个版本”。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;混沌工程代表项目，Netflix创建的“Chaos Monkey”可以在系统的随机位置引发故障，可以随时终止&lt;strong&gt;生产环境&lt;/strong&gt;中运行的虚拟机和容器实例。通过“Chaos Monkey”，开发者可以快速了解构建的服务的健壮性，是否可以弹性扩容以及处理意外故障。&lt;/p&gt;
+&lt;p&gt;参考：&lt;a class=&#34;link&#34; href=&#34;https://zhuanlan.zhihu.com/p/90294032&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;知乎-系统架构设计之路&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;混沌工程，是一种提高技术架构弹性能力的复杂技术手段。Chaos工程经过实验可以确保系统的可用性。混沌工程旨在将故障扼杀在襁褓之中，也就是在故障造成中断之前将它们识别出来。通过主动制造故障，测试系统在各种压力下的行为，识别并修复故障问题，避免造成严重后果。&lt;/p&gt;
+&lt;p&gt;主要针对于&lt;strong&gt;分布式系统&lt;/strong&gt;上的故障测试。&lt;/p&gt;
+&lt;h4 id=&#34;11-混沌工程与故障注入的区别&#34;&gt;1.1 混沌工程与故障注入的区别&lt;/h4&gt;
+&lt;p&gt;混沌工程是一种生成新信息的实践，而故障注入是测试一种情况的一种特定方法。&lt;/p&gt;
+&lt;h4 id=&#34;12-混沌工程实验的步骤&#34;&gt;1.2 混沌工程实验的步骤&lt;/h4&gt;
+&lt;p&gt;通常混沌工程由以下四个步骤组成。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;定义测试系统的“稳定状态”。精确定义指标，表明系统按照应有的方式运行。 Netflix使用客户点击视频流设备上播放按钮的速率作为指标，称为“每秒流量”。请注意，这更像是商业指标而非技术指标；在混沌工程中，&lt;strong&gt;业务指标通常比技术指标更有用&lt;/strong&gt;，因为它们更适合衡量用户体验或运营。&lt;/li&gt;
+&lt;li&gt;创建假设。与任何实验一样，您需要一个假设来进行测试。因为你试图破坏系统正常运行时的稳定状态，你的假设将是这样的，“当我们做X时，这个系统的稳定状态应该没有变化。”为什么用这种方式表达？如果你的期望是你的动作会破坏系统的稳定状态，那么你会做的第一件事会是修复问题。混沌工程应该包括真正的实验，涉及真正的未知数。&lt;/li&gt;
+&lt;li&gt;模拟现实世界中可能发生的事情，目前有如下混沌工程实践方法：模拟数据中心的故障、强制系统时钟不同步、在驱动程序代码中模拟I/O异常、模拟服务之间的延迟、随机引发函数抛异常。通常，您希望模拟可能导致系统不可用或导致其性能降低的场景。首先考虑可能出现什么问题，然后进行模拟。一定要优先考虑潜在的错误。 “当你拥有非常复杂的系统时，很容易引起出乎意料的下游效应，这是混沌工程寻找的结果之一，”“因此，系统越复杂，越重要，它就越有可能成为混沌工程的候选对象。”&lt;/li&gt;
+&lt;li&gt;证明或反驳你的假设。将稳态指标与干扰注入系统后收集的指标进行比较。如果您发现测量结果存在差异，那么您的混沌工程实验已经成功 - 您现在可以继续加固系统，以便现实世界中的类似事件不会导致大问题。或者，如果您发现稳定状态可以保持，那么你对该系统的稳定性大可放心。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;13-案例&#34;&gt;1.3 案例&lt;/h4&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/chaos-mesh/chaos-mesh&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://github.com/chaos-mesh/chaos-mesh&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/chaosblade-io&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://github.com/chaosblade-io&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&#34;into&#34;&gt;Into&lt;/h2&gt;
+&lt;p&gt;混沌测试（一种用于生产环境中的错误注入，来模拟在用户角度的服务bug）已经证明了的可行性。本文要做的就是把这个过程放在更早的阶段——在开发阶段就检测到这些错误。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;现在又有这样的问题&lt;/strong&gt;：缺少开源的微服务应用。仅有的开源微服务应用仅仅用来展示如何构建这些微服务应用，并没有展示这些应用在开发、部署时会出现什么错误。因此，该研究不得不和公司合作，并且需要签订严格的保密措施。&lt;/p&gt;
+&lt;h2 id=&#34;本文贡献&#34;&gt;本文贡献&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;提出一种微服务测试方法：服务级别的故障注入测试&lt;/li&gt;
+&lt;li&gt;一种新的动态归约算法：将应用程序分解成独立的微服务来减少搜索空间的组合爆炸&lt;/li&gt;
+&lt;li&gt;实现了这个服务级别的故障注入测试方法——Filibuster：基于Python开发，可以测试提供HTTP通信的微服务&lt;/li&gt;
+&lt;li&gt;一个用Python实现的微服务应用和故障的语料库：包含8个小心微服务应用程序，每个应用程序都展示了微服务应用中使用的单一模式；还有4个从公开会议演讲中的工业级应用实例——Audible、Expedia、Mailchimp、Netflix&lt;/li&gt;
+&lt;li&gt;并通过该语料库对Filibuster做出评价：表明Filibuster可以用于识别语料中的所有错误，并且展示了通过动态减少可能进行的优化，还提供了如何设计微服务应用程序以实现可测试性的见解。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;挑战应对&#34;&gt;挑战——应对&lt;/h2&gt;
+&lt;p&gt;目前困难主要在于：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;缺少开源的工业级微服务应用案例和相关的错误报告。而这两个内容是软件推动软件测试领域的主要语料库。&lt;/li&gt;
+&lt;li&gt;现有的一些的对于软件测试的研究都是基于一些开源的bug数据库和开源社区的软件，问题在于，这些软件架构多是单体架构，而故障也不是微服务架构所特有的。所以，需要有微服务应用特有的故障以供研究。&lt;/li&gt;
+&lt;li&gt;而对于大型的微服务应用提供商，往往不能直接去研究。这些产品往往是企业的核心，一般不会开源，并且内部的漏洞也不会公开。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;所以，文章系统回顾了50个关于混沌工程的演讲，从这些公开的视频中寻找案例。这些公开演讲中的公司主要关注两个问题：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;开发中的软件的可靠性&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;运行这些软件的基础设施的稳定性&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;进一步团队根据下面的条件寻找语料：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;演讲中是否提供了使用混沌工程发现的真正的详细错误信息&lt;/li&gt;
+&lt;li&gt;所展示的混沌工程是否可以在本地复现（也就是在非生产环境中进行混沌测试）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;最终，文章选取了4个案例，它们来自 Audible、Expedia、Mailchimp和Netflix。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;案例来源&lt;/th&gt;
+&lt;th&gt;服务类型&lt;/th&gt;
+&lt;th&gt;使用混沌工程发现的问题简述&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Audible&lt;/td&gt;
+&lt;td&gt;有声读物移动应用&lt;/td&gt;
+&lt;td&gt;代码中未处理的错误，该错误会通过通用错误消息传播传到移动客户端&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Expedia&lt;/td&gt;
+&lt;td&gt;旅游预订服务&lt;/td&gt;
+&lt;td&gt;基于相关性排序的酒店评价服务不可用，回退到基于时间排序的&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Mailchimp&lt;/td&gt;
+&lt;td&gt;电子邮件管理应用&lt;/td&gt;
+&lt;td&gt;两处不处理返回错误的问题&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Netflix&lt;/td&gt;
+&lt;td&gt;流媒体应用&lt;/td&gt;
+&lt;td&gt;1.加载客户主页设计的服务故障；2.配置错误超时；3.服务回退失败；4.关键服务未配置回退策略&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id=&#34;技术细节&#34;&gt;技术细节&lt;/h2&gt;
+&lt;h3 id=&#34;架构示意图&#34;&gt;架构示意图&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211219115042.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;对每个测试服务器进行检测调用，识别调用从何处发起，从何处接收，并在测试期间注入故障。考虑上图，服务A调用服务B，然后服务B调用服务C，最后将结果返回。&lt;/p&gt;
+&lt;p&gt;SFIT（Service-Level Fault Injection Testing ）建立在当今微服务程序开发的三个关键点之上：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;微服务是独立开发的：不同微服务开发团队难以知晓其他团队服务的内部细节和详细使用规范，难以验证其他服务的问题&lt;/li&gt;
+&lt;li&gt;如果对于微服务进行故障模拟测试，能很大程度上保证生产环境下服务正常运行：但是从文章选取的案例来看，许多团队并没有这样做，可能是因为这样耗费时间或者性价比太低&lt;/li&gt;
+&lt;li&gt;功能测试是黄金标准：开发者使用端到端的测试，并认为这是非常有用的， 本文也因此也在这一点切入。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;sfit实现细节&#34;&gt;SFIT实现细节&lt;/h3&gt;
+&lt;p&gt;假设服务通过HTTP提供，并且单个功能测试可以测试所有应用程序行为。&lt;/p&gt;
+&lt;h4 id=&#34;overview&#34;&gt;Overview&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;通过常规测试，排除服务的逻辑错误。&lt;/li&gt;
+&lt;li&gt;在两个微服务的通信端点，再设计一个测试，并且对微服务之间的请求进行错误注入。如果这次错误注入可以引起不同的服务错误，那么对于每种错误都再复现一次。&lt;/li&gt;
+&lt;li&gt;这些后续的执行放在堆栈上，然后递归执行，直到探索到所有的问题点。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;故障注入&#34;&gt;故障注入&lt;/h4&gt;
+&lt;p&gt;本文的方法依赖于远程调用，如HTTP或gRPC，因此需要有干预微服务之间请求的能力。Opentelemetry、Opentracing等工具已经提供了远程通信的公共调用库。利用这种工具设计故障注入：根据注入的故障，返回故障响应。&lt;/p&gt;
+&lt;h4 id=&#34;故障识别&#34;&gt;故障识别&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;发起请求调用源点的故障：例如Python中request库执行HTTP请求时，执行该请求会引发23个异常，本演示只考虑两个最常见的故障——超时和连接错误。&lt;/li&gt;
+&lt;li&gt;接收请求的远程服务的故障：如果一个服务依赖的另一个服务抛出Timeout异常，那么调用它的服务可能会捕获到，并返回500。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;此外，还有一点是，HTTP请求使用URL标识。相似的URL可能用于不同的服务，所以需要对调用的服务进行一个标识，以此明确服务调用双方的身份。&lt;/p&gt;
+&lt;h4 id=&#34;测试适配&#34;&gt;测试适配&lt;/h4&gt;
+&lt;p&gt;本文提供了一个模块帮助开发者编写故障注入测试，从而减轻开发人员编写复杂测试的负担。需要注意，本文的测试是非入侵的。&lt;/p&gt;
+&lt;h2 id=&#34;故障缩减&#34;&gt;故障缩减&lt;/h2&gt;
+&lt;p&gt;如果组成应用有几十上百的微服务，那么出现错误的空间将非常大。所以有必要在实现故障最大覆盖率的同时，减少搜索空间，提高效率。利用服务分解，对每个独立的微服务进行排障。&lt;/p&gt;
+&lt;p&gt;为此，我们可以利用以下 3 个关键观察结果：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;充分了解服务依赖项可能失败的所有方式。确保我们了解单个服务的一个或多个依赖项失败时的行为以及该服务返回的结果失败是什么。参考图Audible示例，探索 ADS 依赖项可能失败的方式组合（以及 CDS 依赖项失败的方式等）&lt;/li&gt;
+&lt;li&gt;如果我打算在两个或多个不同服务的至少一个依赖项上注入故障，我们已经知道这些故障将对将它们作为依赖项的服务产生的影响。以图Audible示例，我们已经知道当 ADS 的依赖项以任何可能的组合失败时会返回什么，因为我们已经运行了该测试。我们也已经知道当 CDS 的依赖项出于同样的原因以任何可能的组合失败时，它会返回什么。因此，我们不必在依赖项处注入故障，直接在 ADS 或 CDS 中直接注入适当的响应。&lt;/li&gt;
+&lt;li&gt;如果我们已经在该服务中注入了该故障，那么测试就是多余的，因为我们已经观察到了应用程序的这种行为。如果我们参考图Audible示例，我们不需要测试 Stats 服务失败与 Audio Assets 或 Audio Metadata 服务的失败，因为我们已经知道这些失败的结果，这些服务将它们作为依赖；我们也已经观察到这些结果。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;动态归约算法&#34;&gt;动态归约算法&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211219125759.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;filibuster&#34;&gt;Filibuster&lt;/h2&gt;
+&lt;p&gt;这是该团队实现的原型，利用Python以及一些开源库实现的。&lt;/p&gt;
+&lt;p&gt;Filibuster可以注入这些故障：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;调用端异常：由请求库抛出，指示连接错误或超时等条件。对于所有异常类型，Filibuster 可以在抛出异常之前有条件地联系其他服务。对于超时，Filibuster 可以在抛出超时异常之前有条件地等待超时时间。&lt;/li&gt;
+&lt;li&gt;错误响应：从远程服务使用标准 HTTP 错误代码指示内部服务器错误或服务不可用等情况。对于每个错误代码，Filibuster 可以有条件地返回一个关联的正文。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;由于 Filibuster 是作为服务器编写的，跨语言支持是可能的，但尚未实现。仪器和 Filibuster 服务器之间的所有通信都是通过独立于语言的协议进行的；任何特定于语言的东西都在仪器库中完成。&lt;/p&gt;
+&lt;h2 id=&#34;应用语料库&#34;&gt;应用语料库&lt;/h2&gt;
+&lt;h3 id=&#34;电影应用案例&#34;&gt;电影应用案例&lt;/h3&gt;
+&lt;p&gt;由四个微服务组成：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;放映时间：返回电影的放映时间&lt;/li&gt;
+&lt;li&gt;电影：返回给定电影的信息&lt;/li&gt;
+&lt;li&gt;预订：给定用户名，返回有关该用户预订的信息&lt;/li&gt;
+&lt;li&gt;用户：存储用户信息并通过首先请求用户的预订来编排来自最终用户的请求，并且对于每个预订执行对电影服务的后续请求以获取有关电影的信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;根据上述的基础案例，文章又改造了7个示例：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Cinema-2：直接预定电影&lt;/li&gt;
+&lt;li&gt;Cinema-3：与cinema-2 相同，但users 服务在调用bookings 服务时有一个重试循环&lt;/li&gt;
+&lt;li&gt;Cinema-4：与cinema-2 相同，但每个服务在发出任何请求之前都与外部服务对话：用户服务向IMDB 发出请求；预订服务向 Fandango 提出请求；电影服务向 Rotten Tomatoes 提出请求&lt;/li&gt;
+&lt;li&gt;Cinema-5：无论失败与否，所有请求都会发生；在失败的情况下，使用硬编码的默认响应。&lt;/li&gt;
+&lt;li&gt;Cinema-6：添加了预订的第二个副本，在主要副本出现故障时联系该副本。&lt;/li&gt;
+&lt;li&gt;Cinema-7：与cinema-6 相同，但用户服务在发出实际请求之前调用主要预订副本上的健康检查端点。&lt;/li&gt;
+&lt;li&gt;Cinema-8：示例被折叠成单体，其中 API 服务器通过重试循环向它发出请求&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;工业级案例audibleexpediamailchimp-和-netflix&#34;&gt;工业级案例Audible、Expedia、Mailchimp 和 Netflix&lt;/h3&gt;
+&lt;p&gt;示例并不是要重现这些公司的整个微服务架构：我们只关注他们执行的特定混沌实验中涉及的服务。&lt;/p&gt;
+&lt;h4 id=&#34;audible&#34;&gt;Audible&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211219121932.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;示例 Audible微服务架构&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;这个案例包含8个微服务和一个移动客户端：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;内容交付服务（CDS）：给定图书标识符和用户标识符，授权后返回实际音频内容和音频元数据&lt;/li&gt;
+&lt;li&gt;内容交付引擎 (CDE)：返回要请求的的正确 CDS 的 URL&lt;/li&gt;
+&lt;li&gt;Audible App：模拟移动应用程序，向CDE发出请求，根据图书标识符查找相应CDS实例的URL，然后向其发出请求&lt;/li&gt;
+&lt;li&gt;声音下载服务（ADS）：一旦所有权得到验证，就会协调日志记录和 DRM 授权&lt;/li&gt;
+&lt;li&gt;所有权：验证书的所有权&lt;/li&gt;
+&lt;li&gt;激活：为用户激活 DRM 许可证&lt;/li&gt;
+&lt;li&gt;统计：维护书籍和许可证激活统计&lt;/li&gt;
+&lt;li&gt;资产元数据：存储包含章节描述信息的音频资产元数据&lt;/li&gt;
+&lt;li&gt;音频资产：音频文件的存储&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;由于实际的服务是部署在AWS上的微服务，本文则简化并模拟了这些服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;首先，资产元数据和音频资产服务是 AWS S3 存储桶（云存储）。为了模拟这一点，我们创建了 HTTP 服务，如果可用则返回包含资产的 200 OK，或者如果资产不存在则返回 404 Not Found。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;其次，所有权和激活服务是 AWS RDS 实例。为了模拟这一点，我们创建了实现 REST 模式的 HTTP 服务：如果用户不拥有这本书，则返回 403 Forbidden，如果这本书不存在，则返回 404 Not Found，否则返回 200 OK。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;第三，Stats 服务是一个 AWS DynamoDB 实例。为了模拟这一点，我们创建了一个返回 200 OK 的 HTTP 服务&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;expedia&#34;&gt;Expedia&lt;/h4&gt;
+&lt;p&gt;包含三个微服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;按相关性顺序返回评论&lt;/li&gt;
+&lt;li&gt;按时间顺序返回评论&lt;/li&gt;
+&lt;li&gt;API 网关：根据可用性从 Review ML 或 Review Time 向用户返回评论&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;mailchimp&#34;&gt;Mailchimp&lt;/h4&gt;
+&lt;p&gt;包含3个微服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Requestmapper：将电子邮件活动中的高亮URL映射到实际资源URL&lt;/li&gt;
+&lt;li&gt;DB Primary：他们数据库的主要副本&lt;/li&gt;
+&lt;li&gt;DB Secondary：他们数据库的次要副本&lt;/li&gt;
+&lt;li&gt;App Server：向Requestmapper服务请求解析URL，然后对数据库执行read-then-write请求，当主副本不可用时回退到二级数据库副本&lt;/li&gt;
+&lt;li&gt;负载均衡器：负载均衡请求&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;与 Mailchimp 的实际部署相比，我们表示为服务的一些组件实际上是非 HTTP 服务。我们在这里列举了这些差异和调整。首先，DB Primary 和 Secondary 服务是 MySQL 实例。为了模拟这一点，我们创建了一个 HTTP 服务，该服务在成功读取或写入时返回 200 OK，如果数据库为只读则返回 403 Forbidden。其次，Load Balancer 服务是一个 HAProxy 实例。为了模拟这一点，我们创建了一个 HTTP 代理。&lt;/p&gt;
+&lt;p&gt;Mailchimp 示例的错误包含两个：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;MySQL 实例只读。当 MySQL 实例为只读时，数据库会返回一个错误，该错误在代码的某个区域未处理。由于 Mailchimp 使用 PHP，这个错误被直接呈现到页面的输出中，我们通过将 403 Forbidden 响应转换为直接插入页面的输出来模拟这一点。&lt;/li&gt;
+&lt;li&gt;Requestmapper 不可用。当 Requestmapper 服务不可用时，App Server 无法正确处理错误，向负载均衡器返回 500 Internal Server Error。但是，负载均衡器仅配置为通过返回格式化的错误页面来处理 503 Service Unavailable 错误。这是丢失或不正确的故障处理示例。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;netflix&#34;&gt;Netflix&lt;/h4&gt;
+&lt;p&gt;包含10个微服务，与Audible示例类似，我们使用服务模拟 Netflix 移动应用程序，这里称为客户端：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;客户端：模拟移动客户端&lt;/li&gt;
+&lt;li&gt;API 网关：组装用户主页&lt;/li&gt;
+&lt;li&gt;用户档案：返回档案信息&lt;/li&gt;
+&lt;li&gt;书签：返回上次查看的位置&lt;/li&gt;
+&lt;li&gt;我的列表：返回用户列表中的电影列表&lt;/li&gt;
+&lt;li&gt;用户推荐：返回用户推荐的电影&lt;/li&gt;
+&lt;li&gt;评分：返回用户的评分&lt;/li&gt;
+&lt;li&gt;遥测：记录遥测信息&lt;/li&gt;
+&lt;li&gt;趋势：返回热门电影&lt;/li&gt;
+&lt;li&gt;全局推荐：返回推荐的电影&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Netflix示例的bug包含三个，可以使用环境变量激活：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;错误配置的超时。用户配置文件服务以 10 秒的超时时间调用遥测服务；但是，API 网关会以 1 秒的超时时间调用用户配置文件服务&lt;/li&gt;
+&lt;li&gt;服务回退到同一服务器。如果我的列表服务不可用，系统将重试（我的理解是，一个服务有3个实例，其中一个实例不可用，本应该请求其他实例，结果再次请求了那个不可用的实例）&lt;/li&gt;
+&lt;li&gt;没有回退的关键服务。用户配置文件服务没有后备处理逻辑&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>《云计算网络与安全》简记</title>
+        <link>https://lizonglingo.github.io/p/%E4%BA%91%E8%AE%A1%E7%AE%97%E7%BD%91%E7%BB%9C%E4%B8%8E%E5%AE%89%E5%85%A8%E7%AE%80%E8%AE%B0/</link>
+        <pubDate>Mon, 01 Nov 2021 17:37:21 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E4%BA%91%E8%AE%A1%E7%AE%97%E7%BD%91%E7%BB%9C%E4%B8%8E%E5%AE%89%E5%85%A8%E7%AE%80%E8%AE%B0/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;今天在图书馆借了两本云计算安全方面的教材类书籍，系统的了解一下云计算安全技术涉及到的相关内容和一些基本概念。通过本文，你可以了解云计算网络安全涉及的基本知识面。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;1-云计算网络概述&#34;&gt;1. 云计算网络概述&lt;/h2&gt;
+&lt;h3 id=&#34;11-基本概念&#34;&gt;1.1 基本概念&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;云计算是一种提供对共享的、可配置的计算资源池（如网络、服务器、存储、应用及服务等）进行泛在的、便捷的和按需的网络接入访问的模型。在这种模型下，计算资源能够被快速地分配和释放，同时最小化管理工作的投入和服务提供商的参与。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;目的
+&lt;ul&gt;
+&lt;li&gt;提供弹性、透明的资源服务&lt;/li&gt;
+&lt;li&gt;提高资源利用率，降低成本&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;网络是云计算的基础&lt;/strong&gt;。通过网络实现资源虚拟化、池化以及对资源的有效管理。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;云计算基本特征&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;按需自助服务&lt;/li&gt;
+&lt;li&gt;广泛的网络接入&lt;/li&gt;
+&lt;li&gt;资源池化&lt;/li&gt;
+&lt;li&gt;快速弹性&lt;/li&gt;
+&lt;li&gt;可测量的服务&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;云计算服务模型&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;IaaS：硬件资源层面上的抽象，如虚拟机、Amazon EC2、Microsoft Azure、Google Compute Engine&lt;/li&gt;
+&lt;li&gt;PaaS：提供常用软件构建环境、工具、部署等服务，用户不能自己管理网络、存储等底层云的内容，只能控制自己所部署的应用程序等；关键技术在并称编程模型、资源监控调度、海量数据库、分布式文件、存储系统等&lt;/li&gt;
+&lt;li&gt;SaaS：可以理解成现在用的一些服务商提供的软件，如Google Gmail等&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211101_131553_edit_70651210979843.jpg&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;云计算部署模型（根据云平台的所有权和管理权划分）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;公有云：成本低，拓展性好；需要实现对多租户性能、资源和数据等方面的安全隔离；如阿里云、Google Cloud等&lt;/li&gt;
+&lt;li&gt;私有云：一般是部署在企业组织内部的，由单一组织专用；一般是通过内网、VPN为员工提供IaaS或者SaaS服务；安全性较高&lt;/li&gt;
+&lt;li&gt;社区云：可以理解成区块链中联盟链的模式&lt;/li&gt;
+&lt;li&gt;混合云：实现不同模式的数据和应用的可移植性，例如将敏感数据部署到私有云，安全性要求较低的数据部署到公有云&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;12-云计算网络安全技术&#34;&gt;1.2 云计算网络安全技术&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;云计算数据中心（用于托管软硬件资源）网络通过大量二、三层交换机和路由器将服务存储有效的连接起来，通过进一步的虚拟化技术提供了云计算服务。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;云计算网络存在的安全挑战
+&lt;ul&gt;
+&lt;li&gt;网络规模庞大&lt;/li&gt;
+&lt;li&gt;流量模式不同（可以重点关注）：服务器到用户的南北向流量、服务器之间的东西向流量、Mice Flow数量众多对延迟敏感、Elephant Flow传输时间长且需要高带宽，更容易导致拥塞&lt;/li&gt;
+&lt;li&gt;高带宽低延迟的需求&lt;/li&gt;
+&lt;li&gt;拓扑结构复杂&lt;/li&gt;
+&lt;li&gt;资源虚拟化&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;2-数据中心网络技术&#34;&gt;2. 数据中心网络技术&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;数据中心是云计算等应用的重要基础设施，一般包括大量的服务器、存储和网络等硬件设备，以及运行在这些设备上的操作系统和管理软件，此外还有各种安全设备。数据中心网络则要提供高带宽、低延时和零丢包的网络通信环境。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;21-数据中心网络流量&#34;&gt;2.1 数据中心网络流量&lt;/h3&gt;
+&lt;h4 id=&#34;根据通信双方实体类型分&#34;&gt;根据通信双方实体类型分&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;服务器与客户端之间的流量：南北向流量，主要采用基于IP的三层路由转发&lt;/li&gt;
+&lt;li&gt;服务器与服务器之间的流量：东西向流量，对云计算应用的性能至关重要，一般是基于IP的三层转发和基于MAC的二层转发两种形式；三层流量主要是数据中心不同服务之间调用所使用（如Web服务调用数据库服务），二层主要是同一类服务器之间的数据同步计算（如Web集群负载均衡）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211101_135811_edit_71747035632280.jpg&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;不同类型流量的分布占比&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h4 id=&#34;根据流量大小分&#34;&gt;根据流量大小分&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;大数据流：数量众多且对延迟敏感&lt;/li&gt;
+&lt;li&gt;小数据流：容易对网络负载均衡给出挑战&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;由于虚拟化技术使得通信的实体逐渐转向运行在物理机上的虚拟机和容器，它们弹性、动态地部署都对网络中数据流量的调度提出新的挑战。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;由于以太网的高性价比和数据传输率，使其成为数据中心使用的最广泛的数据传输技术。此外，数据中心网络也开始使用iSCSI和FCoE等技术实现网络融合。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;22-数据中心网络拓扑&#34;&gt;2.2 数据中心网络拓扑&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;以交换机为核心的网络架构
+&lt;ul&gt;
+&lt;li&gt;传统三层网络拓扑架构&lt;/li&gt;
+&lt;li&gt;Clos网络架构&lt;/li&gt;
+&lt;li&gt;Spine-Leaf网络架构&lt;/li&gt;
+&lt;li&gt;Fat-Tree网络架构&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;以服务器为核心的网络结构
+&lt;ul&gt;
+&lt;li&gt;DCell&lt;/li&gt;
+&lt;li&gt;FiConn&lt;/li&gt;
+&lt;li&gt;BCube&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;23-数据中心的大二层网络&#34;&gt;2.3 数据中心的大二层网络&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;为使资源可以弹性分配和日益增长的东西向流量需求，有了“大二层”的网络环境的需求，也就是整个数据中心网络属于一个二层广播域。包含物理网络规模和业务支撑两方面的要求。在大二层中虚拟机的创建和迁移不需要对IP或者默认网关的修改，一般将L2、L3的网络边界放在核心交换机。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;大二层网络面临的问题&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;MAC地址学习问题：大二层网络规模庞大，在具有大量节点的网络中泛洪，影响网络性能&lt;/li&gt;
+&lt;li&gt;生成树协议的问题：冗余网络带来环路问题，以太网使用的生成树协议会阻断冗余链路，造成链路资源浪费，降低网络性能、增大交换机负载&lt;/li&gt;
+&lt;li&gt;VLAN技术的局限：租户数量超出VLAN的最大支持数量&lt;/li&gt;
+&lt;li&gt;网络安全问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;为解决上述问题，最直接的方法是摆脱STP协议&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;方案一：采用网络虚拟化技术&lt;/li&gt;
+&lt;li&gt;方案二：实现二层多路径传输技术L2 Fabric，代表方案有TRILL、VXLAN等&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;24-数据中心桥接&#34;&gt;2.4 数据中心桥接&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;以太网是不可靠的，数据网络和存储网络很可能使用不同的协议，因此需要一个承载协议能够适应不同的应用服务的需求，基于以太网的数据桥接技术成为最佳选择。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;数据中心桥接（Data Center Bridging）对以太网特性进行扩充优化，避免链路中的丢包，保证数据传输质量：
+&lt;ul&gt;
+&lt;li&gt;基于优先级的流量控制PFC&lt;/li&gt;
+&lt;li&gt;多级调度的增强传输选择ETS&lt;/li&gt;
+&lt;li&gt;给予反馈的量化拥塞通知QCN&lt;/li&gt;
+&lt;li&gt;提供了DCB自动化配置&lt;/li&gt;
+&lt;li&gt;保持兼容性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;相应的DCB的主要机制：
+&lt;ul&gt;
+&lt;li&gt;基于优先级的流量控制PFC：提供了不丢包的流量控制，保证关键业务流量和非关键业务流量的隔离，是DCB的基础&lt;/li&gt;
+&lt;li&gt;增强传输选择ETS：实现链路带宽的分配问题&lt;/li&gt;
+&lt;li&gt;量化拥塞通知QCN：一种可以直接溯源、可量化调整的拥塞控制机制&lt;/li&gt;
+&lt;li&gt;数据中心桥接交换DCBX：是完成这些工作的一个自动协商协议，允许链路两端的设备自动确认对端是否支持PFC和ETS，并且能够协商PFC和ETS的参数。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;3-服务器虚拟化与网络技术&#34;&gt;3. 服务器虚拟化与网络技术&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;服务器虚拟化对扩展数据中心用户承载能力和提高硬件资源利用率有着十分重要的作用。通过虚拟化技术降低实际使用的物理机的数量并提高利用率，同时减轻管理成本。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;31-虚拟化基本概念&#34;&gt;3.1 虚拟化基本概念&lt;/h3&gt;
+&lt;p&gt;虚拟化是一种将物理资源（计算、网络、存储等）进行抽象、转换和隔离，并最终向用户呈现一个可动态配置的虚拟运行环境，使得用户使用资源时不再受资源的物理配置与地理位置的限制。&lt;/p&gt;
+&lt;p&gt;虚拟化中，宿主机通常就是物理服务器，运行着宿主操作系统。Hypervisor是虚拟机监视器VMM用来创建与运行虚拟机的软件、固件或者硬件。Hypervisor上面运行的虚拟机叫客户机Guest Machine。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;虚拟化分类
+&lt;ul&gt;
+&lt;li&gt;全虚拟化&lt;/li&gt;
+&lt;li&gt;半虚拟化&lt;/li&gt;
+&lt;li&gt;硬件辅助虚拟化：CPU针对性的从指令层面简化虚拟化技术&lt;/li&gt;
+&lt;li&gt;操作系统层面的虚拟化：namespace、cgroups、chroot，也称容器技术如Docker&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;容器技术基于操作系统的资源隔离技术，为应用程序构建出一个轻量级、标准化，并与其他应用程序互相隔离的运行环境。容器中包含应用程序本身以及必需的运行环境（一般叫做镜像），使得该容器能够在任何具有容器引擎（如Docker Engine）中运行。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211101_151331.jpg&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;虚拟机和容器技术的架构&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;在硬件资源的利用率上容器技术强于虚拟机。节省开发、测试和部署的时间。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:center&#34;&gt;项目&lt;/th&gt;
+&lt;th style=&#34;text-align:center&#34;&gt;容器&lt;/th&gt;
+&lt;th style=&#34;text-align:center&#34;&gt;虚拟机&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;启动时间&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;秒级&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;分钟级&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;存储占用&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;MB级&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;GB级&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;性能&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;接近裸机&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;明显的性能损失&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;单机部署数量&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;最多上千个&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;最多几十台&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Docker技术基于Linux的资源隔离技术（namespace、cgroups和chroot），目前比较主流。而容器也作为下一代虚拟化技术。&lt;/p&gt;
+&lt;p&gt;常见的Hypervisor有：VMWare vSphere、 Microsoft Hyper-V和Open Stack，其中Open Stack是开源的。&lt;/p&gt;
+&lt;h3 id=&#34;32-硬件辅助虚拟化&#34;&gt;3.2 硬件辅助虚拟化&lt;/h3&gt;
+&lt;p&gt;Guest OS自认为处于内核态，如果Host OS处理其发出的一些特权指令会带来很大的性能开销。所以会有硬件辅助提高虚拟化体验的需要。&lt;/p&gt;
+&lt;h3 id=&#34;33-虚拟网络接入&#34;&gt;3.3 虚拟网络接入&lt;/h3&gt;
+&lt;h4 id=&#34;虚拟交换机&#34;&gt;虚拟交换机&lt;/h4&gt;
+&lt;p&gt;由于一个物理机上可能有成百上千个虚拟机和容器，显然1：1的配置物理网卡等网络设备是不现实的，因此使用虚拟网络来对真实网络进行模拟。使用软件的形式模拟一台交换机，方便的按需部署。&lt;/p&gt;
+&lt;h4 id=&#34;边界虚拟网桥技术&#34;&gt;边界虚拟网桥技术&lt;/h4&gt;
+&lt;p&gt;目的是让虚拟机以适当的方式共享宿主机上的物理网卡，尽量达到与虚拟机独占物理机网卡接近的性能。&lt;/p&gt;
+&lt;h3 id=&#34;34-容器网络技术&#34;&gt;3.4 容器网络技术&lt;/h3&gt;
+&lt;h4 id=&#34;接入方式&#34;&gt;接入方式&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;Bridge：利用Linux Bridge等虚拟网桥连接到物理网卡。Docker会默认使用这种方法，进程启动时，会在主机上创建虚拟网桥，其他容器会连到虚拟网桥上。此外，Docker还支持OVS(Open vSwitch)，有更强大的功能，在生产环境中多用。&lt;/li&gt;
+&lt;li&gt;Host：容器直接使用宿主机的网络协议栈，共享主机IP。容器有独立的进程和文件空间但没有独立的Network Namespace。&lt;/li&gt;
+&lt;li&gt;Container：可以与其他容器共享网络协议栈。&lt;/li&gt;
+&lt;li&gt;macvlan：把Docker宿主机上的物理网卡在逻辑上虚拟出多个虚拟网卡，并给每一个子接口分配虚拟的MAC地址。如果容器发送数据目的地址在本机，则直接转发到相应的容器中，否则交给物理网卡处理。&lt;/li&gt;
+&lt;li&gt;User-defined：支持用户高级自定义。&lt;/li&gt;
+&lt;li&gt;None：容器拥有自己的Network Namespace但是不提供任何网络配置，需要用户为容器添加网卡、配置IP等。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;跨主机网络通信&#34;&gt;跨主机网络通信&lt;/h4&gt;
+&lt;p&gt;多主机的Docker集群上，有了对Docker跨主机通信技术的需求。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Flat：要求所有容器在同一个可路由的网络环境中&lt;/li&gt;
+&lt;li&gt;Hierarchy：要求容器必须L3可路由，并且具有相同的IP层次。&lt;/li&gt;
+&lt;li&gt;Overlay：为不同主机上的Docker容器创建分布式网络，使得不同主机的容器可以相互通信。这种方式需要实现Linux Network Namespace来隔离不同容器间的网络资源、VXLAN把二层数据包封装到UDP数据包后运输来实现大二层网络、以及一个分布式的k-v数据库来运行发现协议和保存docker集群中的个主机信息。同时也需要分布式的虚拟交换机来转发不同主机之间的数据流。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;通用数据模型&#34;&gt;通用数据模型&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;CNM：Docker的容器网络模型，为IP地址管理插件（负责地址池的创建、删除以及地址分配）和网络插件（负责创建和删除容器虚拟网络，以及分配和回收IP地址）提供接口。基本概念包括：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Sandbox：利用Linux Network Namespace虚拟出的沙盒网络环境，包含容器的整个网络协议栈&lt;/li&gt;
+&lt;li&gt;Endpoint：网络端点，用来连接Sandbox到Network。&lt;/li&gt;
+&lt;li&gt;Network：一系列可以相互通信的Endpoint所组成的虚拟网络。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;CNI：容器网络接口，更加通用，为了使得不同容器平台通过统一的接口互联互通。&lt;/p&gt;
+&lt;p&gt;两个组件：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;容器管理系统&lt;/li&gt;
+&lt;li&gt;网络插件&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;两个接口：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;添加ADD&lt;/li&gt;
+&lt;li&gt;删除DELETE&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;运行流程：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;容器运行环境给每个容器分配Network Namespace和容器ID，然后把这些消息连同CNI的配置参数传递给网络驱动。&lt;/li&gt;
+&lt;li&gt;网络驱动会以JSON文件的形式返回分配给该容器的IP地址并把该容器连接到网络。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;kubernetes网络技术&#34;&gt;kubernetes网络技术&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;组网模型&lt;/p&gt;
+&lt;p&gt;k8s是主从架构的Docker集群编排器，架构如下。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211101_172351_edit_80545155299688.jpg&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Master：控制整个k8s集群所有节点的计算机，用于控制集群中的所有Node和Pod。&lt;/li&gt;
+&lt;li&gt;Node：k8s集群中的一个节点，是实际上负责提供服务的主机。&lt;/li&gt;
+&lt;li&gt;Pod：提供一项服务所需的一系列密切相关的容器的集合（如应用容器和存储容器）。是k8s中可部署的最小单位，每个Pod的IP地址唯一。&lt;/li&gt;
+&lt;li&gt;Service：k8s集群中一组提供相同服务的Pod以及访问这些Pod的方式，还提供了外部访问这些Pod的接口。&lt;/li&gt;
+&lt;li&gt;Label和Label Selector：Label是存储在etcd的一个k-v键值对，根据需要给Pod、Node以及Service等对象添加一个或多个Label，并通过Label Selector选择完成业务所需要的对象。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;容器网络的管理&lt;/p&gt;
+&lt;p&gt;k8s集群需要把Service Cluster分为前后端两组，面向用户仅提供前端服务器的虚拟IP和虚拟端口号，前端服务器处理后最终指派物理后端服务器。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;4-网络虚拟化技术&#34;&gt;4. 网络虚拟化技术&lt;/h2&gt;
+&lt;h3 id=&#34;41-概述&#34;&gt;4.1 概述&lt;/h3&gt;
+&lt;p&gt;数据中心网络的大二层的不同用户的数据帧的传输会带来巨大的风险。这些问题可以用网络虚拟化和隧道技术解决。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;网络虚拟化：把物理网络虚拟化成多个逻辑网络，通常使用VLAN Tag等方式区分数据流，使用隧道技术进行透明传输。这样可以对某个网络进行单独管理，高效利用资源。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;42-传统网络隧道技术&#34;&gt;4.2 传统网络隧道技术&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;VLAN：VLAN技术通过给每个租户分配一个VLAN ID创建虚拟的二层网络，缺点是数量有线，只支持4096个，无法满足实际需求。因此业界推出VXLAN虚拟可扩展局域网。&lt;/li&gt;
+&lt;li&gt;Q-in-Q：也叫Stacked VLAN或者Double VLAN，主要思想是VLAN Tag堆叠，实现透明转发。&lt;/li&gt;
+&lt;li&gt;MPLS：多协议标签交换。解决的问题是大流量下基于最长前缀匹配规则的路由转发开销大，性能不可接受。这是一种基于标签的转发技术，通过在报文中添加MPLS标签，实现高效的数据转发和数据分层的精细控制。&lt;/li&gt;
+&lt;li&gt;GRE： 目标是对某些网络层协议进行封装，然后创建隧道使得这些报文可以在另一个网络层协议中传输，解决不同网络层协议报文的传输问题。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;43-vxlan&#34;&gt;4.3 VXLAN&lt;/h3&gt;
+&lt;p&gt;这是一种大二层网络的虚拟化技术，采用UDP进行封装。优点如下：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;低成本的实现跨三层的大二层网络，通过隧道技术实现了三层网络上的逻辑大二层网络&lt;/li&gt;
+&lt;li&gt;有充足的ID数量（1600万）&lt;/li&gt;
+&lt;li&gt;租户隔离，实现IP地址，MAC地址复用&lt;/li&gt;
+&lt;li&gt;可感知虚拟机&lt;/li&gt;
+&lt;li&gt;支持细粒度的负载均衡&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;44-vpc技术&#34;&gt;4.4 VPC技术&lt;/h3&gt;
+&lt;p&gt;虚拟私有云VPC为租户提供隔离的环境，租户在使用网络时，可以自定义选择IP地址的范围、创建子网和配置路由表和网关，并且无需担心和其他用户产生冲突。&lt;/p&gt;
+&lt;h2 id=&#34;5-软件定义网络技术sdn&#34;&gt;5. 软件定义网络技术SDN&lt;/h2&gt;
+&lt;p&gt;传统的网络架构适应性和更新能力不足。软件定义网络SDN技术的可编程性使得网络变化更加灵活。通过将数据平面和控制平面进行划分，实现网络灵活调配。数据平面上可以使用通用的网络设备提供编程能力，控制平面上对网络进行统一管理。&lt;/p&gt;
+&lt;p&gt;简单说，思想就是&lt;strong&gt;解耦控制平面与数据平面，将处理网络硬件的处理细节交给人&lt;/strong&gt;。&lt;/p&gt;
+&lt;h3 id=&#34;51-体系结构&#34;&gt;5.1 体系结构&lt;/h3&gt;
+&lt;p&gt;自顶向下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;应用平面：如流量均衡模块和防火墙等网络应用模块。允许用户通过编程实现网络行为。&lt;/li&gt;
+&lt;li&gt;北向接口：SDN控制器提供给上层应用的接口，使得上层应用可以调用控制器的功能。&lt;/li&gt;
+&lt;li&gt;控制平面：包含各类控制器，是SDN的数据中心，负责网络内部路径交换和边界路由的生成。控制器实例可以部署在不同位置，通过南向接口对数据平面中的网络设备进行集中式管理，如下发转发决策、监测网络状态。同时通过北向接口向应用平面提供服务。&lt;/li&gt;
+&lt;li&gt;南向接口：SND用于管理交换机的接口，如OpenFlow协议，是数据平面和控制平面的交互接口。&lt;/li&gt;
+&lt;li&gt;数据平面：支持各类SDN的网络设备，如路由器、交换机、虚拟交换机和无线访问接入点等，主要负责用户数据转发，也可以上报网络资源和状态信息。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;52-数据平面和控制平面分离&#34;&gt;5.2 数据平面和控制平面分离&lt;/h3&gt;
+&lt;p&gt;SDN实现核心思想就是解耦数据平面和控制平面，以转发表为界。数据平面中网络设备只保存转发信息，并且有高速转发能力，所有网络决策都由控制器来完成。控制平面可以获取全局网络信息和状态，并且通过南向接口将编程指令下发到数据平面。&lt;/p&gt;
+&lt;p&gt;这样也带来一些问题：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;单控制节点的单点故障；多控制节点的资源调度，负载均衡&lt;/li&gt;
+&lt;li&gt;一致性问题&lt;/li&gt;
+&lt;li&gt;高可用性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;6-网络功能虚拟化技术nfv&#34;&gt;6. 网络功能虚拟化技术NFV&lt;/h2&gt;
+&lt;p&gt;常见的网络功能有防火墙、入侵检测系统、负载均衡器、网络地址转换等。传统的网络部署中，网络的功能实现主要依赖于硬件设备。虚拟化技术使得网络功能的部署不再依赖硬件，而通过软件的形式灵活部署在通用服务器的虚拟化资源中，可以在一个物理平台上同时运行多个不同的网络功能程序。&lt;/p&gt;
+&lt;p&gt;优势：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;共享硬件资源，降低网络成本&lt;/li&gt;
+&lt;li&gt;部署灵活可伸缩，弹性和高可重用&lt;/li&gt;
+&lt;li&gt;自动化更新升级&lt;/li&gt;
+&lt;li&gt;多租户和安全隔离&lt;/li&gt;
+&lt;li&gt;负载均衡和能耗控制&lt;/li&gt;
+&lt;li&gt;接口标准化&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;云计算网络安全基础&lt;/p&gt;
+&lt;p&gt;云计算网络安全技术&lt;/p&gt;
+&lt;p&gt;云计算网络安全机制&lt;/p&gt;
+&lt;p&gt;云计算网络安全实践&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>Web漏洞</title>
+        <link>https://lizonglingo.github.io/p/web%E6%BC%8F%E6%B4%9E/</link>
+        <pubDate>Mon, 09 Aug 2021 16:32:12 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/web%E6%BC%8F%E6%B4%9E/</guid>
+        <description>&lt;h1 id=&#34;web漏洞导图&#34;&gt;Web漏洞导图&lt;/h1&gt;
+&lt;p&gt;&lt;img src=&#34;https://i.loli.net/2021/08/09/2kmDuA4GQred8oU.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;web漏洞.png&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h1 id=&#34;漏洞等级&#34;&gt;漏洞等级&lt;/h1&gt;
+&lt;p&gt;高危：SQL注入、文件上传、文件包含、代码执行、未授权访问、命令执行&lt;/p&gt;
+&lt;p&gt;中危：反序列化、逻辑安全&lt;/p&gt;
+&lt;h1 id=&#34;sql注入&#34;&gt;SQL注入&lt;/h1&gt;
+&lt;h3 id=&#34;mysql注入&#34;&gt;MySql注入&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://i.loli.net/2021/08/20/adoT4smWiXZnePv.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;Mysql注入.png&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h4 id=&#34;判断注入&#34;&gt;判断注入&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;猜解列名、字段数量 &lt;code&gt;order by int&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;猜解准备，找报错  &lt;code&gt;xxxx?id=-1 union select 1,2,3,4&lt;/code&gt; 寻找可以更改的字段&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;信息收集&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;数据库版本：version()&lt;/li&gt;
+&lt;li&gt;数据库名：database()&lt;/li&gt;
+&lt;li&gt;数据库用户：user()&lt;/li&gt;
+&lt;li&gt;操作系统：@@version_compile_os&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;information_schema.tables：记录所有表名信息&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;p&gt;information_schema.columns：记录所有列名信息&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;获取数据库&lt;code&gt;mozhe_Discuz_StormGroup&lt;/code&gt;中的所有表名：&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-mysql&#34; data-lang=&#34;mysql&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;id&lt;span style=&#34;color:#f92672&#34;&gt;=-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;union&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;select&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;,&lt;span style=&#34;color:#a6e22e&#34;&gt;group_concat&lt;/span&gt;(table_name),&lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;,&lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;from&lt;/span&gt; information_schema.&lt;span style=&#34;color:#66d9ef&#34;&gt;tables&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;where&lt;/span&gt; table_schema&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;mozhe_Discuz_StormGroup&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;​	5.获取表&lt;code&gt;StormGroup_member&lt;/code&gt;中所有列名：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-mysql&#34; data-lang=&#34;mysql&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;id&lt;span style=&#34;color:#f92672&#34;&gt;=-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;union&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;select&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;,&lt;span style=&#34;color:#a6e22e&#34;&gt;group_concat&lt;/span&gt;(column_name),&lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;,&lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;from&lt;/span&gt; information_schema.columns 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;where&lt;/span&gt; table_name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;StormGroup_member&amp;#34;&lt;/span&gt;     
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;6&#34;&gt;
+&lt;li&gt;进行注入&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-mysql&#34; data-lang=&#34;mysql&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;id&lt;span style=&#34;color:#f92672&#34;&gt;=-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;union&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;select&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;,name,password,&lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;from&lt;/span&gt; StormGroup_member &lt;span style=&#34;color:#66d9ef&#34;&gt;limit&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;,&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;高权限注入&#34;&gt;高权限注入&lt;/h4&gt;
+&lt;p&gt;高权限注入指：拿到高权限用户如&lt;code&gt;root&lt;/code&gt;的权限，可以通过注入一个数据库，间接获取另一个数据库的信息。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;获取所有数据库名：&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-mysql&#34; data-lang=&#34;mysql&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;id&lt;span style=&#34;color:#f92672&#34;&gt;=-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;union&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;select&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;group_concat&lt;/span&gt;(schema_name), &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;from&lt;/span&gt; information_schema.schemata
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;2&#34;&gt;
+&lt;li&gt;拿到所有数据库名后，获取指定的&lt;code&gt;dbtest&lt;/code&gt;数据库名下的表名信息：&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-mysql&#34; data-lang=&#34;mysql&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;id&lt;span style=&#34;color:#f92672&#34;&gt;=-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;union&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;select&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;group_concat&lt;/span&gt;(table_name), &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;from&lt;/span&gt; information_schema.&lt;span style=&#34;color:#66d9ef&#34;&gt;tables&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;where&lt;/span&gt; table_schema&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;dbtest&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;3&#34;&gt;
+&lt;li&gt;知道表结构后，获取指定的&lt;code&gt;tbtest&lt;/code&gt;下的列名信息：&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-mysql&#34; data-lang=&#34;mysql&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;id&lt;span style=&#34;color:#f92672&#34;&gt;=-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;union&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;select&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;group_concat&lt;/span&gt;(column_name), &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;from&lt;/span&gt; information_schema.columns 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;where&lt;/span&gt; table_name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;tbtest&amp;#39;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;and&lt;/span&gt; table_schema&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;dbtest&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;4&#34;&gt;
+&lt;li&gt;最后获取指定的&lt;code&gt;dbtest&lt;/code&gt;数据库中的&lt;code&gt;tbtest&lt;/code&gt;数据表相关的&lt;code&gt;a&lt;/code&gt;、&lt;code&gt;b&lt;/code&gt;列的信息：&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-mysql&#34; data-lang=&#34;mysql&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;id&lt;span style=&#34;color:#f92672&#34;&gt;=-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;union&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;select&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;, a, b, 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;from&lt;/span&gt; dbtest.tbtest
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;文件读写&#34;&gt;文件读写&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;适用于MySql的操作函数：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;文件读取函数：load_file()&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;select load_file(&#39;filepath&#39;);&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;文件导出函数：into outfile 或者 into dumpfile&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;select &#39;info&#39; into outfile &#39;filepath&#39;;&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;文件路径获取方法：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;报错显示、遗留文件、漏洞报错、平台配置文件、爆破等&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>xiaodi安全笔记</title>
+        <link>https://lizonglingo.github.io/p/xiaodi%E5%AE%89%E5%85%A8%E7%AC%94%E8%AE%B0/</link>
+        <pubDate>Sat, 07 Aug 2021 17:02:25 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/xiaodi%E5%AE%89%E5%85%A8%E7%AC%94%E8%AE%B0/</guid>
+        <description>&lt;h2 id=&#34;web安全相关漏洞&#34;&gt;Web安全相关漏洞&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Web源码类：SQL注入、上传、xss、代码执行、变量覆盖、逻辑漏洞、反序列化&amp;hellip;&lt;/li&gt;
+&lt;li&gt;Web中间件类：中间件自身的漏洞问题&lt;/li&gt;
+&lt;li&gt;Web数据库类：使用的数据库自身的漏洞问题&lt;/li&gt;
+&lt;li&gt;Web系统层：服务器系统Linux、Windows&amp;hellip;等系统漏洞&lt;/li&gt;
+&lt;li&gt;第三方应用、app和pc结合类应用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;信息收集思路&#34;&gt;信息收集思路&lt;/h2&gt;
+&lt;p&gt;&lt;img src=&#34;https://i.loli.net/2021/08/07/f1houqe8yMNvBz7.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;信息收集.png&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;工具网站&#34;&gt;工具&amp;amp;网站&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;http://xiaodi8.com/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;小迪渗透吧-提供最专业的渗透测试培训,web安全培训,网络安全培训,代码审计培训,安全服务培训,CTF比赛培训,SRC平台挖掘培训,红蓝对抗培训！_小迪安全,小迪渗透,小迪培训 (xiaodi8.com)&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;御剑 - 后台扫描工具(目录结构)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;漏了个大洞 - APK提取反编译&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Layer子域名挖掘机 - 域名查询工具&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.mozhe.cn/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;墨者学院_专注于网络安全人才培养 (mozhe.cn)&lt;/a&gt; - 在线靶场&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://vulhub.org/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Vulhub - Docker-Compose file for vulnerability environment&lt;/a&gt; - 使用Docker的漏洞环境集合，用于复现、研究漏洞&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.shodan.io/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Shodan Search Engine&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://securitytrails.com/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;SecurityTrails: Data Security, Threat Hunting, and Attack Surface Management Solutions for Security Teams&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.webscan.cc/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;同IP网站查询,C段查询,IP反查域名,C段旁注,旁注工具 (webscan.cc)&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.zoomeye.org/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;首页 - 网络空间测绘,网络安全,漏洞分析,动态测绘,钟馗之眼,时空测绘,赛博测绘 - ZoomEye(&amp;ldquo;钟馗之眼&amp;rdquo;)网络空间搜索引擎&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://fofa.so/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;网络空间测绘，网络空间安全搜索引擎，网络空间搜索引擎，安全态势感知 - FOFA网络空间测绘系统&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/EnableSecurity/wafw00f&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;EnableSecurity/wafw00f: WAFW00F allows one to identify and fingerprint Web Application Firewall (WAF) products protecting a website. (github.com)&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;http://tools.ipip.net/cdn.php&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;全球 CDN 服务商查询_专业的 IP 地址库_IPIP.NET&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://crt.sh/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;crt.sh | Certificate Search&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.opengps.cn/Data/IP/ipplus.aspx&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;高精度IP定位4 - openGPS.cn&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/EnableSecurity/wafw00f&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;WAF扫描 EnableSecurity/wafw00f: WAFW00F allows one to identify and fingerprint Web Application Firewall (WAF) products protecting a website. (github.com)&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;相关概念&#34;&gt;相关概念&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;CMS（Content Management System）：开源的网站内容管理系统，为建站提供便利&lt;/li&gt;
+&lt;li&gt;WAF（Web Application Firewall）：Web应用级防火墙&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>入侵检测技术</title>
+        <link>https://lizonglingo.github.io/p/%E5%85%A5%E4%BE%B5%E6%A3%80%E6%B5%8B%E6%8A%80%E6%9C%AF/</link>
+        <pubDate>Wed, 10 Mar 2021 20:18:22 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E5%85%A5%E4%BE%B5%E6%A3%80%E6%B5%8B%E6%8A%80%E6%9C%AF/</guid>
+        <description>&lt;h2 id=&#34;概述&#34;&gt;概述&lt;/h2&gt;
+&lt;p&gt;入侵检测是对网络传输进行即时监控，发现可疑传输时发出警报或者采取主动反应措施的网络安全技术。Intrusion Detection System入侵检测系统通过对“行为、安全日志、审计数据或其他网络上可以获取的信息以及计算机系统中若干关键点的信息”，检查网络或系统是否存在违反安全策略的行为和被攻击的迹象。&lt;/p&gt;
+&lt;h2 id=&#34;分类&#34;&gt;分类&lt;/h2&gt;
+&lt;h3 id=&#34;按照检测数据的来源分&#34;&gt;按照检测数据的来源分&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;Host-based IDS基于主机的入侵检测：通过收集主机的活动记录，能够较为准确检测到发生在主机系统高层的复杂攻击行为，采取关闭端口、结束进程等措施进行响应，会占用一定的计算、存储资源；&lt;/li&gt;
+&lt;li&gt;Network-based IDS基于网络的入侵检测：以网络数据作为分析对象，判断主机或者网络是否发生入侵行为，无法发现主机内部攻击，无法直接采取响应措施，可以向其他安全组件报警&lt;/li&gt;
+&lt;li&gt;Hybrid Distributed IDS混合分布式入侵检测：从不同的主机系统、网络部件或者通过网络监听收集数据，分析事件发现可疑行为，提供集成的攻击签名、检测、报告和事件关联功能，部署和使用上更加方便&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;按使用的入侵检测分析方法分类&#34;&gt;按使用的入侵检测分析方法分类&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;Misuse Detection误用检测：也被称为基于特征、基于知识的检测，根据掌握的入侵或攻击知识检测。定义入侵模式-&amp;gt;组建入侵模式库-&amp;gt;捕获流量数据进行比对。误报率低，不能检测到未知入侵。（比对异常行为）&lt;/li&gt;
+&lt;li&gt;异常检测：对正常系统状态下的系统行为建立模型，判定与正常行为模型不符的活动为可疑或者入侵行为。误警率较高。（比对正常行为）&lt;/li&gt;
+&lt;li&gt;混合检测：以模式发现为主，辅助以异常发现技术。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;按系统体系结构分类&#34;&gt;按系统体系结构分类&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;集中式IDS：集中的入侵检测服务器和分布在不同主机上的多个审计程序，审计数据由分散的主机审计程序收集后传到中央检测处理器。设计简单，易于实现；网络负担大，安全性较为脆弱，配置服务器复杂。&lt;/li&gt;
+&lt;li&gt;分布式IDS：主要针对复杂网络，各各组件分布在网络中不同的计算机或设备上，分布性主要体现在数据收集和数据分析上。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;其他方式&#34;&gt;其他方式&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;在线IDS和离线IDS&lt;/li&gt;
+&lt;li&gt;主动响应系统和被动响应系统&lt;/li&gt;
+&lt;li&gt;连续IDS和周期性IDS&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;公共入侵检测框架&#34;&gt;公共入侵检测框架&lt;/h2&gt;
+&lt;p&gt;Common Intrusion Detection Framework是为了解决不同入侵检测系统的互操作性和共存的问题而提出的入侵检测框架。由四个部分组成：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;CIDF的体系结构&lt;/p&gt;
+&lt;p&gt;在IDES入侵检测专家系统和NIDES其后继版本基础上提出了通用模型，将入侵检测系统分为四个基本组件：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;事件产生器：从IDS之外的计算环境中收集事件，转化成CIDF的GIDO（Generalized Intrusion Detection Objects统一入侵检测对象）格式传给其他组件&lt;/li&gt;
+&lt;li&gt;事件分析器：从其他组件收到GIDO，将产生的GIDO传给其他组件&lt;/li&gt;
+&lt;li&gt;响应单元：处理收到的GIDO，并据此采取响应的措施&lt;/li&gt;
+&lt;li&gt;事件数据库：存储GIDO&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;CIDF的通信机制：三层模型有GIDO层（定义事件表示方法），消息层（传送数据），协商传输层（定义组件之间的传输机制）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;CIDF语言：为描述入侵检测响应IDR组件之间传输的信息，定义了Common Intrusion Specification Language公共入侵规范语言，来表示CIDF中的各种信息&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;CIDF的API接口：负责GIDO编码、解码、传递&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;入侵检测系统体系结构&#34;&gt;入侵检测系统体系结构&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;集中式体系结构：优点是可以全面掌握采集到的数据，对入侵行为的分析更加精确；缺点是可扩展性差、分布式的数据采集会造成较高的网络负担，改变配置和加入新功能困难，存在单点失效的风险。&lt;/li&gt;
+&lt;li&gt;分布式体系结构：采用多个代理在网络的各部分分别执行入侵检测，并协作处理可能的入侵行为，其优点是能够较好的完成数据的采集和检测内外部的入侵；缺点在于如今层次化结构的网络难以处理不同层次的代理，每个代理对等地位，无法对时空跨度大的入侵行为进行准确的识别。&lt;/li&gt;
+&lt;li&gt;分层式体系结构：各检测单元被组织成为一个层次化的树状结构。
+&lt;ul&gt;
+&lt;li&gt;最底层负责收集信息进行初步处理，速度快数据量大，仅限于简单的入侵行为&lt;/li&gt;
+&lt;li&gt;中间层负责连接上下层代理，接受下层代理处理的结果进行较高层次的关联性分析输出，向高层代理进行数据和处理结果通报，中间层代理的加入减轻中央控制台的负载压力，提高系统可伸缩性&lt;/li&gt;
+&lt;li&gt;中央控制台处于最高层次，负责整体上对各级代理进行协调和管理&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+        <item>
+        <title>防火墙</title>
+        <link>https://lizonglingo.github.io/p/%E9%98%B2%E7%81%AB%E5%A2%99/</link>
+        <pubDate>Wed, 10 Mar 2021 13:48:28 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E9%98%B2%E7%81%AB%E5%A2%99/</guid>
+        <description>&lt;h2 id=&#34;防火墙概述&#34;&gt;防火墙概述&lt;/h2&gt;
+&lt;p&gt;防火墙位于一个可信的内部网络与一个不可信的外界网络之间，用于保护内部网络免受非法用户的入侵。在内网和外网之间构筑保护层，通过网络路由和信息过滤实现网络的安全。&lt;/p&gt;
+&lt;h4 id=&#34;防火墙的特性&#34;&gt;防火墙的特性&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;内部网络和外部网络之间所有网络数据必须经过防火墙&lt;/li&gt;
+&lt;li&gt;只有符合安全策略的数据流才能通过防火墙&lt;/li&gt;
+&lt;li&gt;防火墙自身应具有非常强的抗攻击免疫力&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;防火墙的功能&#34;&gt;防火墙的功能&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;网络安全的屏障，可以极大程度的提高内部网络的安全性，过滤不安全的服务降低风险&lt;/li&gt;
+&lt;li&gt;强化网络安全策略，以防火墙为中心，通过配置安全软件，集中安全管理&lt;/li&gt;
+&lt;li&gt;对网络存取和访问进行审计监控，记录日志、统计数据、以便分析&lt;/li&gt;
+&lt;li&gt;防范内部信息的外泄&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;主要缺陷&#34;&gt;主要缺陷&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;传统防火墙不能防范来自内部网络的攻击（新一代“分布式防火墙”则支持防范内部攻击）&lt;/li&gt;
+&lt;li&gt;防火墙不能防范不通过防火墙的攻击（必须让防火墙成为唯一的与外部网络连接的网络接口）&lt;/li&gt;
+&lt;li&gt;不能防范恶意代码的传输（防火墙不能扫描每一个数据包内的数据）&lt;/li&gt;
+&lt;li&gt;不能防范利用协议缺陷进行的攻击&lt;/li&gt;
+&lt;li&gt;不能防范利用服务器漏洞进行的攻击&lt;/li&gt;
+&lt;li&gt;不能防范未知的网络安全问题（被动式安全防护技术）&lt;/li&gt;
+&lt;li&gt;对已有的网络服务有一定的限制&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;性能评价指标&#34;&gt;性能评价指标&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;传输层性能指标
+&lt;ul&gt;
+&lt;li&gt;TCP并发连接数：穿越防火墙的主机之间或者主机与防火墙之间能同时建立的最大连接数&lt;/li&gt;
+&lt;li&gt;最大TCP连接速率：防火墙维持的最大TCP连接建立速度，用以体现防火墙更新链接状态表的最大速率和实施反应能力&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;网络层性能指标
+&lt;ul&gt;
+&lt;li&gt;吞吐量指标：没有丢帧情况下，防火墙能接受并转发的最大速率&lt;/li&gt;
+&lt;li&gt;时延指标：发送端口发出数据包经过防火墙后接收端口收到的时间间隔，有直通转发时延和存储转发时延两种&lt;/li&gt;
+&lt;li&gt;丢包率指标：正常稳定网络条件下，应该被转发但是由于缺少资源而没有被转发的数据包占全部数据包的百分比&lt;/li&gt;
+&lt;li&gt;背靠背缓冲指标：接受到以最小帧间隔传输的网络流量时，在不丢包的情况下所能处理的最大包数（缓冲能力）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;应用层性能指标
+&lt;ul&gt;
+&lt;li&gt;HTTP传输速率：被请求的目标数据通过防火墙的平均传输速率&lt;/li&gt;
+&lt;li&gt;最大HTTP事务处理速率：用户访问目标时，所能达到的最大速率&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;功能评价指标&#34;&gt;功能评价指标&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;服务平台支持：常见的系统平台如Linux、Unix等&lt;/li&gt;
+&lt;li&gt;LAN口支持：LAN口的类型、带宽、口数&lt;/li&gt;
+&lt;li&gt;协议支持：主要指对非TCP/IP协议族的支持，如IPX等&lt;/li&gt;
+&lt;li&gt;VPN支持：是否支持虚拟专网VPN功能，提供建立VPN隧道所需的IPSec、PPTP、专用协议以及在VPN中使用TCP/IP&lt;/li&gt;
+&lt;li&gt;加密支持：主要指是否支持VPN加密需要的加密算法如DES、3DES、RC4以及特殊的加密算法和硬件加密功能&lt;/li&gt;
+&lt;li&gt;认证支持：主要指防火墙提供的认证方式，如RADIUS、Keberos、PKI、口令等方式&lt;/li&gt;
+&lt;li&gt;访问控制：主要指防火墙通过包过滤、应用代理或传输层代理方式，实现对网络资源的访问控制&lt;/li&gt;
+&lt;li&gt;NAT支持：是否提供NAT功能，隐藏内部网络结构，提高内网安全&lt;/li&gt;
+&lt;li&gt;日志支持：完善的日志记录、存储、管理等&lt;/li&gt;
+&lt;li&gt;其他：病毒扫描、内容过滤、抵御DOS/DDOS、脚本攻击、实时入侵防御、防范IP欺骗&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;防火墙规则制定的两种原则及其各自特点&#34;&gt;防火墙规则制定的两种原则及其各自特点&lt;/h2&gt;
+&lt;h3 id=&#34;防火墙规则的分类&#34;&gt;防火墙规则的分类：&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;高级政策&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;用来定义受限制的网络许可和明确拒绝的服务内容、使用这些服务的方法以及例外条例&lt;/p&gt;
+&lt;ol start=&#34;2&#34;&gt;
+&lt;li&gt;低级政策&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;描述防火墙限制访问的具体实现及如何过滤高级政策定义的服务&lt;/p&gt;
+&lt;h3 id=&#34;规则的特点&#34;&gt;规则的特点：&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;保护内部信息资源的策略的实现和延伸&lt;/li&gt;
+&lt;li&gt;必须与网络访问活动密切相关&lt;/li&gt;
+&lt;li&gt;可靠稳妥，切合实际&lt;/li&gt;
+&lt;li&gt;实施各种不同的服务访问政策&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;设计原则&#34;&gt;设计原则：&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;拒绝访问一切未予特许的服务（侧重安全性）&lt;/li&gt;
+&lt;li&gt;允许访问一切未被特别拒绝的服务（侧重灵活性和方便性）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;包过滤技术和应用网关技术的区别&#34;&gt;包过滤技术和应用网关技术的区别&lt;/h2&gt;
+&lt;p&gt;包过滤技术也称分组过滤技术，在网络层截获网络数据包，根据防火墙规则表，检测攻击行为，在网络层提供低级别的安全防护和控制。&lt;/p&gt;
+&lt;p&gt;应用网关技术又称为代理技术，采用协议代理服务，位于应用层，需要为每一种应用服务器设置专门的代理服务器。&lt;/p&gt;
+&lt;h2 id=&#34;防火墙常见体系结构&#34;&gt;防火墙常见体系结构&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;筛选路由器体系结构&lt;/li&gt;
+&lt;li&gt;单宿主堡垒主机体系结构&lt;/li&gt;
+&lt;li&gt;双宿主堡垒主机体系结构&lt;/li&gt;
+&lt;li&gt;屏蔽子网体系结构&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+        <item>
+        <title>PKI技术</title>
+        <link>https://lizonglingo.github.io/p/pki%E6%8A%80%E6%9C%AF/</link>
+        <pubDate>Tue, 09 Mar 2021 09:28:11 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/pki%E6%8A%80%E6%9C%AF/</guid>
+        <description>&lt;h2 id=&#34;public-key-infrastructure&#34;&gt;Public Key Infrastructure&lt;/h2&gt;
+&lt;p&gt;PKI技术以非对称密钥技术为基础，以数字证书为媒介，将各参与实体的标识信息与公钥绑定在一起。通过特定接口为用户提供安全服务，包括加密、解密、数字签名、身份认证等；具有透明性、易用性、可扩展性、互操作性、多用性、支持多平台等基础设施共有的特点。&lt;/p&gt;
+&lt;h2 id=&#34;pki系统内容&#34;&gt;PKI系统内容&lt;/h2&gt;
+&lt;h4 id=&#34;pki系统主要包括以下内容&#34;&gt;PKI系统主要包括以下内容：&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;认证中心CA：证书的签发机构；负责签发证书、验证身份、登记、发布证书撤销列表CRL&lt;/li&gt;
+&lt;li&gt;证书库：颁发证书和撤销证书集中存放地&lt;/li&gt;
+&lt;li&gt;密钥备份及恢复系统&lt;/li&gt;
+&lt;li&gt;证书撤销处理系统：Certificate Revocation List&lt;/li&gt;
+&lt;li&gt;PKI应用接口系统&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;pki应用系统包括&#34;&gt;PKI应用系统包括：&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;认证中心CA&lt;/li&gt;
+&lt;li&gt;X.500目录服务器：用于发布用户的证书以及证书注销列表&lt;/li&gt;
+&lt;li&gt;安全WWW服务器以及安全通信平台：通过SSL、IPsec等安全协议保证传输数据的机密性、完整性、真实性&lt;/li&gt;
+&lt;li&gt;安全应用系统&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;pki提供的服务&#34;&gt;PKI提供的服务&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;安全登录&lt;/li&gt;
+&lt;li&gt;对终端用户透明：接口&lt;/li&gt;
+&lt;li&gt;全面的安全性：用统一的方式提供安全服务，保证信息的机密性、完整性、认证性、不可否认性&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;pki体系结构&#34;&gt;PKI体系结构&lt;/h2&gt;
+&lt;h3 id=&#34;paa&#34;&gt;PAA&lt;/h3&gt;
+&lt;p&gt;Policy Approval Authority政策批准机构，创建PKI系统方阵、政策、批准PAA下属PCA政策，为PCA签发公钥证书，建立整个PKI体系的安全策略。&lt;/p&gt;
+&lt;h3 id=&#34;pca&#34;&gt;PCA&lt;/h3&gt;
+&lt;p&gt;Policy Certification Authority政策认证机构，制定本PCA的具体政策，如密钥的产生、长度、证书有效期、CRL处理；并为下属CA签发公钥证书。&lt;/p&gt;
+&lt;h3 id=&#34;ca&#34;&gt;CA&lt;/h3&gt;
+&lt;p&gt;Certificate Authority认证中心，担任具体的用户密钥对生成和签发，CRL的生成以及发布。核心功能是&lt;strong&gt;发放和管理数字证书&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;在Fabric中，CA为组织内部节点发放证书，包含用户公钥、标识等信息，用户证书被CA签名发放。通过CA，第三方用户可以验证用户持有的证书是否由信任的CA分发，以验证用户的合法身份。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;PEM格式：Privacy-Enhanced Mail 隐私增强邮件。&lt;/p&gt;
+&lt;p&gt;此外，证书是公开的，因此不包含私钥信息。对于CA自己的证书，一般通过自签名为自己发放。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;以&lt;code&gt;ca.example.com-cert.pem&lt;/code&gt;为例，这是一个证书文件，为了便于在网络上传送，通常证书会编码为&lt;code&gt;PEM&lt;/code&gt;，如果我们直接查看它的内容：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;-----BEGIN CERTIFICATE-----
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;MIICPjCCAeOgAwIBAgIQUkJOmiAwvlYsCrOusBHa8jAKBggqhkjOPQQDAjBpMQsw
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;CQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNU2FuIEZy
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;YW5jaXNjbzEUMBIGA1UEChMLZXhhbXBsZS5jb20xFzAVBgNVBAMTDmNhLmV4YW1w
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;bGUuY29tMB4XDTIxMDIwNDExMjgwMFoXDTMxMDIwMjExMjgwMFowaTELMAkGA1UE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;BhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNhbiBGcmFuY2lz
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Y28xFDASBgNVBAoTC2V4YW1wbGUuY29tMRcwFQYDVQQDEw5jYS5leGFtcGxlLmNv
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;bTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABLobAhmABZmDnBUN7kYay3p9hX8K
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;3jC6gfo4cH+fMe15b1hwKCr5pcbyNrBLpzejsEu8HKLf6qjQgeqU99t8uOCjbTBr
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;MA4GA1UdDwEB/wQEAwIBpjAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEw
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;DwYDVR0TAQH/BAUwAwEB/zApBgNVHQ4EIgQgjWGUej/DLisEDcDHYMST4otUkW0k
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;qigiB7mobi0r20MwCgYIKoZIzj0EAwIDSQAwRgIhALlqhswN20B9C5z5ZcPjtUsb
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;BE90U8L7RoO/VMQSi/NbAiEApyA0DvYXtm4El8G8w+9D8aE/y4aQGq4d+QKHZYIn
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;BXY&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;-----END CERTIFICATE-----
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;由于Fabric中采用X.509证书，我们使用&lt;code&gt;openssl&lt;/code&gt;查看&lt;code&gt;ca.example.com-cert.pem&lt;/code&gt;的可读格式的内容，下面是一个X.509证书的主要内容：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;C:&lt;span style=&#34;color:#ae81ff&#34;&gt;\U&lt;/span&gt;sers&lt;span style=&#34;color:#ae81ff&#34;&gt;\H&lt;/span&gt;P&lt;span style=&#34;color:#ae81ff&#34;&gt;\D&lt;/span&gt;esktop&lt;span style=&#34;color:#ae81ff&#34;&gt;\t&lt;/span&gt;est-network&lt;span style=&#34;color:#ae81ff&#34;&gt;\o&lt;/span&gt;rganizations&lt;span style=&#34;color:#ae81ff&#34;&gt;\o&lt;/span&gt;rdererOrganizations&lt;span style=&#34;color:#ae81ff&#34;&gt;\e&lt;/span&gt;xample.com&lt;span style=&#34;color:#ae81ff&#34;&gt;\c&lt;/span&gt;a&amp;gt;openssl x509 -in ca.example.com-cert.pem -text -noout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Certificate:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Data:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Version: &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;0x2&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Serial Number:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            52:42:4e:9a:20:30:be:56:2c:0a:b3:ae:b0:11:da:f2	&lt;span style=&#34;color:#75715e&#34;&gt;# 序列号&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Signature Algorithm: ecdsa-with-SHA256	&lt;span style=&#34;color:#75715e&#34;&gt;# 签名算法&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Issuer: C &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; US, ST &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; California, L &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; San Francisco, O &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; example.com, CN &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; ca.example.com &lt;span style=&#34;color:#75715e&#34;&gt;#发放机构&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Validity	&lt;span style=&#34;color:#75715e&#34;&gt;# 有效期&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            Not Before: Feb  &lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt; 11:28:00 &lt;span style=&#34;color:#ae81ff&#34;&gt;2021&lt;/span&gt; GMT
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            Not After : Feb  &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 11:28:00 &lt;span style=&#34;color:#ae81ff&#34;&gt;2031&lt;/span&gt; GMT
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Subject: C &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; US, ST &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; California, L &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; San Francisco, O &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; example.com, CN &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; ca.example.com	&lt;span style=&#34;color:#75715e&#34;&gt;# 证书持有人&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        Subject Public Key Info:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            Public Key Algorithm: id-ecPublicKey
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                Public-Key: &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;256&lt;/span&gt; bit&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;	&lt;span style=&#34;color:#75715e&#34;&gt;# 公钥&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                pub:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                    04:ba:1b:02:19:80:05:99:83:9c:15:0d:ee:46:1a:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                    cb:7a:7d:85:7f:0a:de:30:ba:81:fa:38:70:7f:9f:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                    31:ed:79:6f:58:70:28:2a:f9:a5:c6:f2:36:b0:4b:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                    a7:37:a3:b0:4b:bc:1c:a2:df:ea:a8:d0:81:ea:94:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                    f7:db:7c:b8:e0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                ASN1 OID: prime256v1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                NIST CURVE: P-256
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        X509v3 extensions:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            X509v3 Key Usage: critical
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                Digital Signature, Key Encipherment, Certificate Sign, CRL Sign
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            X509v3 Extended Key Usage:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                TLS Web Client Authentication, TLS Web Server Authentication
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            X509v3 Basic Constraints: critical
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                CA:TRUE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            X509v3 Subject Key Identifier:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                8D:61:94:7A:3F:C3:2E:2B:04:0D:C0:C7:60:C4:93:E2:8B:54:91:6D:24:AA:28:22:07:B9:A8:6E:2D:2B:DB:43
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Signature Algorithm: ecdsa-with-SHA256	&lt;span style=&#34;color:#75715e&#34;&gt;# CA对该证书的签名&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;         30:46:02:21:00:b9:6a:86:cc:0d:db:40:7d:0b:9c:f9:65:c3:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;         e3:b5:4b:1b:04:4f:74:53:c2:fb:46:83:bf:54:c4:12:8b:f3:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;         5b:02:21:00:a7:20:34:0e:f6:17:b6:6e:04:97:c1:bc:c3:ef:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;         43:f1:a1:3f:cb:86:90:1a:ae:1d:f9:02:87:65:82:27:05:76
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;ca证书的发放&#34;&gt;CA证书的发放&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;离线发放：申请批准后，RA初始化申请者信息，在LDAP（Lightweight Directory Access Protocol）服务器添加信息；信息传给CA，生成参照号Ref.number以及认证码Auth.code；使用电子邮件或者打印，线下传递；申请人收到后在审查机构面对面领取证书，证书可存入光盘，软盘等&lt;/li&gt;
+&lt;li&gt;在线发放：申请批准后，RA初始化申请者信息，在LDAP（Lightweight Directory Access Protocol）服务器添加信息；信息传给CA，生成参照号Ref.number以及认证码Auth.code；申请人在本机登录网站通过浏览器安装Root CA证书，输入参照号和授权码获得证书。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;crl&#34;&gt;CRL&lt;/h4&gt;
+&lt;p&gt;证书废除原因主要有以下几点：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;密钥泄露：私钥泄露或者被破坏&lt;/li&gt;
+&lt;li&gt;从属变更：关于密钥的信息变更&lt;/li&gt;
+&lt;li&gt;终止使用：该密钥不再用于原来的用途或者证书已经到期&lt;/li&gt;
+&lt;li&gt;CA本身原因：CA系统私钥泄露&lt;/li&gt;
+&lt;li&gt;CA有理由怀疑证书细节不真实、不可信&lt;/li&gt;
+&lt;li&gt;证书持有者没有履行协议&lt;/li&gt;
+&lt;li&gt;证书持有者死亡、违反电子交易规则或者被判定为犯罪&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;ora&#34;&gt;ORA&lt;/h3&gt;
+&lt;p&gt;Online Register Authority在线证书审查机构进行申请者身份认证，向CA提交证书申请，验证接受CA签发的证书，发放给申请者。&lt;/p&gt;
+&lt;h3 id=&#34;ee&#34;&gt;EE&lt;/h3&gt;
+&lt;p&gt;End Entity最终实体是PKI的最终使用者&lt;/p&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

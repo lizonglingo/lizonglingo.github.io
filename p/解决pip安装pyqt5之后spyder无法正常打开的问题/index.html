@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='开发环境 Anaconda3 &#43; Pycharm Python3.7 报错描述 我是用的Pycharm&#43;conda的环境进行开发的，有的时候会用到Spyder。 在我安装PyQt5后，使用Pycha'>
+<title>解决pip安装PyQt5之后Spyder无法正常打开的问题</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/%E8%A7%A3%E5%86%B3pip%E5%AE%89%E8%A3%85pyqt5%E4%B9%8B%E5%90%8Espyder%E6%97%A0%E6%B3%95%E6%AD%A3%E5%B8%B8%E6%89%93%E5%BC%80%E7%9A%84%E9%97%AE%E9%A2%98/'>
+
+<link rel="stylesheet" href="/scss/style.min.8191399262444ab68b72a18c97392f5349be20a1615d77445be51e974c144cff.css"><meta property='og:title' content='解决pip安装PyQt5之后Spyder无法正常打开的问题'>
+<meta property='og:description' content='开发环境 Anaconda3 &#43; Pycharm Python3.7 报错描述 我是用的Pycharm&#43;conda的环境进行开发的，有的时候会用到Spyder。 在我安装PyQt5后，使用Pycha'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/%E8%A7%A3%E5%86%B3pip%E5%AE%89%E8%A3%85pyqt5%E4%B9%8B%E5%90%8Espyder%E6%97%A0%E6%B3%95%E6%AD%A3%E5%B8%B8%E6%89%93%E5%BC%80%E7%9A%84%E9%97%AE%E9%A2%98/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='Python' /><meta property='article:published_time' content='2019-09-24T21:37:06&#43;08:00'/><meta property='article:modified_time' content='2019-09-24T21:37:06&#43;08:00'/>
+<meta name="twitter:title" content="解决pip安装PyQt5之后Spyder无法正常打开的问题">
+<meta name="twitter:description" content="开发环境 Anaconda3 &#43; Pycharm Python3.7 报错描述 我是用的Pycharm&#43;conda的环境进行开发的，有的时候会用到Spyder。 在我安装PyQt5后，使用Pycha">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description">子标题</h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://twitter.com'
+                        target="_blank"
+                        title="Twitter"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#开发环境">开发环境</a></li>
+    <li><a href="#报错描述">报错描述</a></li>
+    <li><a href="#解决方案">解决方案</a></li>
+    <li><a href="#结果">结果</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/python/" >
+                Python
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/%E8%A7%A3%E5%86%B3pip%E5%AE%89%E8%A3%85pyqt5%E4%B9%8B%E5%90%8Espyder%E6%97%A0%E6%B3%95%E6%AD%A3%E5%B8%B8%E6%89%93%E5%BC%80%E7%9A%84%E9%97%AE%E9%A2%98/">解决pip安装PyQt5之后Spyder无法正常打开的问题</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Sep 24, 2019</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 1 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="开发环境">开发环境</h2>
+<ul>
+<li>Anaconda3 + Pycharm</li>
+<li>Python3.7</li>
+</ul>
+<h2 id="报错描述">报错描述</h2>
+<p>我是用的Pycharm+conda的环境进行开发的，有的时候会用到Spyder。</p>
+<p>在我安装PyQt5后，使用Pycharm进行GUI的开发后发现，Anaconda中的Spyder打不开了：</p>
+<p><img src="https://i.loli.net/2019/09/24/EJqYLocpkRuAFD3.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>并有了以下报错：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>Traceback <span style="color:#f92672">(</span>most recent call last<span style="color:#f92672">)</span>:
+</span></span><span style="display:flex;"><span>File <span style="color:#e6db74">&#34;D:\Anaconda\installanaconda\Scripts\spyder-script.py&#34;</span>, line 10, in 
+</span></span><span style="display:flex;"><span>sys.exit<span style="color:#f92672">(</span>main<span style="color:#f92672">())</span>
+</span></span><span style="display:flex;"><span>File <span style="color:#e6db74">&#34;D:\Anaconda\installanaconda\lib\site-packages\spyder\app\start.py&#34;</span>, line 186, in main
+</span></span><span style="display:flex;"><span>from spyder.app import mainwindow
+</span></span><span style="display:flex;"><span>File <span style="color:#e6db74">&#34;D:\Anaconda\installanaconda\lib\site-packages\spyder\app\mainwindow.py&#34;</span>, line 90, in 
+</span></span><span style="display:flex;"><span>from qtpy import QtWebEngineWidgets <span style="color:#75715e"># analysis:ignore</span>
+</span></span><span style="display:flex;"><span>File <span style="color:#e6db74">&#34;D:\Anaconda\installanaconda\lib\site-packages\qtpy\QtWebEngineWidgets.py&#34;</span>, line 22, in 
+</span></span><span style="display:flex;"><span>from PyQt5.QtWebEngineWidgets import QWebEnginePage
+</span></span><span style="display:flex;"><span>ValueError: PyCapsule_GetPointer called with incorrect name
+</span></span></code></pre></div><p>这个问题原来遇到过，由于没有使用Spyder的需求就一直没有想去解决。这是用于安装的PyQt5与spyder中带有的pyqt版本发生了冲突。于是我最终在stackoverflow上找到了<a class="link" href="https://stackoverflow.com/questions/55794101/valueerrorpycapsule-getpointer-called-with-incorrect-name-with-from-pyqt5-qtwe"  target="_blank" rel="noopener"
+    >解决方案</a></p>
+<h2 id="解决方案">解决方案</h2>
+<p>原文是这样说的：</p>
+<p>The solution is to downgrade <code>PyQt5</code>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-py" data-lang="py"><span style="display:flex;"><span>pip install PyQt5<span style="color:#f92672">==</span><span style="color:#ae81ff">5.10.1</span>
+</span></span><span style="display:flex;"><span>Collecting PyQt5<span style="color:#f92672">==</span><span style="color:#ae81ff">5.10.1</span>
+</span></span><span style="display:flex;"><span>  Downloading https:<span style="color:#f92672">//</span>files<span style="color:#f92672">.</span>pythonhosted<span style="color:#f92672">.</span>org<span style="color:#f92672">/</span>packages<span style="color:#f92672">/</span>a7<span style="color:#f92672">/</span><span style="color:#ae81ff">22</span><span style="color:#f92672">/</span><span style="color:#ae81ff">67</span>cc2bac6ae2cd3a7eabb2a2e91638b94bdc6e0503747e49670ce44bb5b0<span style="color:#f92672">/</span>PyQt5<span style="color:#f92672">-</span><span style="color:#ae81ff">5.10.1</span><span style="color:#f92672">-</span><span style="color:#ae81ff">5.10.1</span><span style="color:#f92672">-</span>cp35<span style="color:#f92672">.</span>cp36<span style="color:#f92672">.</span>cp37<span style="color:#f92672">.</span>cp38<span style="color:#f92672">-</span>none<span style="color:#f92672">-</span>win_amd64<span style="color:#f92672">.</span>whl (<span style="color:#ae81ff">81.0</span>MB)
+</span></span><span style="display:flex;"><span>    <span style="color:#ae81ff">100</span><span style="color:#f92672">%</span> <span style="color:#f92672">|</span><span style="color:#960050;background-color:#1e0010">████████████████████████████████</span><span style="color:#f92672">|</span> <span style="color:#ae81ff">81.0</span>MB <span style="color:#ae81ff">187</span>kB<span style="color:#f92672">/</span>s
+</span></span><span style="display:flex;"><span>Requirement already satisfied: sip<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">4.20</span>,<span style="color:#f92672">&gt;=</span><span style="color:#ae81ff">4.19.4</span> <span style="color:#f92672">in</span> c:\anaconda3\lib\site<span style="color:#f92672">-</span>packages (<span style="color:#f92672">from</span> PyQt5<span style="color:#f92672">==</span><span style="color:#ae81ff">5.10.1</span>) (<span style="color:#ae81ff">4.19.8</span>)
+</span></span><span style="display:flex;"><span>spyder <span style="color:#ae81ff">3.3.4</span> requires pyqtwebengine<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">5.13</span>, which <span style="color:#f92672">is</span> <span style="color:#f92672">not</span> installed<span style="color:#f92672">.</span>
+</span></span><span style="display:flex;"><span>Installing collected packages: PyQt5
+</span></span><span style="display:flex;"><span>  Found existing installation: PyQt5 <span style="color:#ae81ff">5.12.1</span>
+</span></span><span style="display:flex;"><span>    Uninstalling PyQt5<span style="color:#f92672">-</span><span style="color:#ae81ff">5.12.1</span>:
+</span></span><span style="display:flex;"><span>      Successfully uninstalled PyQt5<span style="color:#f92672">-</span><span style="color:#ae81ff">5.12.1</span>
+</span></span><span style="display:flex;"><span>Successfully installed PyQt5<span style="color:#f92672">-</span><span style="color:#ae81ff">5.10.1</span>
+</span></span></code></pre></div><p>This problem occurs because the <code>PyQt5</code> I installed is beyond version as the version of <code>spyder</code>.</p>
+<p>所以，我将原先的PyQt5进行卸载后，安装了5.10.1版本的PyQt5。</p>
+<p>之后对结果进行测试。</p>
+<h2 id="结果">结果</h2>
+<p>先是看一下Spyder是否正常打开以及运行：</p>
+<p><img src="https://i.loli.net/2019/09/24/EqGTIaXZt7zcoiA.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>Spyder可以正常打开并且使用了。</p>
+<p>然后检查PyQt模块是否能正常使用：</p>
+<p><img src="https://i.loli.net/2019/09/24/fLHzla6yTh8ZqjW.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p><img src="https://i.loli.net/2019/09/24/At3sGvlrMm82F5I.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>完事！</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/python/">Python</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/pyqt5%E4%B8%AD%E6%96%87%E6%95%99%E7%A8%8B%E6%8E%A8%E8%8D%90/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">PyQt5中文教程推荐</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/python%E4%B8%AD%E7%9A%84%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Python中的正则表达式</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E8%A7%A3%E5%86%B3pycharm%E5%87%BA%E7%8E%B0runtime-error-r6034%E7%9A%84%E6%8A%A5%E9%94%99/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">解决Pycharm出现Runtime Error R6034的报错</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E7%88%AC%E5%8F%96%E7%8C%AB%E7%9C%BCtop100/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">爬取猫眼Top100</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/python%E4%BC%AA%E9%80%A0%E6%95%B0%E6%8D%AE%E7%94%9F%E6%88%90%E5%99%A8faker/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Python伪造数据生成器：Faker</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

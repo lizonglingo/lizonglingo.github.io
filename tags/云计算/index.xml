@@ -1,0 +1,1230 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>云计算 on Li Duo</title>
+        <link>https://lizonglingo.github.io/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/</link>
+        <description>Recent content in 云计算 on Li Duo</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-CN</language>
+        <lastBuildDate>Sat, 20 Nov 2021 11:24:40 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>从Docker覆盖网络引出大二层网络</title>
+        <link>https://lizonglingo.github.io/p/%E4%BB%8Edocker%E8%A6%86%E7%9B%96%E7%BD%91%E7%BB%9C%E5%BC%95%E5%87%BA%E5%A4%A7%E4%BA%8C%E5%B1%82%E7%BD%91%E7%BB%9C/</link>
+        <pubDate>Sat, 20 Nov 2021 11:24:40 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E4%BB%8Edocker%E8%A6%86%E7%9B%96%E7%BD%91%E7%BB%9C%E5%BC%95%E5%87%BA%E5%A4%A7%E4%BA%8C%E5%B1%82%E7%BD%91%E7%BB%9C/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;学习Docker覆盖网络的时候，自然免不了与数据中心大二层网络技术的关系，然后补了一下相关的知识。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;从docker覆盖网络谈起&#34;&gt;从Docker覆盖网络谈起&lt;/h2&gt;
+&lt;p&gt;对于不同网络中容器的安全、可靠通信问题十分关键。Docker通过覆盖网络技术，创建扁平、安全的二层网络连接不同物理网络的容器，连接到覆盖网络的容器可以直接通信。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211120_113444_edit_815400474937555.jpg&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;如上图所示，两个属于不同物理网络的节点，通过连接到同一个&lt;code&gt;Overlay&lt;/code&gt;覆盖网络可以直接完成通信。覆盖网络创建了虚拟二层网络&lt;code&gt;10.0.0.0/24&lt;/code&gt;然后为这两个节点分配了IP地址。也就是说，在节点1上&lt;code&gt;ping 10.0.0.4&lt;/code&gt;可以通，并且只需要经过1跳。&lt;/p&gt;
+&lt;p&gt;那么Overlay是怎么实现的。&lt;/p&gt;
+&lt;h2 id=&#34;vxlan&#34;&gt;VXLAN&lt;/h2&gt;
+&lt;h3 id=&#34;vlan&#34;&gt;VLAN&lt;/h3&gt;
+&lt;p&gt;为了隔离二层网络的广播域，又能使网络中用户相互访问，我们使用划分VLAN的方式，构建虚拟局域网。同一个VLAN中的用户可以直接通信，同属于一个广播域。这些VLAN报文通过在MAC帧添加VLAN标记来进行传输。&lt;/p&gt;
+&lt;p&gt;问题就在于，VLAN支持用户数量太少了。&lt;/p&gt;
+&lt;p&gt;数据中心需要支持的虚拟机数量远远大于VLAN支持的数量。为了与依赖的网络硬件设备解耦，并支持大规模虚拟机网络管理，一些做虚拟化的IT厂商推出了一些SND技术，VXLAN就是。&lt;/p&gt;
+&lt;h3 id=&#34;vxlan-1&#34;&gt;VXLAN&lt;/h3&gt;
+&lt;p&gt;VXLAN的实现是在需要接入覆盖网络的主机上，通过虚拟化的交换机、虚拟化的网络适配器来实现在三层网络上虚拟出一个二层网络。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;设计目的就在于：&lt;strong&gt;允许用户基于已经存在的三层网络创建虚拟的二层网络&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;使用的主要技术是：&lt;strong&gt;基于UDP封装的隧道技术&lt;/strong&gt;。VXLAN基于三层IP网络创建了隧道。在隧道两端，VXLAN隧道终端VTEP完成封装和解封装。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211120_114959_edit_816311714547833.jpg&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;为了实现在三层网络上虚拟出二层覆盖网络，大致有下面几个步骤。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;在主机上创建一个Sandbox网络命名空间，这相当于在主机上运行了一个独立的网络栈（可以看作以容器方式运行）。&lt;/li&gt;
+&lt;li&gt;在Sandbox中创建一个虚拟交换机（虚拟网桥）。&lt;/li&gt;
+&lt;li&gt;在主机中创建一个VXLAN隧道终端VTEP，并把它的一端接入到虚拟交换机上，另一端则接入主机的网络栈。接入主机网络栈后，VTEP就从主机所连接的基础网络中获取到主机的IP地址，并以UDP Socket的方式绑定到4789端口。&lt;/li&gt;
+&lt;li&gt;这样一来，不同主机上的两个VTEP通过VXLAN隧道连接在了一起，创建了一个覆盖网络。&lt;/li&gt;
+&lt;li&gt;经过以上步骤，这个覆盖网络中的主机向下是连通了，那向上怎么去传递数据呢？所以，主机继续创建虚拟以太网适配器（虚拟网卡），并将这个虚拟网卡接入虚拟交换机上，这样从交换机上来的数据帧就可以被转发。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;下面来看一个完整的通过覆盖网络的数据传输过程：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;node1节点上的容器叫C1，node2的叫C2。&lt;/li&gt;
+&lt;li&gt;C1去&lt;code&gt;ping 10.0.0.4&lt;/code&gt;也就是C2。这个请求的流量，通过连接到虚拟交换机的虚拟网卡发出。但此时虚拟交换机并不知道从哪个接口转发出去。因为虚拟交换机中暂时没有与该IP对应的MAC地址。&lt;/li&gt;
+&lt;li&gt;所以虚拟交换机会向所有接口转发。连接到虚拟交换机的VXLAN隧道终端VTEP知道它自己应该接收并转发这个数据帧，所以它会返回自己的MAC地址，并且虚拟交换机中交换表就新增了这一条转发条目，以后发往该IP的数据帧都转发给VTEP。（实际上就是二层网络的ARP协议在主机中使用软件模拟）&lt;/li&gt;
+&lt;li&gt;为什么VTEP知道自己应该转发发往C2的10.0.0.4这个IP的数据帧呢？因为Docker启动容器时，会将自己的网络信息通过Gossip协议发送给相同Swarm集群的其他节点。&lt;/li&gt;
+&lt;li&gt;虚拟交换机把数据帧转发给VTEP，VTEP继续封装，加入VXLAN Header等信息，这样这条数据帧就可以在真实的基础网络中透明传输了。&lt;/li&gt;
+&lt;li&gt;VTEP将数据帧放到UDP包中，设置端口4789和C2真实的目的地址，然后交给底层网络。&lt;/li&gt;
+&lt;li&gt;这条数据包在基础网络中透明传输，到达node2，把它交给UDP的4789端口处理，由于VTEP绑定了4789端口，所以进一步交给VTEP处理。&lt;/li&gt;
+&lt;li&gt;VTEP解封装后，向上交给虚拟交换机，再转发到C2对应的虚拟网卡，这样C2就收到了这条数据。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;为什么数据中心需要使用大二层网络&#34;&gt;为什么数据中心需要使用大二层网络？&lt;/h2&gt;
+&lt;p&gt;数据中心为用户管理了大量的虚拟机，为了对物理机进行维护、升级，就有了迁移虚拟机的需求。重要的是，对虚拟机的迁移在用户看来应该是透明无感知的。这就要求在迁移的过程中，虚拟机需要正常提供服务，它的网络属性如IP需要保持不变。&lt;/p&gt;
+&lt;p&gt;如果使用传统的二三层网络结构（如VLAN划分的2层网络），地址数量限制了虚拟机动态迁移只能在一个较小的局部范围中。为了实现大规模、跨地域数据中心的虚拟机动态迁移，就需要构建大二层网络，实现虚拟机的无障碍动态迁移。&lt;/p&gt;
+&lt;h3 id=&#34;二层网络和三层网络对比&#34;&gt;二层网络和三层网络对比&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;来源：&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://nc.haut.edu.cn/info/1034/4213.htm&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://nc.haut.edu.cn/info/1034/4213.htm&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://zhuanlan.zhihu.com/p/108713008&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://zhuanlan.zhihu.com/p/108713008&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;在网络结构中，有二层网络和三层网络两种选择。在这里的二层、三层是按照逻辑拓扑结构进行的分类，并不是说ISO七层模型中的数据链路层和网络层，而是&lt;strong&gt;指核心层，汇聚层和接入层，这三层都部署的就是三层网络结构，二层网络结构没有汇聚层&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;只有核心层和接入层的&lt;strong&gt;二层网络结构模式运行简便&lt;/strong&gt;，交换机根据MAC地址表进行数据包的转发，有则转发，无则泛洪，即将数据包广播发送到所有端口，如果目的终端收到给出回应，那么交换机就可以将该MAC地址添加到地址表中，这是交换机对MAC地址进行建立的过程。&lt;/p&gt;
+&lt;p&gt;但这样频繁的对未知的MAC目标的数据包进行广播，在大规模的网络架构中形成的网络风暴是非常庞大的，这也很大程度上限制了二层网络规模的扩大，因此&lt;strong&gt;二层网络的组网能力非常有限，所以一般只是用来搭建小局域网&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;与二层网络结构不同的是，&lt;strong&gt;三层网络结构可以组建大型的网络&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;核心层&lt;/strong&gt;是整个网络的支撑脊梁和数据传输通道，重要性不言而喻，因此在整个三层网络结构中，核心层的设备要求是最高的，必须配备高性能的数据冗余转接设备和防止负载过剩的均衡负载的设备，以降低各核心层交换机所需承载的数据量。（网络的高速交换主干）&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;汇聚层&lt;/strong&gt;是连接网络的核心层和各个接入的应用层，在两层之间承担“媒介传输”的作用。汇聚层应该具备以下功能：实施安全功能（划分 VLAN和配置 ACL）、工作组整体接入功能、虚拟网络过滤功能。因此，&lt;strong&gt;汇聚层设备应采用三层交换机&lt;/strong&gt;。（提供基于策略的连接）&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;接入层&lt;/strong&gt;的面向对象主要是终端客户，为终端客户提供接入功能。（将工作站接入网络）&lt;/p&gt;
+&lt;p&gt;二层网络仅仅通过MAC寻址即可实现通讯，但仅仅是同一个冲突域内；三层网络则需要通过IP路由实现跨网段的通讯，可以跨多个冲突域。&lt;/p&gt;
+&lt;h3 id=&#34;大二层网络&#34;&gt;大二层网络&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;来源：&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://blog.csdn.net/xinjixun3641/article/details/84334384&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://blog.csdn.net/xinjixun3641/article/details/84334384&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;大二层网络基本上都是&lt;strong&gt;针对数据中心场景的&lt;/strong&gt;，因为它实际上就是为了解决数据中心的服务器虚拟化之后的虚拟机动态迁移这一特定需求而出现的。其实&lt;strong&gt;学校网络也是一个相当于数据中心的网络&lt;/strong&gt;，因为他需要对整个校园提供上网服务，例如WIFI漫游等。&lt;/p&gt;
+&lt;p&gt;为了实现虚拟机的大范围甚至跨地域的动态迁移，就要求把VM迁移可能涉及的&lt;strong&gt;所有服务器都纳入同一个二层网络域&lt;/strong&gt;，这样才能实现VM的&lt;strong&gt;大范围无障碍迁移&lt;/strong&gt;。这就是大二层网络！&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;一个真正意义的大二层网络至少要能容纳1万以上的主机，才能叫做大二层网络。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;传统的二层网络为啥大不起来？其实说起来也简单，二层网络的核心问题就是环路问题以及由此产生的&lt;strong&gt;广播风暴问题&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;传统的二层技术为啥不能支持大二层？&lt;strong&gt;基于VLAN+xSTP技术的二层网络，可能容纳的主机数量通常都不会超过1K&lt;/strong&gt;。&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>使用Docker Swarm管理服务集群</title>
+        <link>https://lizonglingo.github.io/p/%E4%BD%BF%E7%94%A8docker-swarm%E7%AE%A1%E7%90%86%E6%9C%8D%E5%8A%A1%E9%9B%86%E7%BE%A4/</link>
+        <pubDate>Tue, 16 Nov 2021 11:57:32 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E4%BD%BF%E7%94%A8docker-swarm%E7%AE%A1%E7%90%86%E6%9C%8D%E5%8A%A1%E9%9B%86%E7%BE%A4/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;这个实验书上的示例是6台机器（虚拟机），我在本机部署时由于内存原因只用了4台虚拟机，但效果还是基本达到了，只有在模拟某台管理节点宕机时，出现剩下的唯一一个管理节点无法正常工作的情况（和使用raft共识有关），在对应部分会详细说明。&lt;/p&gt;
+&lt;p&gt;本次实验的环境是4台Ubuntu18.04虚拟机，每台2G内存、1核2线程，采用桥接模式共用宿主机网络。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;docker-swarm&#34;&gt;Docker Swarm&lt;/h2&gt;
+&lt;p&gt;Swarm有两层含义：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;一个Docker安全集群：让用户以集群方式管理一个或多个Docker节点，默认内置分布式集群存储，加密网络，公用TLS，安全集群接入令牌，简化的数字证书管理PKI。&lt;/li&gt;
+&lt;li&gt;一个微服务编排引擎：通过声明式配置文件部署和管理复杂的微服务应用，支持滚动升级，回滚，以及扩缩容。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Swarm中的节点分为管理节点和工作节点：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;管理节点：负责集群的控制，监控集群状态，分发任务到工作节点。&lt;/li&gt;
+&lt;li&gt;工作节点：接收任务并执行。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;搭建swarm集群&#34;&gt;搭建Swarm集群&lt;/h2&gt;
+&lt;h3 id=&#34;初始化swarm&#34;&gt;初始化Swarm&lt;/h3&gt;
+&lt;p&gt;在正式搭建之前，每个节点需要开放下面的端口：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;2377/tcp：用于客户端与Swarm安全通信。&lt;/li&gt;
+&lt;li&gt;7946/tcp与7946/udp：用于控制面gossip分发。&lt;/li&gt;
+&lt;li&gt;4789/udp：用于基于VXLAN的覆盖网络&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;我用iptables完成了这些步骤。下面开始创建集群。&lt;/p&gt;
+&lt;h4 id=&#34;初始化swarm-1&#34;&gt;初始化Swarm&lt;/h4&gt;
+&lt;p&gt;不包含在Swarm中的Docker节点称为运行于单引擎模式，一旦加入Swarm就切换为Swarm模式。首先通过&lt;code&gt;docker swarm init&lt;/code&gt;将第一个节点切换到Swarm模式并设置其为第一个管理节点A。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker swarm init &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; --advertise-addr 10.0.20.25:2377 &lt;span style=&#34;color:#ae81ff&#34;&gt;\	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 其他节点用来连接当前管理节点的IP和端口&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; --listen-addr 10.0.20.25:2377			&lt;span style=&#34;color:#75715e&#34;&gt;# 承载Swarm流量的IP和端口&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Swarm initialized: current node &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;kwtw0ybgf4uzd1d6bcdpwze1y&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; is now a manager.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;To add a worker to this swarm, run the following command:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    docker swarm join --token SWMTKN-1-2avftcvr1a1lesoqcyjr06tdvjvvof9n0wiz39lepv8aezk6xm-2dai3bks4siwhgetlhcuqnonz 10.0.20.25:2377
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;To add a manager to this swarm, run &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;docker swarm join-token manager&amp;#39;&lt;/span&gt; and follow the instructions.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Swarm给出提示，向集群加入新的管理节点和工作节点需要什么命令，它们需要的token是不同的，比如加入管理节点的命令：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker swarm join-token manager
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;To add a manager to this swarm, run the following command:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    docker swarm join --token SWMTKN-1-2avftcvr1a1lesoqcyjr06tdvjvvof9n0wiz39lepv8aezk6xm-erhmvcq8z52aure635nv6w8ch 10.0.20.25:2377
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;下面加入一个工作节点c&#34;&gt;下面加入一个工作节点C&lt;/h4&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl-c:~$ docker swarm join --token SWMTKN-1-2avftcvr1a1lesoqcyjr06tdvjvvof9n0wiz39lepv8aezk6xm-2dai3bks4siwhgetlhcuqnonz 10.0.20.25:2377 &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; --advertise-addr 10.0.20.26:2377 &lt;span style=&#34;color:#ae81ff&#34;&gt;\	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 这两个属性虽然是可选的&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; --listen-addr 10.0.20.26:2377			&lt;span style=&#34;color:#75715e&#34;&gt;# 但是最好指明每个节点的网络属性&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;This node joined a swarm as a worker.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;加入其他节点&#34;&gt;加入其他节点&lt;/h4&gt;
+&lt;p&gt;同样的，我们把第二个管理节点B和第二个工作节点D加入集群。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl-b:~$ docker swarm join --token SWMTKN-1-2avftcvr1a1lesoqcyjr06tdvjvvof9n0wiz39lepv8aezk6xm-erhmvcq8z52aure635nv6w8ch 10.0.20.25:2377 &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; --advertise-addr 10.0.20.35:2377 &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; --listen-addr 10.0.20.35:2377
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;This node joined a swarm as a manager.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl-d:~$ docker swarm join --token SWMTKN-1-2avftcvr1a1lesoqcyjr06tdvjvvof9n0wiz39lepv8aezk6xm-2dai3bks4siwhgetlhcuqnonz 10.0.20.25:2377 &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; --advertise-addr 10.0.20.27:2377 &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; --listen-addr 10.0.20.27:2377
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;This node joined a swarm as a worker.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;blockquote&gt;
+&lt;p&gt;这样我们集群中就有了：&lt;/p&gt;
+&lt;p&gt;管理节点A：10.0.20.25&lt;/p&gt;
+&lt;p&gt;管理节点B：10.0.20.35&lt;/p&gt;
+&lt;p&gt;工作节点C：10.0.20.26&lt;/p&gt;
+&lt;p&gt;工作节点D：10.0.20.27&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&#34;查看集群中的节点&#34;&gt;查看集群中的节点&lt;/h4&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker node ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;aez7db9rdqoylqktrk7stcu49     lzl-c      Ready     Active                          20.10.10
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;jfhjtedzu8mg0y6vzgw0unvw7     lzl-d      Ready     Active                          20.10.10
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kwtw0ybgf4uzd1d6bcdpwze1y *   lzl        Ready     Active         Leader           20.10.10
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ppvj0ll2jo0smt4htpms9fosw     lzl-b      Ready     Active         Reachable        20.10.10
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Swarm已经启动TLS以保证集群安全。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;*：表示当前节点&lt;/li&gt;
+&lt;li&gt;Leader：表示管理节点的Leader&lt;/li&gt;
+&lt;li&gt;Reachable：表示其他可用的管理节点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;高可用性ha&#34;&gt;高可用性HA&lt;/h3&gt;
+&lt;p&gt;Swarm使用Raft达成共识，我这里使用两个管理节点实际上是不好的，一个是数量太少，另一个是偶数个管理节点可能发生脑裂现象。最好是&lt;strong&gt;部署奇数个管理节点，也不要太多，3个5个都行&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;即使一个或多个管理节点出现故障，其他管理节点也会继续工作保证Swarm的运转。&lt;strong&gt;管理节点中的主节点是唯一的会对Swarm发送控制命令的节点，其他管理节点收到的命令会转发给主节点。&lt;/strong&gt;&lt;/p&gt;
+&lt;h3 id=&#34;安全机制&#34;&gt;安全机制&lt;/h3&gt;
+&lt;p&gt;Swarm的安全机制如CA、接入Token、公用TLS、加密网络、加密集群存储、加密节点ID等开箱即用。&lt;/p&gt;
+&lt;h3 id=&#34;锁定swarm&#34;&gt;锁定Swarm&lt;/h3&gt;
+&lt;p&gt;Docker提供了自动锁机制锁定Swarm，使得重启的管理节点只有提供集群解锁码后才能重新接入集群。&lt;/p&gt;
+&lt;p&gt;在管理节点A启用锁：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker swarm update --autolock&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;true
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Swarm updated.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;To unlock a swarm manager after it restarts, run the &lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;docker swarm unlock&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;command and provide the following key:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    SWMKEY-1-0A98dswMx4EOOmfMwjlVDEL1w1OLncMAQniYV+nPKuk
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Please remember to store this key in a password manager, since without it you
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;will not be able to restart the manager.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;重启另一个管理节点B，发现它加不进去，因为集群上锁了：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl-b:~$ service docker restart
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl-b:~$ docker node ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Error response from daemon: Swarm is encrypted and needs to be unlocked before it can be used. Please use &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;docker swarm unlock&amp;#34;&lt;/span&gt; to unlock it.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我们在管理节点A列出节点试试？&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker node ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Error response from daemon: rpc error: code &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Unknown desc &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; The swarm does not have a leader. It&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&amp;#39;&lt;/span&gt;s possible that too few managers are online. Make sure more than half of the managers are online.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;由于部署2个管理节点，1个节点掉线后，仅剩的管理节点A无法正常工作，因为要求至少半数管理节点在线，所以为什么至少要3、5个管理节点&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;现在用解锁key启动管理节点B：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl-b:~$ docker swarm unlock
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Please enter unlock key: SWMKEY-1-0A98dswMx4EOOmfMwjlVDEL1w1OLncMAQniYV+nPKuk
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl-b:~$ docker node ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;aez7db9rdqoylqktrk7stcu49     lzl-c      Ready     Active                          20.10.10
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;jfhjtedzu8mg0y6vzgw0unvw7     lzl-d      Ready     Active                          20.10.10
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kwtw0ybgf4uzd1d6bcdpwze1y     lzl        Ready     Active         Leader           20.10.10
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ppvj0ll2jo0smt4htpms9fosw *   lzl-b      Ready     Active         Reachable        20.10.10
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;swarm服务&#34;&gt;Swarm服务&lt;/h2&gt;
+&lt;p&gt;Docker1.12后引入服务，通过Swarm部署服务的多个实例，实现服务的高可用、弹性、滚动升级。&lt;/p&gt;
+&lt;p&gt;我们部署一个简单的Web服务：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service create --name web-fe &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; -p 8080:8080 &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; --replicas &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; nigelpoulton/pluralsight-docker-ci
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;image nigelpoulton/pluralsight-docker-ci:latest could not be accessed on a registry to record
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;its digest. Each node will access nigelpoulton/pluralsight-docker-ci:latest independently,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;possibly leading to different nodes running different
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;versions of the image.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;cz5m15yzyfzvxoilx2czv9s0n
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;overall progress: &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; out of &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; tasks 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;1/3: running   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;2/3: running   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;3/3: running   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;verify: Service converged 
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&amp;ndash;replicas：表示有3个实例&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;假设某个节点宕机了，服务实例降为2个，那么Swarm会再实例化一个服务，保证有3个实例提供服务。通过端口映射，每个机器上访问8080端口都可以访问服务。&lt;/p&gt;
+&lt;h3 id=&#34;查看swarm服务&#34;&gt;查看Swarm服务&lt;/h3&gt;
+&lt;p&gt;列出服务：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID             NAME      MODE         REPLICAS   IMAGE                                       PORTS
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;cz5m15yzyfzv   web-fe    replicated   3/3        nigelpoulton/pluralsight-docker-ci:latest   *:8080-&amp;gt;8080/tcp
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;查看每个服务副本：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service ps web-fe
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID             NAME       IMAGE                                       NODE      DESIRED STATE   CURRENT STATE                ERROR     PORTS
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mexucdagzhx3   web-fe.1   nigelpoulton/pluralsight-docker-ci:latest   lzl-b     Running         Running about a minute ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;if2hnpkawwhk   web-fe.2   nigelpoulton/pluralsight-docker-ci:latest   lzl-c     Running         Running about a minute ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mtkhx4uaazya   web-fe.3   nigelpoulton/pluralsight-docker-ci:latest   lzl-d     Running         Running about a minute ago
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;查看该服务细节：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service inspect --pretty web-fe 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID:		cz5m15yzyfzvxoilx2czv9s0n
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Name:		web-fe
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Service Mode:	Replicated
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; Replicas:	&lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Placement:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;UpdateConfig:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; Parallelism:	&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; On failure:	pause
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; Monitoring Period: 5s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; Max failure ratio: &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; Update order:      stop-first
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;RollbackConfig:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; Parallelism:	&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; On failure:	pause
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; Monitoring Period: 5s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; Max failure ratio: &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; Rollback order:    stop-first
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ContainerSpec:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; Image:		nigelpoulton/pluralsight-docker-ci:latest
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; Init:		false
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Resources:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Endpoint Mode:	vip
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Ports:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; PublishedPort &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;8080&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Protocol &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; tcp
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  TargetPort &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;8080&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  PublishMode &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; ingress 
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&amp;ndash;pretty：不加会列出更为详细的信息。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;副本服务和全局服务&#34;&gt;副本服务和全局服务&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;副本模式：这是默认的模式，将期望数量的副本均匀的分布到整个集群中。&lt;/li&gt;
+&lt;li&gt;全局模式：每个节点上仅运行一个副本，使用&lt;code&gt;docker create service --mode global&lt;/code&gt;部署全局模式。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;服务扩缩容&#34;&gt;服务扩缩容&lt;/h3&gt;
+&lt;p&gt;假设3个实例提供服务有些吃力了，我们需要将实例增加到6个。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service scale web-fe&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;web-fe scaled to &lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;overall progress: &lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt; out of &lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt; tasks 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;1/6: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;2/6: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;3/6: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;4/6: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;5/6: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;6/6: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;verify: Service converged 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID             NAME      MODE         REPLICAS   IMAGE                                       PORTS
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;cz5m15yzyfzv   web-fe    replicated   6/6        nigelpoulton/pluralsight-docker-ci:latest   *:8080-&amp;gt;8080/tcp
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service ps web-fe 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID             NAME       IMAGE                                       NODE      DESIRED STATE   CURRENT STATE                ERROR     PORTS
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mexucdagzhx3   web-fe.1   nigelpoulton/pluralsight-docker-ci:latest   lzl-b     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;7&lt;/span&gt; minutes ago                  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;if2hnpkawwhk   web-fe.2   nigelpoulton/pluralsight-docker-ci:latest   lzl-c     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;7&lt;/span&gt; minutes ago                  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mtkhx4uaazya   web-fe.3   nigelpoulton/pluralsight-docker-ci:latest   lzl-d     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;7&lt;/span&gt; minutes ago                  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ngjcu26etj9l   web-fe.4   nigelpoulton/pluralsight-docker-ci:latest   lzl       Running         Running about a minute ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;4muhlzldan91   web-fe.5   nigelpoulton/pluralsight-docker-ci:latest   lzl-c     Running         Running about a minute ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;m4ugu5sz63b8   web-fe.6   nigelpoulton/pluralsight-docker-ci:latest   lzl-d     Running         Running about a minute ago
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Swarm自动为我们均衡的增加了服务实例，现在再将实例降回到3个。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service scale web-fe&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;web-fe scaled to &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;overall progress: &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; out of &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; tasks 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;1/3: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;2/3: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;3/3: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;verify: Service converged 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service ps web-fe 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID             NAME       IMAGE                                       NODE      DESIRED STATE   CURRENT STATE            ERROR     PORTS
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mexucdagzhx3   web-fe.1   nigelpoulton/pluralsight-docker-ci:latest   lzl-b     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;10&lt;/span&gt; minutes ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;if2hnpkawwhk   web-fe.2   nigelpoulton/pluralsight-docker-ci:latest   lzl-c     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;10&lt;/span&gt; minutes ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mtkhx4uaazya   web-fe.3   nigelpoulton/pluralsight-docker-ci:latest   lzl-d     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;10&lt;/span&gt; minutes ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ngjcu26etj9l   web-fe.4   nigelpoulton/pluralsight-docker-ci:latest   lzl       Remove          Running &lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt; seconds ago              
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;4muhlzldan91   web-fe.5   nigelpoulton/pluralsight-docker-ci:latest   lzl-c     Remove          Running &lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt; seconds ago              
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;m4ugu5sz63b8   web-fe.6   nigelpoulton/pluralsight-docker-ci:latest   lzl-d     Remove          Running &lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt; seconds ago  
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;现在有3个服务实例已经被移除。&lt;/p&gt;
+&lt;h3 id=&#34;删除服务&#34;&gt;删除服务&lt;/h3&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service rm web-fe
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;web-fe
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;滚动升级&#34;&gt;滚动升级&lt;/h3&gt;
+&lt;p&gt;下面用一个新的服务演示滚动升级。在此之前，需要创建一个覆盖网络&lt;strong&gt;overlay&lt;/strong&gt;。这是一个二层网络，所有接入该网络的容器可以互相通信，即使这些容器的宿主机的底层网络不同。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211116_132014_edit_596230659587665.jpg&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker network create -d overlay uber-net
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;np6r4rhm4lpsalikwfiahopcy
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker network ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NETWORK ID     NAME              DRIVER    SCOPE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;72f99c88c853   bridge            bridge    local
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;9027fdbdc8f6   docker_gwbridge   bridge    local
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;7a84b4fa35eb   host              host      local
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mvd937imkve6   ingress           overlay   swarm
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;66b37b687b76   none              null      local
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;np6r4rhm4lps   uber-net          overlay   swarm	&lt;span style=&#34;color:#75715e&#34;&gt;# 我们新建的覆盖网络&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;然后新建一个服务，创建8个服务提供实例，并把它接入该网络。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service create --name uber-svc &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; --network uber-net &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; -p 80:80 --replicas &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; nigelpoulton/tu-demo:v1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;image nigelpoulton/tu-demo:v1 could not be accessed on a registry to record
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;its digest. Each node will access nigelpoulton/tu-demo:v1 independently,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;possibly leading to different nodes running different
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;versions of the image.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;v5hohnigjlubbg7itg42habfr
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;overall progress: &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt; out of &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt; tasks 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;1/8: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;2/8: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;3/8: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;4/8: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;5/8: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;6/8: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;7/8: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;8/8: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;verify: Service converged 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID             NAME       MODE         REPLICAS   IMAGE                     PORTS
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;v5hohnigjlub   uber-svc   replicated   8/8        nigelpoulton/tu-demo:v1   *:80-&amp;gt;80/tcp
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service ps uber-svc 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID             NAME         IMAGE                     NODE      DESIRED STATE   CURRENT STATE            ERROR     PORTS
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;3cxuushzkvo4   uber-svc.1   nigelpoulton/tu-demo:v1   lzl-c     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;49&lt;/span&gt; seconds ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;xjv8k31yxhxt   uber-svc.2   nigelpoulton/tu-demo:v1   lzl-b     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;49&lt;/span&gt; seconds ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;xzxyzyk9kxy9   uber-svc.3   nigelpoulton/tu-demo:v1   lzl-c     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;48&lt;/span&gt; seconds ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;tg6zmzqwzab6   uber-svc.4   nigelpoulton/tu-demo:v1   lzl-d     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;52&lt;/span&gt; seconds ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;y4jl7yg5jsc1   uber-svc.5   nigelpoulton/tu-demo:v1   lzl       Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;49&lt;/span&gt; seconds ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;s8yvzixgbepo   uber-svc.6   nigelpoulton/tu-demo:v1   lzl-d     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;50&lt;/span&gt; seconds ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;69ghlllr9mi5   uber-svc.7   nigelpoulton/tu-demo:v1   lzl-b     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;48&lt;/span&gt; seconds ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mtkg9y3j7dl3   uber-svc.8   nigelpoulton/tu-demo:v1   lzl       Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;51&lt;/span&gt; seconds ago  
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;-p 80:80&lt;/code&gt;：把所有到达Swarm节点的80端口的流量映射到每个服务副本中的80端口&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--network uber-net&lt;/code&gt;：服务的所有副本使用这个覆盖网络&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;一般的，对于开放端口的处理，默认使用入站模式，此外还有主机模式。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;入站模式：所有Swarm节点都开放端口，即使节点上没有任何服务副本，从任何节点的IP都可以访问到服务，因为节点配置的映射会将请求转发给有服务实例的节点&lt;/li&gt;
+&lt;li&gt;主机模式：仅在运行了服务实例的节点开放端口&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;下面来看滚动升级，升级策略是每次升级2个副本，间隔20秒。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service update &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; --image nigelpoulton/tu-demo:v2 &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; --update-parallelism &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;&amp;gt; --update-delay 20s uber-svc
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;image nigelpoulton/tu-demo:v2 could not be accessed on a registry to record
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;its digest. Each node will access nigelpoulton/tu-demo:v2 independently,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;possibly leading to different nodes running different
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;versions of the image.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;uber-svc
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;overall progress: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; out of &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt; tasks 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;1/8: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;2/8: running   &lt;span style=&#34;color:#f92672&#34;&gt;[==================================================&lt;/span&gt;&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;3/8:   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;4/8:   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;5/8:   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;6/8:   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;7/8:   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;8/8:   
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;--image nigelpoulton/tu-demo:v2&lt;/code&gt;：指定升级的服务镜像&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--update-parallelism 2&lt;/code&gt;：每次升级2个服务&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--update-delay 20s&lt;/code&gt;：升级间隔20秒&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在升级过程中，我们查看当前服务实例副本：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service ps uber-svc 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID             NAME             IMAGE                     NODE      DESIRED STATE   CURRENT STATE             ERROR     PORTS
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;3cxuushzkvo4   uber-svc.1       nigelpoulton/tu-demo:v1   lzl-c     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt; minutes ago               
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mc36cqxnh0gs   uber-svc.2       nigelpoulton/tu-demo:v2   lzl-b     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;37&lt;/span&gt; seconds ago              
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;xjv8k31yxhxt    &lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt; uber-svc.2   nigelpoulton/tu-demo:v1   lzl-b     Shutdown        Shutdown &lt;span style=&#34;color:#ae81ff&#34;&gt;39&lt;/span&gt; seconds ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nok5eng7umqc   uber-svc.3       nigelpoulton/tu-demo:v2   lzl-c     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;11&lt;/span&gt; seconds ago              
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;xzxyzyk9kxy9    &lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt; uber-svc.3   nigelpoulton/tu-demo:v1   lzl-c     Shutdown        Shutdown &lt;span style=&#34;color:#ae81ff&#34;&gt;13&lt;/span&gt; seconds ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;dkxz1gpg4f4f   uber-svc.4       nigelpoulton/tu-demo:v2   lzl-d     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;37&lt;/span&gt; seconds ago              
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;tg6zmzqwzab6    &lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt; uber-svc.4   nigelpoulton/tu-demo:v1   lzl-d     Shutdown        Shutdown &lt;span style=&#34;color:#ae81ff&#34;&gt;39&lt;/span&gt; seconds ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;flgey27vyz35   uber-svc.5       nigelpoulton/tu-demo:v2   lzl       Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;11&lt;/span&gt; seconds ago              
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;y4jl7yg5jsc1    &lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt; uber-svc.5   nigelpoulton/tu-demo:v1   lzl       Shutdown        Shutdown &lt;span style=&#34;color:#ae81ff&#34;&gt;13&lt;/span&gt; seconds ago             
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;s8yvzixgbepo   uber-svc.6       nigelpoulton/tu-demo:v1   lzl-d     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt; minutes ago               
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;69ghlllr9mi5   uber-svc.7       nigelpoulton/tu-demo:v1   lzl-b     Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt; minutes ago               
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mtkg9y3j7dl3   uber-svc.8       nigelpoulton/tu-demo:v1   lzl       Running         Running &lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt; minutes ago  
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;在滚动升级的过程中，同时存在新版本的服务和旧版本的服务。在这个时候去访问网站，可能会出现有的访问的是新的服务有的访问的是旧的服务。但升级期间我们的服务仍然是正常工作的，在滚动升级完成后，所以服务实例都被升级。&lt;/p&gt;
+&lt;h3 id=&#34;故障排除&#34;&gt;故障排除&lt;/h3&gt;
+&lt;p&gt;排障这部分主要是通过Swarm集群工作日志来实现的。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker service logs uber-svc 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;uber-svc.8.mtkg9y3j7dl3@lzl    | &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;2021-11-15 08:03:19 +0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;1&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Starting gunicorn 20.1.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;uber-svc.8.mtkg9y3j7dl3@lzl    | &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;2021-11-15 08:03:19 +0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;1&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Listening at: http://0.0.0.0:80 &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;1&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;uber-svc.8.mtkg9y3j7dl3@lzl    | &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;2021-11-15 08:03:19 +0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;1&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Using worker: sync
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;uber-svc.8.mtkg9y3j7dl3@lzl    | &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;2021-11-15 08:03:19 +0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;6&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Booting worker with pid: &lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;uber-svc.8.mtkg9y3j7dl3@lzl    | &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;2021-11-15 08:03:19 +0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;7&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Booting worker with pid: &lt;span style=&#34;color:#ae81ff&#34;&gt;7&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;uber-svc.8.mtkg9y3j7dl3@lzl    | &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;2021-11-15 08:03:19 +0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;8&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Booting worker with pid: &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;uber-svc.8.mtkg9y3j7dl3@lzl    | &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;2021-11-15 08:03:19 +0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;9&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Booting worker with pid: &lt;span style=&#34;color:#ae81ff&#34;&gt;9&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;uber-svc.8.mtkg9y3j7dl3@lzl    | &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;2021-11-15 08:10:54 +0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;1&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Handling signal: term
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;···
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;退出swarm模式&#34;&gt;退出Swarm模式&lt;/h2&gt;
+&lt;p&gt;最后，我们down掉服务后，退出Swarm模式，将集群关闭。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 在工作节点上使用 &lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker swarm leave
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Node left the swarm.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 在管理节点上使用&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~$ docker swarm leave --force
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Node left the swarm.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
+        </item>
+        <item>
+        <title>使用docker-compose部署应用</title>
+        <link>https://lizonglingo.github.io/p/%E4%BD%BF%E7%94%A8docker-compose%E9%83%A8%E7%BD%B2%E5%BA%94%E7%94%A8/</link>
+        <pubDate>Thu, 11 Nov 2021 14:47:36 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E4%BD%BF%E7%94%A8docker-compose%E9%83%A8%E7%BD%B2%E5%BA%94%E7%94%A8/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;Docker Compose可以在Docker节点上，以单引擎模式进行多容器应用的部署和管理。使用时，首先定义多容器的应用的YAML文件，然后就可以交给docker-compose进行部署。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;安装docker-compose&#34;&gt;安装Docker Compose&lt;/h2&gt;
+&lt;p&gt;直接访问&lt;a class=&#34;link&#34; href=&#34;https://github.com/docker/compose/releases&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Github&lt;/a&gt;的镜像源可能会超时，这样还有国内的镜像源可以使用，根据自己的需要修改版本号。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 可能会超时&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ sudo curl -L https://github.com/docker/compose/releases/download/2.1.1/docker-compose-&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;uname -s&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;-&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;uname -m&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt; -o /usr/local/bin/docker-compose
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 使用国内镜像源&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ sudo curl -L https://get.daocloud.io/docker/compose/releases/download/1.28.5/docker-compose-&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;uname -s&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;-&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;uname -m&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt; -o /usr/local/bin/docker-compose
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 增加权限&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ sudo chmod +x /usr/local/bin/docker-compose
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 查看是否安装成功&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose --version
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;docker-compose version 1.28.5, build c4eb3a1f
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;compose文件&#34;&gt;Compose文件&lt;/h2&gt;
+&lt;p&gt;Docker Compose使用YAML文件定义多服务应用，YAML是JSON的子集，因此使用JSON也是可以的。文件的默认名是&lt;code&gt;docker-compose.yml&lt;/code&gt;，也可使用&lt;code&gt;-f&lt;/code&gt;参数指定具体的文件。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;version&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;3.5&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;services&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;web-fe&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;build&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;.&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;command&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;python app.py&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;ports&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#f92672&#34;&gt;target&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;5000&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;published&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;5000&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;networks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#ae81ff&#34;&gt;counter-net&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;volumes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#f92672&#34;&gt;type&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;volume&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;source&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;counter-vol&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;target&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;/code&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;redis&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;image&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;redis:alpine&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;networks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;counter-net&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;networks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;counter-net&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;volumes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;counter-vol&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这个文件包含4个一级key：&lt;code&gt;version&lt;/code&gt;, &lt;code&gt;services&lt;/code&gt;, &lt;code&gt;networks&lt;/code&gt;, &lt;code&gt;volumes&lt;/code&gt;。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;version&lt;/code&gt;：是必须指定的，而且总是位于文件的第一行。它定义的是使用的Compose文件格式的版本。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;services&lt;/code&gt;：用于定义不同的应用服务。就如上面的定义了两个服务，&lt;code&gt;web-fe&lt;/code&gt;和&lt;code&gt;redis&lt;/code&gt;。Docker Compose会将每个服务部署在各自的容器中。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;networks&lt;/code&gt;：用于指定Docker创建新网络，默认情况下创建bridge形式的网络。这是单主机类型网络，只能实现同一主机上容器的连接。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;volumes&lt;/code&gt;：指定创建新的卷。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;根据&lt;code&gt;networks&lt;/code&gt;和&lt;code&gt;volumes&lt;/code&gt;会创建一个名为&lt;code&gt;counter-net&lt;/code&gt;的网络和一个&lt;code&gt;counter-vol&lt;/code&gt;的卷。&lt;code&gt;services&lt;/code&gt;定义了两个二级key：&lt;code&gt;web-fe&lt;/code&gt;和&lt;code&gt;redis&lt;/code&gt;，因此会部署两个容器，这两个容器名字会使用这两个二级key。&lt;/p&gt;
+&lt;p&gt;在&lt;code&gt;web-fe&lt;/code&gt;服务中：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;build: .&lt;/code&gt;会基于当前目录，构建一个新的，用于启动容器的镜像，它会根据当前目录的Dockerfile构建镜像&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;command: python app.py&lt;/code&gt;指定该脚本为主程序&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ports&lt;/code&gt;指定将容器内的&lt;code&gt;- target&lt;/code&gt;的5000端口映射到主机&lt;code&gt;published&lt;/code&gt;的5000端口上，也就是发送到主机5000端口的流量会被转发到Docker容器中的5000端口上&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;networks&lt;/code&gt;使Docker可以连接到指定网络，这个网络应该是已经存在的或者是一级key中定义的网络&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;volumes&lt;/code&gt;指定Docker将&lt;code&gt;counter-vol&lt;/code&gt;卷(source:)挂载到容器内的&lt;code&gt;/code&lt;/code&gt;(target:)，这个卷是应该已经存在或者在一级key中定义了的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;使用docker-compose部署应用&#34;&gt;使用Docker Compose部署应用&lt;/h2&gt;
+&lt;p&gt;示例的文件在&lt;a class=&#34;link&#34; href=&#34;https://github.com/nigelpoulton/counter-app&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;这里&lt;/a&gt;下载。目录结构如下：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ tree
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;├── app.py				&lt;span style=&#34;color:#75715e&#34;&gt;# 应用程序代码 一个Flask应用&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;├── docker-compose.yml	&lt;span style=&#34;color:#75715e&#34;&gt;# Compose文件，告诉Docker怎么部署应用&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;├── Dockerfile			&lt;span style=&#34;color:#75715e&#34;&gt;# 定义如何构建web-fe镜像&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;├── README.md		
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;└── requirements.txt	&lt;span style=&#34;color:#75715e&#34;&gt;# python 所需的依赖&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;下面在这个目录把应用启起来：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;这里需要注意的是，有些镜像源可能会拉去失败，我在更换了Docker的国内镜像源后就行了。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose up &amp;amp;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;1&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;71363&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ Building web-fe
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Sending build context to Docker daemon  6.656kB
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Step 1/5 : FROM python:3.6-alpine
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;3.6-alpine: Pulling from library/python
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;a0d0a0d46f8b: Already exists
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;c11246b421be: Pulling fs layer
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ef6741e6e9c4: Pulling fs layer
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;9d6fa827d5ce: Pulling fs layer
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;01b777f5b036: Pulling fs layer
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;01b777f5b036: Waiting
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;9d6fa827d5ce: Verifying Checksum
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;9d6fa827d5ce: Download complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;c11246b421be: Download complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;c11246b421be: Pull complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;01b777f5b036: Verifying Checksum
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;01b777f5b036: Download complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ef6741e6e9c4: Verifying Checksum
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ef6741e6e9c4: Download complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ef6741e6e9c4: Pull complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;9d6fa827d5ce: Pull complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;01b777f5b036: Pull complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Digest: sha256:4d04019f2907a6463e07c385ad30d773b122e83a32112d6cfc15902a12179da2
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Status: Downloaded newer image &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; python:3.6-alpine
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; ---&amp;gt; c5aebf5e06c5
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Step 2/5 : ADD . /code
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; ---&amp;gt; fea08c327ce0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Step 3/5 : WORKDIR /code
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; ---&amp;gt; Running in 0a3784bffe75
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Removing intermediate container 0a3784bffe75
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; ---&amp;gt; 8ea8abf1588d
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Step 4/5 : RUN pip install -r requirements.txt
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; ---&amp;gt; Running in 1734648fa3fc
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Collecting flask
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Downloading Flask-2.0.2-py3-none-any.whl &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;95&lt;/span&gt; kB&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Collecting redis
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Downloading redis-3.5.3-py2.py3-none-any.whl &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;72&lt;/span&gt; kB&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Collecting click&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;7.1.2
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Downloading click-8.0.3-py3-none-any.whl &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;97&lt;/span&gt; kB&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Collecting Werkzeug&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;2.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Downloading Werkzeug-2.0.2-py3-none-any.whl &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;288&lt;/span&gt; kB&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Collecting itsdangerous&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;2.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Downloading itsdangerous-2.0.1-py3-none-any.whl &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;18&lt;/span&gt; kB&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Collecting Jinja2&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;3.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Downloading Jinja2-3.0.3-py3-none-any.whl &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;133&lt;/span&gt; kB&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Collecting importlib-metadata
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Downloading importlib_metadata-4.8.2-py3-none-any.whl &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;17&lt;/span&gt; kB&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Collecting MarkupSafe&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;2.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Downloading MarkupSafe-2.0.1-cp36-cp36m-musllinux_1_1_x86_64.whl &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;29&lt;/span&gt; kB&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Collecting dataclasses
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Downloading dataclasses-0.8-py3-none-any.whl &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;19&lt;/span&gt; kB&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Collecting zipp&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;0.5
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Downloading zipp-3.6.0-py3-none-any.whl &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;5.3 kB&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Collecting typing-extensions&amp;gt;&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;3.6.4
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Downloading typing_extensions-3.10.0.2-py3-none-any.whl &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;26&lt;/span&gt; kB&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Installing collected packages: zipp, typing-extensions, MarkupSafe, importlib-metadata, dataclasses, Werkzeug, Jinja2, itsdangerous, click, redis, flask
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;WARNING: Running pip as the &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;root&amp;#39;&lt;/span&gt; user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Successfully installed Jinja2-3.0.3 MarkupSafe-2.0.1 Werkzeug-2.0.2 click-8.0.3 dataclasses-0.8 flask-2.0.2 importlib-metadata-4.8.2 itsdangerous-2.0.1 redis-3.5.3 typing-extensions-3.10.0.2 zipp-3.6.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;WARNING: You are using pip version 21.2.4; however, version 21.3.1 is available.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;You should consider upgrading via the &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;/usr/local/bin/python -m pip install --upgrade pip&amp;#39;&lt;/span&gt; command.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Removing intermediate container 1734648fa3fc
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; ---&amp;gt; f6d6d22ade59
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Step 5/5 : CMD &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;python&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;app.py&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; ---&amp;gt; Running in c11adb1eb784
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Removing intermediate container c11adb1eb784
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; ---&amp;gt; 1e3f0e452820
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Successfully built 1e3f0e452820
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Successfully tagged counter-app-master_web-fe:latest
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;WARNING: Image &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; service web-fe was built because it did not already exist. To rebuild this image you must use &lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;docker-compose build&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt; or &lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;docker-compose up --build&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Pulling redis &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;redis:alpine&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;alpine: Pulling from library/redis
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;a0d0a0d46f8b: Already exists
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;a04b0375051e: Pull complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;cdc2bb0f9590: Pull complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;0aa2a8e7bd65: Pull complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;f64034a16b58: Pull complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;7b9178a22893: Pull complete
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Digest: sha256:58132ff3162cf9ecc8e2042c77b2ec46f6024c35e83bda3cabde76437406f8ac
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Status: Downloaded newer image &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; redis:alpine
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Creating counter-app-master_web-fe_1 ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Creating counter-app-master_redis_1  ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Attaching to counter-app-master_redis_1, counter-app-master_web-fe_1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;redis_1   | 1:C &lt;span style=&#34;color:#ae81ff&#34;&gt;11&lt;/span&gt; Nov &lt;span style=&#34;color:#ae81ff&#34;&gt;2021&lt;/span&gt; 08:10:29.159 &lt;span style=&#34;color:#75715e&#34;&gt;# oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;redis_1   | 1:C &lt;span style=&#34;color:#ae81ff&#34;&gt;11&lt;/span&gt; Nov &lt;span style=&#34;color:#ae81ff&#34;&gt;2021&lt;/span&gt; 08:10:29.159 &lt;span style=&#34;color:#75715e&#34;&gt;# Redis version=6.2.6, bits=64, commit=00000000, modified=0, pid=1, just started&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;redis_1   | 1:C &lt;span style=&#34;color:#ae81ff&#34;&gt;11&lt;/span&gt; Nov &lt;span style=&#34;color:#ae81ff&#34;&gt;2021&lt;/span&gt; 08:10:29.159 &lt;span style=&#34;color:#75715e&#34;&gt;# Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;redis_1   | 1:M &lt;span style=&#34;color:#ae81ff&#34;&gt;11&lt;/span&gt; Nov &lt;span style=&#34;color:#ae81ff&#34;&gt;2021&lt;/span&gt; 08:10:29.160 * monotonic clock: POSIX clock_gettime
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;redis_1   | 1:M &lt;span style=&#34;color:#ae81ff&#34;&gt;11&lt;/span&gt; Nov &lt;span style=&#34;color:#ae81ff&#34;&gt;2021&lt;/span&gt; 08:10:29.161 * Running mode&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;standalone, port&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;6379.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;redis_1   | 1:M &lt;span style=&#34;color:#ae81ff&#34;&gt;11&lt;/span&gt; Nov &lt;span style=&#34;color:#ae81ff&#34;&gt;2021&lt;/span&gt; 08:10:29.161 &lt;span style=&#34;color:#75715e&#34;&gt;# Server initialized&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;redis_1   | 1:M &lt;span style=&#34;color:#ae81ff&#34;&gt;11&lt;/span&gt; Nov &lt;span style=&#34;color:#ae81ff&#34;&gt;2021&lt;/span&gt; 08:10:29.161 &lt;span style=&#34;color:#75715e&#34;&gt;# WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add &amp;#39;vm.overcommit_memory = 1&amp;#39; to /etc/sysctl.conf and then reboot or run the command &amp;#39;sysctl vm.overcommit_memory=1&amp;#39; for this to take effect.&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;redis_1   | 1:M &lt;span style=&#34;color:#ae81ff&#34;&gt;11&lt;/span&gt; Nov &lt;span style=&#34;color:#ae81ff&#34;&gt;2021&lt;/span&gt; 08:10:29.162 * Ready to accept connections
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;web-fe_1  |  * Serving Flask app &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;app&amp;#39;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;lazy loading&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;web-fe_1  |  * Environment: production
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;web-fe_1  |    WARNING: This is a development server. Do not use it in a production deployment.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;web-fe_1  |    Use a production WSGI server instead.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;web-fe_1  |  * Debug mode: on
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;web-fe_1  |  * Running on all addresses.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;web-fe_1  |    WARNING: This is a development server. Do not use it in a production deployment.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;web-fe_1  |  * Running on http://172.18.0.2:5000/ &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Press CTRL+C to quit&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;web-fe_1  |  * Restarting with stat
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~/WorkSpace/docker/counter-app-master$ web-fe_1  |  * Debugger is active!
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;web-fe_1  |  * Debugger PIN: 126-336-179
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;lzl@lzl:~/WorkSpace/docker/counter-app-master$ 
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;其启动流程如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;首先会找到&lt;code&gt;Dockerfile&lt;/code&gt;，按照内容进行镜像构建。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   FROM python:3.6-alpine
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   ADD . /code
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   WORKDIR /code
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   RUN pip install -r requirements.txt
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   CMD &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;python&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;app.py&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;docker-compose up&lt;/code&gt;会查找名为&lt;code&gt;docker-compose.yml&lt;/code&gt;或&lt;code&gt;docker-compose.yaml&lt;/code&gt;的文件，按照文件学的进行多服务引用的构建。如果是其他的就需要用&lt;code&gt;docker-compose -f xxx.yml up&lt;/code&gt;参数来启动。如果是&lt;code&gt;docker-compose -f xxx.yml up -d&lt;/code&gt;这个&lt;code&gt;-d&lt;/code&gt;命令使其在后台启动。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;这样应用就构建并启动起来了。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   $ docker image ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   REPOSITORY                           TAG          IMAGE ID       CREATED         SIZE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   counter-app-master_web-fe            latest       1e3f0e452820   &lt;span style=&#34;color:#ae81ff&#34;&gt;5&lt;/span&gt; minutes ago   52.5MB
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   python                               3.6-alpine   c5aebf5e06c5   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; weeks ago     40.8MB
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   redis                                alpine       e24d2b9deaec   &lt;span style=&#34;color:#ae81ff&#34;&gt;5&lt;/span&gt; weeks ago     32.3MB
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   $ docker container ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   CONTAINER ID   IMAGE                       COMMAND                  CREATED         STATUS         PORTS                                       NAMES
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   93b990e9d382   counter-app-master_web-fe   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;python app.py&amp;#34;&lt;/span&gt;          &lt;span style=&#34;color:#ae81ff&#34;&gt;7&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;7&lt;/span&gt; minutes   0.0.0.0:5000-&amp;gt;5000/tcp, :::5000-&amp;gt;5000/tcp   counter-app-master_web-fe_1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   024d6af94218   redis:alpine                &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;docker-entrypoint.s…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;7&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;7&lt;/span&gt; minutes   6379/tcp                                    counter-app-master_redis_1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   $ docker network ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   NETWORK ID     NAME                             DRIVER    SCOPE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   923f7682872b   bridge                           bridge    local
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   66054169df04   counter-app-master_counter-net   bridge    local
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   7a84b4fa35eb   host                             host      local
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   66b37b687b76   none                             null      local
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   $ docker volume ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   DRIVER    VOLUME NAME
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   local     4569b40ca4ad82b1c32612c1859721b8f3bafafa90455000520d7cb0c8764373
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   local     counter-app-master_counter-vol
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我们可以从中看到，新拉取的镜像，创建的容器以及网络和卷。然后打开我们的浏览器，访问5000端口。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211111162306.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;此外，因为我们在启动时使用了&lt;code&gt;&amp;amp;&lt;/code&gt;，这会将所有日志输出到终端。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   web-fe_1  | 172.18.0.1 - - &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;11/Nov/2021 08:22:42&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;GET / HTTP/1.1&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;200&lt;/span&gt; -
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   web-fe_1  | 172.18.0.1 - - &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;11/Nov/2021 08:22:42&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;GET /favicon.ico HTTP/1.1&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;404&lt;/span&gt; -
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   web-fe_1  | 172.18.0.1 - - &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;11/Nov/2021 08:22:48&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;GET / HTTP/1.1&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;200&lt;/span&gt; -
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;5&#34;&gt;
+&lt;li&gt;这样，我们就通过docker compose文件成功部署了两个服务（容器）的应用。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;使用docker-compose管理应用&#34;&gt;使用Docker Compose管理应用&lt;/h2&gt;
+&lt;p&gt;关闭服务的命令很简单，但实际上&lt;code&gt;down&lt;/code&gt;使用了两个命令，分别是&lt;code&gt;stop&lt;/code&gt;和&lt;code&gt;rm&lt;/code&gt;：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose down
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Stopping counter-app-master_redis_1  ... 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Stopping counter-app-master_web-fe_1 ... 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;redis_1   | 1:signal-handler &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;1636619854&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; Received SIGTERM scheduling shutdown...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;redis_1   | 1:M &lt;span style=&#34;color:#ae81ff&#34;&gt;11&lt;/span&gt; Nov &lt;span style=&#34;color:#ae81ff&#34;&gt;2021&lt;/span&gt; 08:37:34.813 &lt;span style=&#34;color:#75715e&#34;&gt;# User requested shutdown...&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;redis_1   | 1:M &lt;span style=&#34;color:#ae81ff&#34;&gt;11&lt;/span&gt; Nov &lt;span style=&#34;color:#ae81ff&#34;&gt;2021&lt;/span&gt; 08:37:34.813 * Saving the final RDB snapshot before exiting.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Stopping counter-app-master_redis_1  ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;redis_1   | 1:M &lt;span style=&#34;color:#ae81ff&#34;&gt;11&lt;/span&gt; Nov &lt;span style=&#34;color:#ae81ff&#34;&gt;2021&lt;/span&gt; 08:37:34.815 &lt;span style=&#34;color:#75715e&#34;&gt;# Redis is now ready to exit, bye bye...&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Stopping counter-app-master_web-fe_1 ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;counter-app-master_web-fe_1 exited with code &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Removing counter-app-master_redis_1  ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Removing counter-app-master_web-fe_1 ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Removing network counter-app-master_counter-net
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;1&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;+  Done                    docker-compose up
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol&gt;
+&lt;li&gt;首先，尝试停止两个服务。&lt;/li&gt;
+&lt;li&gt;向服务发送&lt;code&gt;SIGTERM&lt;/code&gt;优雅关闭服务。&lt;/li&gt;
+&lt;li&gt;我们发现在退出之前会保存卷数据，这个卷保证数据持久化存储，卷的生命周期和容器的是解耦的。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在后台启动：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose up -d
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Creating network &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;counter-app-master_counter-net&amp;#34;&lt;/span&gt; with the default driver
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Creating counter-app-master_web-fe_1 ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Creating counter-app-master_redis_1  ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;查看已经启动的服务：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose ps
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;           Name                          Command               State                    Ports                  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;---------------------------------------------------------------------------------------------------------------
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;counter-app-master_redis_1    docker-entrypoint.sh redis ...   Up      6379/tcp                                
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;counter-app-master_web-fe_1   python app.py                    Up      0.0.0.0:5000-&amp;gt;5000/tcp,:::5000-&amp;gt;5000/tcp
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;查看每个服务中的进程：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose top
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;counter-app-master_redis_1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;UID    PID    PPID    C   STIME   TTY     TIME             CMD        
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;----------------------------------------------------------------------
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;999&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;73540&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;73474&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;   16:42   ?     00:00:00   redis-server *:6379
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;counter-app-master_web-fe_1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;UID     PID    PPID    C   STIME   TTY     TIME                    CMD                
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;--------------------------------------------------------------------------------------
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root   &lt;span style=&#34;color:#ae81ff&#34;&gt;73576&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;73519&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;   16:42   ?     00:00:00   python app.py                     
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root   &lt;span style=&#34;color:#ae81ff&#34;&gt;73706&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;73576&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;   16:42   ?     00:00:00   /usr/local/bin/python /code/app.py
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;与关闭服务的&lt;code&gt;down&lt;/code&gt;不同，&lt;code&gt;stop&lt;/code&gt;是暂停服务，在列表中仍然可以看到：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose stop
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Stopping counter-app-master_web-fe_1 ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Stopping counter-app-master_redis_1  ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose ps
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;           Name                          Command               State    Ports
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;-----------------------------------------------------------------------------
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;counter-app-master_redis_1    docker-entrypoint.sh redis ...   Exit &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;        
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;counter-app-master_web-fe_1   python app.py                    Exit &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;        
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;进一步，使用&lt;code&gt;rm&lt;/code&gt;会删除Compose应用，但是不会删除镜像和卷：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose rm
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Going to remove counter-app-master_web-fe_1, counter-app-master_redis_1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Are you sure? &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;yN&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; y   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Removing counter-app-master_web-fe_1 ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Removing counter-app-master_redis_1  ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose ps
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Name   Command   State   Ports
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;已经&lt;code&gt;rm&lt;/code&gt;的应用是不能通过&lt;code&gt;restart&lt;/code&gt;命令重启的，而&lt;code&gt;stop&lt;/code&gt;的可以通过&lt;code&gt;restart&lt;/code&gt;重启&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose rm
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Going to remove counter-app-master_web-fe_1, counter-app-master_redis_1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Are you sure? &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;yN&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; y   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Removing counter-app-master_web-fe_1 ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Removing counter-app-master_redis_1  ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose restart
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERROR: No containers to restart
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERROR: &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose stop
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Stopping counter-app-master_redis_1  ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Stopping counter-app-master_web-fe_1 ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ docker-compose restart
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Restarting counter-app-master_redis_1  ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Restarting counter-app-master_web-fe_1 ... &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;应用使用卷volume进行持久化存储&#34;&gt;应用使用卷volume进行持久化存储&lt;/h2&gt;
+&lt;p&gt;在上面的实例中，我们先看Dockerfile文件：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;FROM python:3.6-alpine&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;ADD . /code&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;WORKDIR /code&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;RUN pip install -r requirements.txt&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;CMD [&amp;#34;python&amp;#34;, &amp;#34;app.py&amp;#34;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我们将主机上的项目根目录中的文件拷贝到容器中的&lt;code&gt;/code&lt;/code&gt;目录下，并设为工作目录。&lt;/p&gt;
+&lt;p&gt;然后在&lt;code&gt;docker-compose.yml&lt;/code&gt;文件中：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;version&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;3.5&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;services&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;web-fe&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;build&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;.&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;command&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;python app.py&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;ports&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#f92672&#34;&gt;target&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;5000&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;published&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;5000&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;networks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#ae81ff&#34;&gt;counter-net&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;volumes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#f92672&#34;&gt;type&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;volume&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;source&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;counter-vol&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;target&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;/code&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;redis&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;image&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;redis:alpine&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;networks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;counter-net&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;networks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;counter-net&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;volumes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;counter-vol&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我们把用于数据存储的卷&lt;code&gt;counter-vol&lt;/code&gt;挂载到&lt;code&gt;/code&lt;/code&gt;目录下，也就是&lt;code&gt;target: /code&lt;/code&gt;。在使用&lt;code&gt;docker-compose up&lt;/code&gt;第一次启动应用时，会查找是否指定的卷已经存在，如果没有就按照一级key指定的创建，并进行挂载。&lt;/p&gt;
+&lt;p&gt;使用&lt;code&gt;down&lt;/code&gt;是不会删除卷的，所以在第二次启动时，速度会快很多，因为指定的卷已经存在了。&lt;/p&gt;
+&lt;p&gt;这同样说明，在Docker主机中对卷中的数据进行修改，会反映到容器中，我们来验证下。（此时应用是运行中的）&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;编辑&lt;code&gt;app.py&lt;/code&gt;文件，显示不同的内容。我们加一个&amp;quot;A New Change!&amp;quot;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;然后将更新的文件复制到Docker主机相应的卷中，也就是复制到一个或者多个容器的挂载点上。使用如下命令查看容器在主机的挂载点：&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   $ docker volume inspect counter-app-master_counter-vol 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;       &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;           &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;CreatedAt&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;2021-11-11T16:10:28+08:00&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;           &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Driver&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;local&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;           &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Labels&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;               &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;com.docker.compose.project&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;counter-app-master&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;               &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;com.docker.compose.version&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;1.28.5&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;               &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;com.docker.compose.volume&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;counter-vol&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;           &lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;           &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Mountpoint&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/var/lib/docker/volumes/counter-app-master_counter-vol/_data&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;           &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Name&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;counter-app-master_counter-vol&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;           &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Options&amp;#34;&lt;/span&gt;: null,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;           &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Scope&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;local&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;       &lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   &lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;&amp;quot;Mountpoint&amp;quot;: &amp;quot;/var/lib/docker/volumes/counter-app-master_counter-vol/_data&amp;quot;&lt;/code&gt;就是。然后进行复制。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   $ sudo cp app.py /var/lib/docker/volumes/counter-app-master_counter-vol/_data/app.py
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;我们刷新下页面：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211111171033.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;已经变了，说明是起作用的。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+        <item>
+        <title>《云计算网络与安全》简记</title>
+        <link>https://lizonglingo.github.io/p/%E4%BA%91%E8%AE%A1%E7%AE%97%E7%BD%91%E7%BB%9C%E4%B8%8E%E5%AE%89%E5%85%A8%E7%AE%80%E8%AE%B0/</link>
+        <pubDate>Mon, 01 Nov 2021 17:37:21 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E4%BA%91%E8%AE%A1%E7%AE%97%E7%BD%91%E7%BB%9C%E4%B8%8E%E5%AE%89%E5%85%A8%E7%AE%80%E8%AE%B0/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;今天在图书馆借了两本云计算安全方面的教材类书籍，系统的了解一下云计算安全技术涉及到的相关内容和一些基本概念。通过本文，你可以了解云计算网络安全涉及的基本知识面。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;1-云计算网络概述&#34;&gt;1. 云计算网络概述&lt;/h2&gt;
+&lt;h3 id=&#34;11-基本概念&#34;&gt;1.1 基本概念&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;云计算是一种提供对共享的、可配置的计算资源池（如网络、服务器、存储、应用及服务等）进行泛在的、便捷的和按需的网络接入访问的模型。在这种模型下，计算资源能够被快速地分配和释放，同时最小化管理工作的投入和服务提供商的参与。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;目的
+&lt;ul&gt;
+&lt;li&gt;提供弹性、透明的资源服务&lt;/li&gt;
+&lt;li&gt;提高资源利用率，降低成本&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;网络是云计算的基础&lt;/strong&gt;。通过网络实现资源虚拟化、池化以及对资源的有效管理。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;云计算基本特征&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;按需自助服务&lt;/li&gt;
+&lt;li&gt;广泛的网络接入&lt;/li&gt;
+&lt;li&gt;资源池化&lt;/li&gt;
+&lt;li&gt;快速弹性&lt;/li&gt;
+&lt;li&gt;可测量的服务&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;云计算服务模型&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;IaaS：硬件资源层面上的抽象，如虚拟机、Amazon EC2、Microsoft Azure、Google Compute Engine&lt;/li&gt;
+&lt;li&gt;PaaS：提供常用软件构建环境、工具、部署等服务，用户不能自己管理网络、存储等底层云的内容，只能控制自己所部署的应用程序等；关键技术在并称编程模型、资源监控调度、海量数据库、分布式文件、存储系统等&lt;/li&gt;
+&lt;li&gt;SaaS：可以理解成现在用的一些服务商提供的软件，如Google Gmail等&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211101_131553_edit_70651210979843.jpg&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;云计算部署模型（根据云平台的所有权和管理权划分）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;公有云：成本低，拓展性好；需要实现对多租户性能、资源和数据等方面的安全隔离；如阿里云、Google Cloud等&lt;/li&gt;
+&lt;li&gt;私有云：一般是部署在企业组织内部的，由单一组织专用；一般是通过内网、VPN为员工提供IaaS或者SaaS服务；安全性较高&lt;/li&gt;
+&lt;li&gt;社区云：可以理解成区块链中联盟链的模式&lt;/li&gt;
+&lt;li&gt;混合云：实现不同模式的数据和应用的可移植性，例如将敏感数据部署到私有云，安全性要求较低的数据部署到公有云&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;12-云计算网络安全技术&#34;&gt;1.2 云计算网络安全技术&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;云计算数据中心（用于托管软硬件资源）网络通过大量二、三层交换机和路由器将服务存储有效的连接起来，通过进一步的虚拟化技术提供了云计算服务。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;云计算网络存在的安全挑战
+&lt;ul&gt;
+&lt;li&gt;网络规模庞大&lt;/li&gt;
+&lt;li&gt;流量模式不同（可以重点关注）：服务器到用户的南北向流量、服务器之间的东西向流量、Mice Flow数量众多对延迟敏感、Elephant Flow传输时间长且需要高带宽，更容易导致拥塞&lt;/li&gt;
+&lt;li&gt;高带宽低延迟的需求&lt;/li&gt;
+&lt;li&gt;拓扑结构复杂&lt;/li&gt;
+&lt;li&gt;资源虚拟化&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;2-数据中心网络技术&#34;&gt;2. 数据中心网络技术&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;数据中心是云计算等应用的重要基础设施，一般包括大量的服务器、存储和网络等硬件设备，以及运行在这些设备上的操作系统和管理软件，此外还有各种安全设备。数据中心网络则要提供高带宽、低延时和零丢包的网络通信环境。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;21-数据中心网络流量&#34;&gt;2.1 数据中心网络流量&lt;/h3&gt;
+&lt;h4 id=&#34;根据通信双方实体类型分&#34;&gt;根据通信双方实体类型分&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;服务器与客户端之间的流量：南北向流量，主要采用基于IP的三层路由转发&lt;/li&gt;
+&lt;li&gt;服务器与服务器之间的流量：东西向流量，对云计算应用的性能至关重要，一般是基于IP的三层转发和基于MAC的二层转发两种形式；三层流量主要是数据中心不同服务之间调用所使用（如Web服务调用数据库服务），二层主要是同一类服务器之间的数据同步计算（如Web集群负载均衡）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211101_135811_edit_71747035632280.jpg&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;不同类型流量的分布占比&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h4 id=&#34;根据流量大小分&#34;&gt;根据流量大小分&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;大数据流：数量众多且对延迟敏感&lt;/li&gt;
+&lt;li&gt;小数据流：容易对网络负载均衡给出挑战&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;由于虚拟化技术使得通信的实体逐渐转向运行在物理机上的虚拟机和容器，它们弹性、动态地部署都对网络中数据流量的调度提出新的挑战。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;由于以太网的高性价比和数据传输率，使其成为数据中心使用的最广泛的数据传输技术。此外，数据中心网络也开始使用iSCSI和FCoE等技术实现网络融合。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;22-数据中心网络拓扑&#34;&gt;2.2 数据中心网络拓扑&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;以交换机为核心的网络架构
+&lt;ul&gt;
+&lt;li&gt;传统三层网络拓扑架构&lt;/li&gt;
+&lt;li&gt;Clos网络架构&lt;/li&gt;
+&lt;li&gt;Spine-Leaf网络架构&lt;/li&gt;
+&lt;li&gt;Fat-Tree网络架构&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;以服务器为核心的网络结构
+&lt;ul&gt;
+&lt;li&gt;DCell&lt;/li&gt;
+&lt;li&gt;FiConn&lt;/li&gt;
+&lt;li&gt;BCube&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;23-数据中心的大二层网络&#34;&gt;2.3 数据中心的大二层网络&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;为使资源可以弹性分配和日益增长的东西向流量需求，有了“大二层”的网络环境的需求，也就是整个数据中心网络属于一个二层广播域。包含物理网络规模和业务支撑两方面的要求。在大二层中虚拟机的创建和迁移不需要对IP或者默认网关的修改，一般将L2、L3的网络边界放在核心交换机。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;大二层网络面临的问题&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;MAC地址学习问题：大二层网络规模庞大，在具有大量节点的网络中泛洪，影响网络性能&lt;/li&gt;
+&lt;li&gt;生成树协议的问题：冗余网络带来环路问题，以太网使用的生成树协议会阻断冗余链路，造成链路资源浪费，降低网络性能、增大交换机负载&lt;/li&gt;
+&lt;li&gt;VLAN技术的局限：租户数量超出VLAN的最大支持数量&lt;/li&gt;
+&lt;li&gt;网络安全问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;为解决上述问题，最直接的方法是摆脱STP协议&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;方案一：采用网络虚拟化技术&lt;/li&gt;
+&lt;li&gt;方案二：实现二层多路径传输技术L2 Fabric，代表方案有TRILL、VXLAN等&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;24-数据中心桥接&#34;&gt;2.4 数据中心桥接&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;以太网是不可靠的，数据网络和存储网络很可能使用不同的协议，因此需要一个承载协议能够适应不同的应用服务的需求，基于以太网的数据桥接技术成为最佳选择。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;数据中心桥接（Data Center Bridging）对以太网特性进行扩充优化，避免链路中的丢包，保证数据传输质量：
+&lt;ul&gt;
+&lt;li&gt;基于优先级的流量控制PFC&lt;/li&gt;
+&lt;li&gt;多级调度的增强传输选择ETS&lt;/li&gt;
+&lt;li&gt;给予反馈的量化拥塞通知QCN&lt;/li&gt;
+&lt;li&gt;提供了DCB自动化配置&lt;/li&gt;
+&lt;li&gt;保持兼容性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;相应的DCB的主要机制：
+&lt;ul&gt;
+&lt;li&gt;基于优先级的流量控制PFC：提供了不丢包的流量控制，保证关键业务流量和非关键业务流量的隔离，是DCB的基础&lt;/li&gt;
+&lt;li&gt;增强传输选择ETS：实现链路带宽的分配问题&lt;/li&gt;
+&lt;li&gt;量化拥塞通知QCN：一种可以直接溯源、可量化调整的拥塞控制机制&lt;/li&gt;
+&lt;li&gt;数据中心桥接交换DCBX：是完成这些工作的一个自动协商协议，允许链路两端的设备自动确认对端是否支持PFC和ETS，并且能够协商PFC和ETS的参数。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;3-服务器虚拟化与网络技术&#34;&gt;3. 服务器虚拟化与网络技术&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;服务器虚拟化对扩展数据中心用户承载能力和提高硬件资源利用率有着十分重要的作用。通过虚拟化技术降低实际使用的物理机的数量并提高利用率，同时减轻管理成本。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;31-虚拟化基本概念&#34;&gt;3.1 虚拟化基本概念&lt;/h3&gt;
+&lt;p&gt;虚拟化是一种将物理资源（计算、网络、存储等）进行抽象、转换和隔离，并最终向用户呈现一个可动态配置的虚拟运行环境，使得用户使用资源时不再受资源的物理配置与地理位置的限制。&lt;/p&gt;
+&lt;p&gt;虚拟化中，宿主机通常就是物理服务器，运行着宿主操作系统。Hypervisor是虚拟机监视器VMM用来创建与运行虚拟机的软件、固件或者硬件。Hypervisor上面运行的虚拟机叫客户机Guest Machine。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;虚拟化分类
+&lt;ul&gt;
+&lt;li&gt;全虚拟化&lt;/li&gt;
+&lt;li&gt;半虚拟化&lt;/li&gt;
+&lt;li&gt;硬件辅助虚拟化：CPU针对性的从指令层面简化虚拟化技术&lt;/li&gt;
+&lt;li&gt;操作系统层面的虚拟化：namespace、cgroups、chroot，也称容器技术如Docker&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;容器技术基于操作系统的资源隔离技术，为应用程序构建出一个轻量级、标准化，并与其他应用程序互相隔离的运行环境。容器中包含应用程序本身以及必需的运行环境（一般叫做镜像），使得该容器能够在任何具有容器引擎（如Docker Engine）中运行。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211101_151331.jpg&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;虚拟机和容器技术的架构&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;在硬件资源的利用率上容器技术强于虚拟机。节省开发、测试和部署的时间。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:center&#34;&gt;项目&lt;/th&gt;
+&lt;th style=&#34;text-align:center&#34;&gt;容器&lt;/th&gt;
+&lt;th style=&#34;text-align:center&#34;&gt;虚拟机&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;启动时间&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;秒级&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;分钟级&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;存储占用&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;MB级&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;GB级&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;性能&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;接近裸机&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;明显的性能损失&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;单机部署数量&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;最多上千个&lt;/td&gt;
+&lt;td style=&#34;text-align:center&#34;&gt;最多几十台&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Docker技术基于Linux的资源隔离技术（namespace、cgroups和chroot），目前比较主流。而容器也作为下一代虚拟化技术。&lt;/p&gt;
+&lt;p&gt;常见的Hypervisor有：VMWare vSphere、 Microsoft Hyper-V和Open Stack，其中Open Stack是开源的。&lt;/p&gt;
+&lt;h3 id=&#34;32-硬件辅助虚拟化&#34;&gt;3.2 硬件辅助虚拟化&lt;/h3&gt;
+&lt;p&gt;Guest OS自认为处于内核态，如果Host OS处理其发出的一些特权指令会带来很大的性能开销。所以会有硬件辅助提高虚拟化体验的需要。&lt;/p&gt;
+&lt;h3 id=&#34;33-虚拟网络接入&#34;&gt;3.3 虚拟网络接入&lt;/h3&gt;
+&lt;h4 id=&#34;虚拟交换机&#34;&gt;虚拟交换机&lt;/h4&gt;
+&lt;p&gt;由于一个物理机上可能有成百上千个虚拟机和容器，显然1：1的配置物理网卡等网络设备是不现实的，因此使用虚拟网络来对真实网络进行模拟。使用软件的形式模拟一台交换机，方便的按需部署。&lt;/p&gt;
+&lt;h4 id=&#34;边界虚拟网桥技术&#34;&gt;边界虚拟网桥技术&lt;/h4&gt;
+&lt;p&gt;目的是让虚拟机以适当的方式共享宿主机上的物理网卡，尽量达到与虚拟机独占物理机网卡接近的性能。&lt;/p&gt;
+&lt;h3 id=&#34;34-容器网络技术&#34;&gt;3.4 容器网络技术&lt;/h3&gt;
+&lt;h4 id=&#34;接入方式&#34;&gt;接入方式&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;Bridge：利用Linux Bridge等虚拟网桥连接到物理网卡。Docker会默认使用这种方法，进程启动时，会在主机上创建虚拟网桥，其他容器会连到虚拟网桥上。此外，Docker还支持OVS(Open vSwitch)，有更强大的功能，在生产环境中多用。&lt;/li&gt;
+&lt;li&gt;Host：容器直接使用宿主机的网络协议栈，共享主机IP。容器有独立的进程和文件空间但没有独立的Network Namespace。&lt;/li&gt;
+&lt;li&gt;Container：可以与其他容器共享网络协议栈。&lt;/li&gt;
+&lt;li&gt;macvlan：把Docker宿主机上的物理网卡在逻辑上虚拟出多个虚拟网卡，并给每一个子接口分配虚拟的MAC地址。如果容器发送数据目的地址在本机，则直接转发到相应的容器中，否则交给物理网卡处理。&lt;/li&gt;
+&lt;li&gt;User-defined：支持用户高级自定义。&lt;/li&gt;
+&lt;li&gt;None：容器拥有自己的Network Namespace但是不提供任何网络配置，需要用户为容器添加网卡、配置IP等。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;跨主机网络通信&#34;&gt;跨主机网络通信&lt;/h4&gt;
+&lt;p&gt;多主机的Docker集群上，有了对Docker跨主机通信技术的需求。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Flat：要求所有容器在同一个可路由的网络环境中&lt;/li&gt;
+&lt;li&gt;Hierarchy：要求容器必须L3可路由，并且具有相同的IP层次。&lt;/li&gt;
+&lt;li&gt;Overlay：为不同主机上的Docker容器创建分布式网络，使得不同主机的容器可以相互通信。这种方式需要实现Linux Network Namespace来隔离不同容器间的网络资源、VXLAN把二层数据包封装到UDP数据包后运输来实现大二层网络、以及一个分布式的k-v数据库来运行发现协议和保存docker集群中的个主机信息。同时也需要分布式的虚拟交换机来转发不同主机之间的数据流。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;通用数据模型&#34;&gt;通用数据模型&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;CNM：Docker的容器网络模型，为IP地址管理插件（负责地址池的创建、删除以及地址分配）和网络插件（负责创建和删除容器虚拟网络，以及分配和回收IP地址）提供接口。基本概念包括：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Sandbox：利用Linux Network Namespace虚拟出的沙盒网络环境，包含容器的整个网络协议栈&lt;/li&gt;
+&lt;li&gt;Endpoint：网络端点，用来连接Sandbox到Network。&lt;/li&gt;
+&lt;li&gt;Network：一系列可以相互通信的Endpoint所组成的虚拟网络。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;CNI：容器网络接口，更加通用，为了使得不同容器平台通过统一的接口互联互通。&lt;/p&gt;
+&lt;p&gt;两个组件：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;容器管理系统&lt;/li&gt;
+&lt;li&gt;网络插件&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;两个接口：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;添加ADD&lt;/li&gt;
+&lt;li&gt;删除DELETE&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;运行流程：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;容器运行环境给每个容器分配Network Namespace和容器ID，然后把这些消息连同CNI的配置参数传递给网络驱动。&lt;/li&gt;
+&lt;li&gt;网络驱动会以JSON文件的形式返回分配给该容器的IP地址并把该容器连接到网络。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;kubernetes网络技术&#34;&gt;kubernetes网络技术&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;组网模型&lt;/p&gt;
+&lt;p&gt;k8s是主从架构的Docker集群编排器，架构如下。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211101_172351_edit_80545155299688.jpg&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Master：控制整个k8s集群所有节点的计算机，用于控制集群中的所有Node和Pod。&lt;/li&gt;
+&lt;li&gt;Node：k8s集群中的一个节点，是实际上负责提供服务的主机。&lt;/li&gt;
+&lt;li&gt;Pod：提供一项服务所需的一系列密切相关的容器的集合（如应用容器和存储容器）。是k8s中可部署的最小单位，每个Pod的IP地址唯一。&lt;/li&gt;
+&lt;li&gt;Service：k8s集群中一组提供相同服务的Pod以及访问这些Pod的方式，还提供了外部访问这些Pod的接口。&lt;/li&gt;
+&lt;li&gt;Label和Label Selector：Label是存储在etcd的一个k-v键值对，根据需要给Pod、Node以及Service等对象添加一个或多个Label，并通过Label Selector选择完成业务所需要的对象。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;容器网络的管理&lt;/p&gt;
+&lt;p&gt;k8s集群需要把Service Cluster分为前后端两组，面向用户仅提供前端服务器的虚拟IP和虚拟端口号，前端服务器处理后最终指派物理后端服务器。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;4-网络虚拟化技术&#34;&gt;4. 网络虚拟化技术&lt;/h2&gt;
+&lt;h3 id=&#34;41-概述&#34;&gt;4.1 概述&lt;/h3&gt;
+&lt;p&gt;数据中心网络的大二层的不同用户的数据帧的传输会带来巨大的风险。这些问题可以用网络虚拟化和隧道技术解决。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;网络虚拟化：把物理网络虚拟化成多个逻辑网络，通常使用VLAN Tag等方式区分数据流，使用隧道技术进行透明传输。这样可以对某个网络进行单独管理，高效利用资源。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;42-传统网络隧道技术&#34;&gt;4.2 传统网络隧道技术&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;VLAN：VLAN技术通过给每个租户分配一个VLAN ID创建虚拟的二层网络，缺点是数量有线，只支持4096个，无法满足实际需求。因此业界推出VXLAN虚拟可扩展局域网。&lt;/li&gt;
+&lt;li&gt;Q-in-Q：也叫Stacked VLAN或者Double VLAN，主要思想是VLAN Tag堆叠，实现透明转发。&lt;/li&gt;
+&lt;li&gt;MPLS：多协议标签交换。解决的问题是大流量下基于最长前缀匹配规则的路由转发开销大，性能不可接受。这是一种基于标签的转发技术，通过在报文中添加MPLS标签，实现高效的数据转发和数据分层的精细控制。&lt;/li&gt;
+&lt;li&gt;GRE： 目标是对某些网络层协议进行封装，然后创建隧道使得这些报文可以在另一个网络层协议中传输，解决不同网络层协议报文的传输问题。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;43-vxlan&#34;&gt;4.3 VXLAN&lt;/h3&gt;
+&lt;p&gt;这是一种大二层网络的虚拟化技术，采用UDP进行封装。优点如下：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;低成本的实现跨三层的大二层网络，通过隧道技术实现了三层网络上的逻辑大二层网络&lt;/li&gt;
+&lt;li&gt;有充足的ID数量（1600万）&lt;/li&gt;
+&lt;li&gt;租户隔离，实现IP地址，MAC地址复用&lt;/li&gt;
+&lt;li&gt;可感知虚拟机&lt;/li&gt;
+&lt;li&gt;支持细粒度的负载均衡&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;44-vpc技术&#34;&gt;4.4 VPC技术&lt;/h3&gt;
+&lt;p&gt;虚拟私有云VPC为租户提供隔离的环境，租户在使用网络时，可以自定义选择IP地址的范围、创建子网和配置路由表和网关，并且无需担心和其他用户产生冲突。&lt;/p&gt;
+&lt;h2 id=&#34;5-软件定义网络技术sdn&#34;&gt;5. 软件定义网络技术SDN&lt;/h2&gt;
+&lt;p&gt;传统的网络架构适应性和更新能力不足。软件定义网络SDN技术的可编程性使得网络变化更加灵活。通过将数据平面和控制平面进行划分，实现网络灵活调配。数据平面上可以使用通用的网络设备提供编程能力，控制平面上对网络进行统一管理。&lt;/p&gt;
+&lt;p&gt;简单说，思想就是&lt;strong&gt;解耦控制平面与数据平面，将处理网络硬件的处理细节交给人&lt;/strong&gt;。&lt;/p&gt;
+&lt;h3 id=&#34;51-体系结构&#34;&gt;5.1 体系结构&lt;/h3&gt;
+&lt;p&gt;自顶向下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;应用平面：如流量均衡模块和防火墙等网络应用模块。允许用户通过编程实现网络行为。&lt;/li&gt;
+&lt;li&gt;北向接口：SDN控制器提供给上层应用的接口，使得上层应用可以调用控制器的功能。&lt;/li&gt;
+&lt;li&gt;控制平面：包含各类控制器，是SDN的数据中心，负责网络内部路径交换和边界路由的生成。控制器实例可以部署在不同位置，通过南向接口对数据平面中的网络设备进行集中式管理，如下发转发决策、监测网络状态。同时通过北向接口向应用平面提供服务。&lt;/li&gt;
+&lt;li&gt;南向接口：SND用于管理交换机的接口，如OpenFlow协议，是数据平面和控制平面的交互接口。&lt;/li&gt;
+&lt;li&gt;数据平面：支持各类SDN的网络设备，如路由器、交换机、虚拟交换机和无线访问接入点等，主要负责用户数据转发，也可以上报网络资源和状态信息。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;52-数据平面和控制平面分离&#34;&gt;5.2 数据平面和控制平面分离&lt;/h3&gt;
+&lt;p&gt;SDN实现核心思想就是解耦数据平面和控制平面，以转发表为界。数据平面中网络设备只保存转发信息，并且有高速转发能力，所有网络决策都由控制器来完成。控制平面可以获取全局网络信息和状态，并且通过南向接口将编程指令下发到数据平面。&lt;/p&gt;
+&lt;p&gt;这样也带来一些问题：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;单控制节点的单点故障；多控制节点的资源调度，负载均衡&lt;/li&gt;
+&lt;li&gt;一致性问题&lt;/li&gt;
+&lt;li&gt;高可用性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;6-网络功能虚拟化技术nfv&#34;&gt;6. 网络功能虚拟化技术NFV&lt;/h2&gt;
+&lt;p&gt;常见的网络功能有防火墙、入侵检测系统、负载均衡器、网络地址转换等。传统的网络部署中，网络的功能实现主要依赖于硬件设备。虚拟化技术使得网络功能的部署不再依赖硬件，而通过软件的形式灵活部署在通用服务器的虚拟化资源中，可以在一个物理平台上同时运行多个不同的网络功能程序。&lt;/p&gt;
+&lt;p&gt;优势：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;共享硬件资源，降低网络成本&lt;/li&gt;
+&lt;li&gt;部署灵活可伸缩，弹性和高可重用&lt;/li&gt;
+&lt;li&gt;自动化更新升级&lt;/li&gt;
+&lt;li&gt;多租户和安全隔离&lt;/li&gt;
+&lt;li&gt;负载均衡和能耗控制&lt;/li&gt;
+&lt;li&gt;接口标准化&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;云计算网络安全基础&lt;/p&gt;
+&lt;p&gt;云计算网络安全技术&lt;/p&gt;
+&lt;p&gt;云计算网络安全机制&lt;/p&gt;
+&lt;p&gt;云计算网络安全实践&lt;/p&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

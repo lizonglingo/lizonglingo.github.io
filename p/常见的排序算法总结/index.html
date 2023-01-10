@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='整理常用的排序算法，主要包括： 选择排序 冒泡排序 归并排序 快速排序 插入排序 堆排序 策略以及时间开销 排序算法 基于的思想 时间开销 选择排序 蛮力法 O(n^2) 冒泡排'>
+<title>常见的排序算法总结</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/%E5%B8%B8%E8%A7%81%E7%9A%84%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E6%80%BB%E7%BB%93/'>
+
+<link rel="stylesheet" href="/scss/style.min.8191399262444ab68b72a18c97392f5349be20a1615d77445be51e974c144cff.css"><meta property='og:title' content='常见的排序算法总结'>
+<meta property='og:description' content='整理常用的排序算法，主要包括： 选择排序 冒泡排序 归并排序 快速排序 插入排序 堆排序 策略以及时间开销 排序算法 基于的思想 时间开销 选择排序 蛮力法 O(n^2) 冒泡排'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/%E5%B8%B8%E8%A7%81%E7%9A%84%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E6%80%BB%E7%BB%93/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='算法' /><meta property='article:published_time' content='2019-11-21T19:36:24&#43;08:00'/><meta property='article:modified_time' content='2019-11-21T19:36:24&#43;08:00'/>
+<meta name="twitter:title" content="常见的排序算法总结">
+<meta name="twitter:description" content="整理常用的排序算法，主要包括： 选择排序 冒泡排序 归并排序 快速排序 插入排序 堆排序 策略以及时间开销 排序算法 基于的思想 时间开销 选择排序 蛮力法 O(n^2) 冒泡排">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description">子标题</h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://twitter.com'
+                        target="_blank"
+                        title="Twitter"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#策略以及时间开销">策略以及时间开销</a></li>
+    <li><a href="#部分排序的核心算法">部分排序的核心算法</a>
+      <ul>
+        <li><a href="#归并排序">归并排序</a></li>
+        <li><a href="#快速排序">快速排序</a></li>
+        <li><a href="#插入排序">插入排序</a></li>
+        <li><a href="#堆排序">堆排序</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E7%AE%97%E6%B3%95/" >
+                算法
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/%E5%B8%B8%E8%A7%81%E7%9A%84%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E6%80%BB%E7%BB%93/">常见的排序算法总结</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Nov 21, 2019</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 3 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>整理常用的排序算法，主要包括：</p>
+<ul>
+<li>选择排序</li>
+<li>冒泡排序</li>
+<li>归并排序</li>
+<li>快速排序</li>
+<li>插入排序</li>
+<li>堆排序</li>
+</ul>
+</blockquote>
+<h2 id="策略以及时间开销">策略以及时间开销</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>排序算法</th>
+<th>基于的思想</th>
+<th>时间开销</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>选择排序</td>
+<td>蛮力法</td>
+<td>O(n^2)</td>
+</tr>
+<tr>
+<td>冒泡排序</td>
+<td>蛮力法</td>
+<td>O(n^2)</td>
+</tr>
+<tr>
+<td>归并排序</td>
+<td>分治法</td>
+<td>O(nlogn)</td>
+</tr>
+<tr>
+<td>快速排序</td>
+<td>分治法</td>
+<td>O(nlogn)</td>
+</tr>
+<tr>
+<td>插入排序</td>
+<td>减治法</td>
+<td>O(n^2)</td>
+</tr>
+<tr>
+<td>堆排序</td>
+<td>减治法</td>
+<td>O(nlogn)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="部分排序的核心算法">部分排序的核心算法</h2>
+<h3 id="归并排序">归并排序</h3>
+<h4 id="图解">图解</h4>
+<p><img src="https://i.loli.net/2019/11/21/IwoPu7Eb6VrLYiR.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h4 id="代码">代码</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">输入：待排序的数组r[n]，待排序区间[s,t]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">输出：升序序列r[s]~r[t]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">1. 如果s==t，则待排序区间只有一个元素，返回
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">2. 计算划分重点：m=(s+t)/2
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">3. 对于前半个子序列以 r[s]~r[m]进行递归，继续划分
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">4. 对于后半个子序列以 r[m+1]~r[t]进行递归，继续划分
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">5. 合并划分后的子序列：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	5.1 令i=s,j=m+1,k=s 在 i&lt;=m&amp;&amp;j&lt;=t时进行循环
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">		5.1.1 按照升序依次在两个子序列选择元素放入r1[]临时数组，同时改变两个子序列的索引位置
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">6. 处理某个子序列未放完的元素
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">7. 将r1复制到r中
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">8. 待所有递归过程结束，打印r[]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">*/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">MergeSort</span>(<span style="color:#66d9ef">int</span> r[],<span style="color:#66d9ef">int</span> s,<span style="color:#66d9ef">int</span> t){
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> m,r1[<span style="color:#ae81ff">1000</span>];
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span>(s<span style="color:#f92672">==</span>t) <span style="color:#66d9ef">return</span>;		<span style="color:#75715e">// 此时划分至只有一个元素了
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">else</span>{
+</span></span><span style="display:flex;"><span>        m <span style="color:#f92672">=</span> (s<span style="color:#f92672">+</span>t)<span style="color:#f92672">/</span><span style="color:#ae81ff">2</span>;		<span style="color:#75715e">// 继续划分
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        MergeSort(r,s,m);	<span style="color:#75715e">// 划分前半个子序列
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        MergeSort(r,m<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>,t);	<span style="color:#75715e">// 划分后半个子序列
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        Merge(r,r1,s,m,t);	<span style="color:#75715e">// 合并划分后的结果
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span>(<span style="color:#66d9ef">int</span> i<span style="color:#f92672">=</span>s;i<span style="color:#f92672">&lt;=</span>t;i<span style="color:#f92672">++</span>){
+</span></span><span style="display:flex;"><span>            r[i]<span style="color:#f92672">=</span>r1[i];
+</span></span><span style="display:flex;"><span>        }   
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/* 合并函数 */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">Merge</span>(<span style="color:#66d9ef">int</span> r[],<span style="color:#66d9ef">int</span> r1[],<span style="color:#66d9ef">int</span> s,<span style="color:#66d9ef">int</span> m,<span style="color:#66d9ef">int</span> t){
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> i<span style="color:#f92672">=</span>s;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> j<span style="color:#f92672">=</span>m<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>;		<span style="color:#75715e">// 分别标记原数组两个子序列的起始位置
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> k<span style="color:#f92672">=</span>s;		<span style="color:#75715e">// 标记r1临时数组
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span>(i<span style="color:#f92672">&lt;=</span>m<span style="color:#f92672">&amp;&amp;</span>j<span style="color:#f92672">&lt;=</span>t){
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span>(r[i]<span style="color:#f92672">&lt;=</span>r[j])	r1[k<span style="color:#f92672">++</span>]<span style="color:#f92672">=</span>r[i<span style="color:#f92672">++</span>];
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>	r1[k<span style="color:#f92672">++</span>]<span style="color:#f92672">=</span>r[j<span style="color:#f92672">++</span>];
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 进行收尾工作
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">while</span>(i<span style="color:#f92672">&lt;=</span>m) r1[k<span style="color:#f92672">++</span>]<span style="color:#f92672">=</span>r[i<span style="color:#f92672">++</span>];
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span>(j<span style="color:#f92672">&lt;=</span>t) r1[k<span style="color:#f92672">++</span>]<span style="color:#f92672">=</span>r[j<span style="color:#f92672">++</span>];
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="快速排序">快速排序</h3>
+<h4 id="图解-1">图解</h4>
+<p><img src="https://i.loli.net/2019/11/21/qRtJ6xVDgNPfHwe.jpg"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h4 id="代码-1">代码</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">伪代码：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">（假设以首元素为轴值）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">输入：r[n]，first，end
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">输出：升序排序的r[n]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">1. 选定首元素即 r[first] 为轴值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">2. 如果first&lt;end
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	2.1 划分左右区间，获得轴值位置
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">		2.1.1 令 i=first j=end, if i&lt;j 做：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">		2.1.2 右侧扫描，if r[j]&gt;轴值 j-- ；反之 swap(r[i],r[j])
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">		2.1.3 左侧扫描，if r[i]&lt;轴值 i++ ；反之 swap(r[i],r[j])
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	2.2 返回最后的i即为轴值的最新位置，pivot&lt;-i
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	2.3 左孩子序列以：r,first,pivot-1 快排
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">    2.4 右孩子序列以：r,pivot+1,end 快排
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">3. 最后输出排完序的r[n]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">*/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">QuickSort</span>(<span style="color:#66d9ef">int</span> r[],<span style="color:#66d9ef">int</span> first,<span style="color:#66d9ef">int</span> end){
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> pivot;		<span style="color:#75715e">// 轴值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span>(first<span style="color:#f92672">&lt;</span>end){
+</span></span><span style="display:flex;"><span>    	pivot<span style="color:#f92672">=</span>Partition(r,first,end);	<span style="color:#75715e">// 划分子序列，pivot是轴值所在位置的索引
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        QuickSort(r,first,pivot<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>);		<span style="color:#75715e">// 左子序列快排
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        QuickSort(r,pivot<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>,end);		<span style="color:#75715e">// 右子序列快排
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/* 划分子序列，求解轴值位置 */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">Partition</span>(<span style="color:#66d9ef">int</span> r[],<span style="color:#66d9ef">int</span> first,<span style="color:#66d9ef">int</span> end){
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> i<span style="color:#f92672">=</span>first;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> j<span style="color:#f92672">=</span>end;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span>(i<span style="color:#f92672">&lt;</span>j){
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span>(i<span style="color:#f92672">&lt;</span>j<span style="color:#f92672">&amp;&amp;</span>r[i]<span style="color:#f92672">&lt;=</span>r[j])	j<span style="color:#f92672">--</span>;
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span>(i<span style="color:#f92672">&lt;</span>j){
+</span></span><span style="display:flex;"><span>        	<span style="color:#66d9ef">int</span> temp<span style="color:#f92672">=</span>r[i];
+</span></span><span style="display:flex;"><span>            r[i]<span style="color:#f92672">=</span>r[j];
+</span></span><span style="display:flex;"><span>            r[j]<span style="color:#f92672">=</span>temp;
+</span></span><span style="display:flex;"><span>            i<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span>(i<span style="color:#f92672">&lt;</span>j<span style="color:#f92672">&amp;&amp;</span>r[i]<span style="color:#f92672">&lt;=</span>r[j])	i<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span>(i<span style="color:#f92672">&lt;</span>j){
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int</span> temp<span style="color:#f92672">=</span>r[i];
+</span></span><span style="display:flex;"><span>        	r[i]<span style="color:#f92672">=</span>r[j];
+</span></span><span style="display:flex;"><span>            r[j]<span style="color:#f92672">=</span>temp;
+</span></span><span style="display:flex;"><span>            j<span style="color:#f92672">--</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> i;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="插入排序">插入排序</h3>
+<h4 id="图解-2">图解</h4>
+<p><img src="https://i.loli.net/2019/11/21/IxXUsw3nHOTzJV2.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h4 id="代码-2">代码</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#75715e">// 设r[0]为哨兵，实际的数据从r[1]开始
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">for</span>(<span style="color:#66d9ef">int</span> i<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>;i<span style="color:#f92672">&lt;=</span>n;i<span style="color:#f92672">++</span>){
+</span></span><span style="display:flex;"><span>    r[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">=</span>r[i];		<span style="color:#75715e">// 使得r[0]一直为无序序列的第一个一个元素
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">for</span>(<span style="color:#66d9ef">int</span> j<span style="color:#f92672">=</span>i<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;r[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">&lt;</span>r[j];j<span style="color:#f92672">--</span>){
+</span></span><span style="display:flex;"><span>        r[j<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>]<span style="color:#f92672">=</span>r[j];		<span style="color:#75715e">// 如果待插入元素比有序序列中某个元素小，这个元素后移
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>    r[j<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>]<span style="color:#f92672">=</span>r[<span style="color:#ae81ff">0</span>];
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="堆排序">堆排序</h3>
+<h4 id="图解-3">图解</h4>
+<p><img src="https://i.loli.net/2019/11/21/oLHMUvJ9eVZIXCf.jpg"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h4 id="代码-3">代码</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">伪代码：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">输入：r(k+1)~r(n)满足堆的条件，待筛选记录rk
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">输出：{r(k)&#39;,r(k+1)&#39;,...r(n)&#39;}为大根堆
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">1. 设置i和j，分别指向要筛选的结点和其左孩子结点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">2. 若ri已是叶子，则筛选完毕
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	否则，比较要筛选结点的左右孩子结点，并将j指向较大的结点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">3. 将ri和rj进行比较，有以下两种情况：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	3.1 如果ri&gt;rj，则完全二叉树已是堆，筛选完毕
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	3.2 否则将ri和rj进行交换；令i=j，转步骤2继续执行
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">*/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">HeapSort</span>(<span style="color:#66d9ef">int</span> r[],<span style="color:#66d9ef">int</span> n){
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> i,temp;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span>(i<span style="color:#f92672">=</span>(n<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)<span style="color:#f92672">/</span><span style="color:#ae81ff">2</span>;i<span style="color:#f92672">&gt;=</span><span style="color:#ae81ff">0</span>;i<span style="color:#f92672">--</span>){		<span style="color:#75715e">// 初始建堆，最后一个分支下标为(n-1)/2
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        SiftHeap(r,i,n);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span>(i<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>;i<span style="color:#f92672">&lt;=</span>n<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;i<span style="color:#f92672">++</span>){
+</span></span><span style="display:flex;"><span>        temp<span style="color:#f92672">=</span>r[<span style="color:#ae81ff">0</span>];
+</span></span><span style="display:flex;"><span>        r[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">=</span>r[n<span style="color:#f92672">-</span>i];
+</span></span><span style="display:flex;"><span>        r[n<span style="color:#f92672">-</span>i]<span style="color:#f92672">=</span>temp;
+</span></span><span style="display:flex;"><span>        SiftHeap(r,<span style="color:#ae81ff">0</span>,n<span style="color:#f92672">-</span>i);			<span style="color:#75715e">// 只需要调整根节点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">SiftHeap</span>(<span style="color:#66d9ef">int</span> r[],<span style="color:#66d9ef">int</span> k,<span style="color:#66d9ef">int</span> n){
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> i,j,temp;					<span style="color:#75715e">// 置i为要筛的结点，j为i的左孩子
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    i<span style="color:#f92672">=</span>k;
+</span></span><span style="display:flex;"><span>    j<span style="color:#f92672">=</span>i<span style="color:#f92672">*</span><span style="color:#ae81ff">2</span><span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span>(j<span style="color:#f92672">&lt;</span>n){
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span>(j<span style="color:#f92672">&lt;</span>n<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span><span style="color:#f92672">&amp;&amp;</span>r[j]<span style="color:#f92672">&lt;</span>r[j<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>]) j<span style="color:#f92672">++</span>;		<span style="color:#75715e">// 比较i的左右孩子，j为较大者
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span>(r[i]<span style="color:#f92672">&gt;</span>r[j]) 	<span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>{
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 将被筛结点与结点j交换
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            temp<span style="color:#f92672">=</span>r[i];
+</span></span><span style="display:flex;"><span>            r[i]<span style="color:#f92672">=</span>r[j];
+</span></span><span style="display:flex;"><span>            r[j]<span style="color:#f92672">=</span>temp;
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 被筛节点位于原来结点j的位置
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            i<span style="color:#f92672">=</span>j;
+</span></span><span style="display:flex;"><span>            j<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span><span style="color:#f92672">*</span>i<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div>
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/%E7%94%A8%E4%B8%8D%E5%90%8C%E7%AE%97%E6%B3%95%E8%A7%A3%E5%86%B30/1%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">用不同算法解决0/1背包问题</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

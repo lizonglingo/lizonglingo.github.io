@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='吴恩达ML学习笔记 机器学习定义 计算机从经验E中学习，解决任务T，进行某个性能度量P，通过P测定在T上的表现因经验E而提高。 机器学习分类 Supervised le'>
+<title>ML学习笔记</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/ml%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+
+<link rel="stylesheet" href="/scss/style.min.8191399262444ab68b72a18c97392f5349be20a1615d77445be51e974c144cff.css"><meta property='og:title' content='ML学习笔记'>
+<meta property='og:description' content='吴恩达ML学习笔记 机器学习定义 计算机从经验E中学习，解决任务T，进行某个性能度量P，通过P测定在T上的表现因经验E而提高。 机器学习分类 Supervised le'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/ml%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='ML/DL' /><meta property='article:published_time' content='2021-10-08T12:52:45&#43;08:00'/><meta property='article:modified_time' content='2021-10-08T12:52:45&#43;08:00'/>
+<meta name="twitter:title" content="ML学习笔记">
+<meta name="twitter:description" content="吴恩达ML学习笔记 机器学习定义 计算机从经验E中学习，解决任务T，进行某个性能度量P，通过P测定在T上的表现因经验E而提高。 机器学习分类 Supervised le">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description">子标题</h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://twitter.com'
+                        target="_blank"
+                        title="Twitter"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#机器学习定义">机器学习定义</a></li>
+    <li><a href="#机器学习分类">机器学习分类</a></li>
+    <li><a href="#监督学习">监督学习</a>
+      <ul>
+        <li><a href="#回归问题-regression">回归问题-regression</a></li>
+        <li><a href="#分类问题-classification">分类问题-classification</a></li>
+      </ul>
+    </li>
+    <li><a href="#无监督学习">无监督学习</a>
+      <ul>
+        <li><a href="#聚类算法-clustering-algorithm">聚类算法-clustering algorithm</a></li>
+      </ul>
+    </li>
+    <li><a href="#评估模型">评估模型</a></li>
+    <li><a href="#常见问题">常见问题</a>
+      <ul>
+        <li><a href="#过拟合问题">过拟合问题</a></li>
+        <li><a href="#欠拟合问题">欠拟合问题</a></li>
+      </ul>
+    </li>
+    <li><a href="#符号定义">符号定义</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/ml/dl/" >
+                ML/DL
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/ml%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">ML学习笔记</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Oct 08, 2021</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 6 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="吴恩达ml学习笔记">吴恩达ML学习笔记</h1>
+<h2 id="机器学习定义">机器学习定义</h2>
+<ul>
+<li>计算机从经验<code>E</code>中学习，解决任务<code>T</code>，进行某个性能度量<code>P</code>，通过<code>P</code>测定在<code>T</code>上的表现因经验<code>E</code>而提高。</li>
+</ul>
+<h2 id="机器学习分类">机器学习分类</h2>
+<ul>
+<li>Supervised learning监督学习：教会计算机做某件事情</li>
+<li>Unsupervised learning无监督学习：让计算机自己去学习</li>
+<li>Reinforcement learning强化学习</li>
+<li>Recommend systems推荐系统</li>
+<li>···</li>
+</ul>
+<h2 id="监督学习">监督学习</h2>
+<p>给算法一个数据集，这个数据集中包含了正确的答案，并告诉计算机什么是正确的、什么是错误的（或者说数据对应的明确标签）；算法的目的是让机器给出更多正确的答案。</p>
+<h3 id="回归问题-regression">回归问题-regression</h3>
+<p>预测连续的数值属性。</p>
+<ul>
+<li>预测房价</li>
+</ul>
+<h4 id="单变量线性回归-linear-regression-with-one-variable">单变量线性回归-Linear regression with one variable</h4>
+<p>$$
+Hypothesis：			h_{\theta}(x)=\theta_0+\theta_1x
+$$</p>
+<p>$$
+Parameters:		\theta_0,\theta_1
+$$</p>
+<p>$$
+Cost Function:		J(\theta_0,\theta_1) = {1\over2m}\sum_{i=1}^m(h_{\theta}(x^{(i)})-y^{(i)})^2
+$$</p>
+<p>$$
+Goal: minimize_{(\theta_0,\theta_1)}J(\theta_0,\theta_1)
+$$</p>
+<p>既然我们的目标是将代价函数最小化，那一个一个试参数将会非常麻烦。所以这里引入<strong>梯度函数</strong>，快速将代价函数<code>J</code>最小化。</p>
+<h4 id="梯度下降算法-gradient-descent-batch">梯度下降算法-Gradient descent-Batch</h4>
+<p>$$
+重复直至收敛：\theta_j := \theta_j - \alpha\frac{\partial }{\partial \theta_j}J(\theta_0,\theta_1){,}{,}(for{,}{,}j=0{,}{,}and{,}{,}j=1)
+$$</p>
+<p>或者换一种表达方法(同样的要进行到收敛)：
+$$
+\theta_0 :=\theta_0-\alpha{1\over m}\sum_{i=1}^m(h_{\theta}(x^{(i)})-y^{(i)})
+$$</p>
+<p>$$
+\theta_1:=\theta_1-\alpha{1\over m}\sum_{i=1}^m(h_{\theta}(x^{(i)})-y^{(i)})·x^{(i)}
+$$</p>
+<p>其中：
+$$
+\alpha
+$$
+表示学习率，也就是梯度下降时我们迈出多大的步子。越小则说明梯度下降的速率越缓慢，越大则说明梯度下降的速率越迅速。</p>
+<p>梯度下降是很常用的算法，它是一个一阶的最优化算法，不仅被用在线性回归上，还被用在众多的机器学习领域中。</p>
+<p>它可以解决更一般的问题。</p>
+<p>Have some function:
+$$
+J(\theta_0,\theta_1,\theta_2,&hellip;,\theta_n)
+$$
+Want:
+$$
+min_{(\theta_0,&hellip;,\theta_n)}J(\theta_0,&hellip;,\theta_n)
+$$
+特点：</p>
+<ul>
+<li>沿着不同路线下降，会有多个局部最优解，容易陷入局部最优化</li>
+</ul>
+<h4 id="多元线性回归模型及梯度下降算法">多元线性回归模型及梯度下降算法</h4>
+<p>$$
+Hypothesis:h_\theta(x)=\theta^Tx=\theta_0x_0+\theta_1x_1+\theta_2x_2+···+\theta_nx_n
+$$</p>
+<p>$$
+Parameters:\theta_0,\theta_1,···,\theta_n
+$$</p>
+<p>$$
+Cost Function:J(\theta_0,\theta_1,···,\theta_n)={1\over2m}\sum_{i=1}^m(h_{\theta}(x^{(i)})-y^{(i)})^2
+$$</p>
+<p>$$
+GradientDescent:Repeat{\theta_j:=\theta_j-\alpha\frac{\partial }{\partial \theta_j}J(\theta_0,\theta_1,···,\theta_n)}
+$$</p>
+<p>将<code>GradientDescent</code>的偏导数展开，就是：
+$$
+\theta_j:=\theta_j-\alpha{1\over m}\sum_{i=1}^m(h_{\theta}(x^{(i)})-y^{(i)})x^{(i)}_j
+$$</p>
+<h4 id="处理梯度下降的常用技巧">处理梯度下降的常用技巧</h4>
+<h5 id="特征缩放">特征缩放</h5>
+<p>如果一个问题有很多特征，这些特征的取值都处在一个相近的范围，那么梯度下降算法就能更快地收敛。</p>
+<p>特征缩放的目的是：将特征的取值约束到<code>-1</code>到<code>+1</code>的范围内。</p>
+<h5 id="归一化">归一化</h5>
+<p>进行如下替换，让特征值具有为0的平均值：
+$$
+x_i-&gt;(x_i-\mu_i)
+$$
+其中：
+$$
+x_i:第i个特征
+$$</p>
+<p>$$
+\mu_i:第i个特征x_i的平均值
+$$</p>
+<p>然后用：
+$$
+x_i-\mu_i\over s_i
+$$
+去替换特征值：
+$$
+x_i
+$$
+其中：
+$$
+s_i:特征x_i的规模或者说是取值范围
+$$</p>
+<h4 id="正规方程用来最小化代价函数">正规方程用来最小化代价函数</h4>
+<p>除了可以使用梯度下降法求解最优代价方程的<code>θ</code>，还可以使用最小化代价函数直接求解最优<code>θ</code>。
+$$
+\theta = (X^TX)^{-1}X^Ty
+$$
+其中：
+$$
+X：特征矩阵
+$$</p>
+<p>$$
+y:结果向量
+$$</p>
+<p>如此得到的<code>θ</code>就可以将代价函数最小化。</p>
+<h3 id="分类问题-classification">分类问题-classification</h3>
+<p>预测离散的数值属性。</p>
+<ul>
+<li>判断肿瘤良性与否</li>
+</ul>
+<h4 id="logistic-regression">Logistic regression</h4>
+<p>有$h_\theta(x)=g(\theta^Tx)$；其中$g(z)={1\over1+e^{-z}}$​​ ，又叫做&quot;logistic function&quot;或者“sigmoid function”。在这里</p>
+<p>$h_\theta(x)$预测的是在参数$\theta$、特征值$x$的条件下，$y=1$​的概率。</p>
+<h4 id="logistic-regression-的-cost-function">Logistic regression 的 cost function</h4>
+<p>与上面回归模型不同是，在使用“logistic function”后，我们的$J(\theta)$​代价函数的图像会变成“非凸”的，会存在多个局部最小值。所以我们想找一个只有一个最值的图像。这里引入逻辑回归的代价函数：</p>
+<p>整体的代价函数如下：
+$$
+J(\theta)={1\over m}\sum_{i=1}^mCost(h_\theta(x)^{(i)},y^{(i)})
+$$</p>
+<p>其中：
+$$
+Cost(h_\theta(x),y) =
+\begin{cases}
+-log(h_\theta(x)),,,if ,, y=1\
+-log(1-h_\theta(x)),,,if ,, y=0\
+\end{cases}
+$$
+这里需要注意：$y=0 ,, or ,, 1 ,, always$​</p>
+<p>所以，$Cost(h_\theta(x),y)$又可以写成：
+$$
+Cost(h_\theta(x),y)=-ylog(h_\theta(x))-(1-y)log(1-h_\theta(x))
+$$
+最终，新的代价函数$J(\theta)$就是：
+$$
+J(\theta)=-{1\over m}[\sum_{i=1}^my^{(i)}log(h_\theta(x^{(i)}))+(1-y^{(i)})log(1-h_\theta(x^{(i)}))]
+$$
+接下来，我们仍希望去最小化代价函数，得到$min_\theta J(\theta)$。</p>
+<p>与上面回归问题相似，我们依旧使用梯度下降法：
+$$
+Repeat{\
+\theta_j:=\theta_j-\alpha\frac{\partial }{\partial \theta_j}J(\theta) \
+simulataneously,,update,,all ,,\theta_j}
+$$
+<strong>需要注意的是</strong>：这里的公式看似与前面相同，但是我们对$h_{\theta}(x)$的定义发生了变化，所以这是完全不同的。</p>
+<h2 id="无监督学习">无监督学习</h2>
+<p>给算法的数据集没有明确的目的和用途，也不清楚每个数据点的意义，让计算机从中找出某种结构（比如让机器能够将数据分成若干个”簇“），</p>
+<h3 id="聚类算法-clustering-algorithm">聚类算法-clustering algorithm</h3>
+<p>告诉算法，这有一堆数据，不知道这些数据是什么、不知道谁是什么类型、甚至不知道有哪些类型（当然也无法告诉机器什么是正确答案），让机器自动找出这些数据的结构并按照得到的结构类型将这些数据个体分成”簇“</p>
+<ul>
+<li>Google news</li>
+<li>genes自动分类</li>
+<li>自动管理计算机集群</li>
+<li>社会网络分析</li>
+<li>星际数据分析</li>
+</ul>
+<h2 id="评估模型">评估模型</h2>
+<ul>
+<li>过拟合-高方差：直接表现为训练误差大，同时交叉验证误差也很大</li>
+<li>欠拟合-高偏差：直接表现为训练 误差较小，但是交叉验证误差很大</li>
+<li>修正高方差(variance)问题：使用更多的训练样本、减少特征数量、增大正则化项系数$\lambda$的值​​</li>
+<li>修正高偏差(bias)问题：增加样本数 或 增加多项式特征、减小正则化系数$\lambda$的值</li>
+</ul>
+<h2 id="常见问题">常见问题</h2>
+<h3 id="过拟合问题">过拟合问题</h3>
+<p>过拟合问题通常在变量过多时出现，在训练时的假设可以很好的拟合训练集，代价函数实际上很可能接近于甚至等于0，这样一来模型会千方百计的去拟合训练集，最终导致<strong>模型无法泛化到新的样本中</strong>。</p>
+<h4 id="如何解决过拟合">如何解决过拟合</h4>
+<ol>
+<li>
+<p>减少特征的数量</p>
+<ul>
+<li>人工的去决定哪些特征变量是重要的。</li>
+<li>使用模型选择算法，让算法去决定保留哪些特征变量。</li>
+</ul>
+<p>这种方法的缺点是：会舍弃一些信息，尽管这些信息是有用的。</p>
+</li>
+<li>
+<p>正则化Regularization</p>
+<ul>
+<li>保持所有的特征变量，但是减少量级或者参数$\theta$的大小。</li>
+<li>这样就保留了所有特征变量，因为每一个变量都会对预测的模型产生或大或小的影响。</li>
+</ul>
+</li>
+</ol>
+<h3 id="欠拟合问题">欠拟合问题</h3>
+<p>与过拟合相反。</p>
+<h2 id="符号定义">符号定义</h2>
+<p>$$
+m：训练样本的数量
+$$</p>
+<p>$$
+x&rsquo;s：输入变量，或者说是特征
+$$</p>
+<p>$$
+y&rsquo;s：输出变量，也就是要预测的目标变量
+$$</p>
+<p>$$
+(x,y)：表示一个训练样本
+$$</p>
+<p>$$
+(x^{(i)},y^{(i)})：表示第i个训练样本
+$$</p>
+<p>$$
+h：假设函数(hypothesis)，接收x，尝试输出y
+$$</p>
+<p>$$
+假设函数h_{\theta}(x)=\theta_0+\theta_1x，那么\theta_0和\theta_1叫做模型参数
+$$</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/ml/dl/">ML/DL</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

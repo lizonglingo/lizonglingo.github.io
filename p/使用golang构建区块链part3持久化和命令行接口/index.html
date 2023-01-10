@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='介绍 到现在，我们已经构建了一个有工作量证明系统和可以挖矿的区块链。我们的实现离一个具有完整功能的区块链又进了一步，但是它仍然少一些重要的性质'>
+<title>使用Golang构建区块链Part3：持久化和命令行接口</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/%E4%BD%BF%E7%94%A8golang%E6%9E%84%E5%BB%BA%E5%8C%BA%E5%9D%97%E9%93%BEpart3%E6%8C%81%E4%B9%85%E5%8C%96%E5%92%8C%E5%91%BD%E4%BB%A4%E8%A1%8C%E6%8E%A5%E5%8F%A3/'>
+
+<link rel="stylesheet" href="/scss/style.min.8191399262444ab68b72a18c97392f5349be20a1615d77445be51e974c144cff.css"><meta property='og:title' content='使用Golang构建区块链Part3：持久化和命令行接口'>
+<meta property='og:description' content='介绍 到现在，我们已经构建了一个有工作量证明系统和可以挖矿的区块链。我们的实现离一个具有完整功能的区块链又进了一步，但是它仍然少一些重要的性质'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/%E4%BD%BF%E7%94%A8golang%E6%9E%84%E5%BB%BA%E5%8C%BA%E5%9D%97%E9%93%BEpart3%E6%8C%81%E4%B9%85%E5%8C%96%E5%92%8C%E5%91%BD%E4%BB%A4%E8%A1%8C%E6%8E%A5%E5%8F%A3/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='Golang' /><meta property='article:tag' content='区块链' /><meta property='article:published_time' content='2019-09-06T13:26:13&#43;08:00'/><meta property='article:modified_time' content='2019-09-06T13:26:13&#43;08:00'/>
+<meta name="twitter:title" content="使用Golang构建区块链Part3：持久化和命令行接口">
+<meta name="twitter:description" content="介绍 到现在，我们已经构建了一个有工作量证明系统和可以挖矿的区块链。我们的实现离一个具有完整功能的区块链又进了一步，但是它仍然少一些重要的性质">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description">子标题</h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://twitter.com'
+                        target="_blank"
+                        title="Twitter"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#介绍">介绍</a></li>
+    <li><a href="#数据库的选择">数据库的选择</a></li>
+    <li><a href="#boltdb">BoltDB</a></li>
+    <li><a href="#数据库结构">数据库结构</a></li>
+    <li><a href="#序列化">序列化</a></li>
+    <li><a href="#持久化">持久化</a></li>
+    <li><a href="#检查区块链">检查区块链</a></li>
+    <li><a href="#命令行接口cli">命令行接口（CLI）</a></li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/golang/" >
+                Golang
+            </a>
+        
+            <a href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE/" >
+                区块链
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/%E4%BD%BF%E7%94%A8golang%E6%9E%84%E5%BB%BA%E5%8C%BA%E5%9D%97%E9%93%BEpart3%E6%8C%81%E4%B9%85%E5%8C%96%E5%92%8C%E5%91%BD%E4%BB%A4%E8%A1%8C%E6%8E%A5%E5%8F%A3/">使用Golang构建区块链Part3：持久化和命令行接口</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Sep 06, 2019</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 10 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="介绍">介绍</h2>
+<p>到现在，我们已经构建了一个有工作量证明系统和可以挖矿的区块链。我们的实现离一个具有完整功能的区块链又进了一步，但是它仍然少一些重要的性质。今天，我们要将区块链存储到数据库中，在这之后，我们将做一个简单的命令行接口来支持区块链的操作。在它的一个重要的本质中，区块链是一个分布式数据库；我们现在要省略“分布式”的部分，而集中精力于“数据存储”部分。</p>
+<h2 id="数据库的选择">数据库的选择</h2>
+<p>目前，在我们的实现中并没有数据库；反而我们在每一次运行程序创建区块时都存储在内存中。我们既不能重复使用区块链也不能与其他人共享，因此我们需要将它存储在磁盘中。</p>
+<p>我们需要哪一个数据库呢？事实上，任何一个都可以。在<a class="link" href="https://bitcoin.org/bitcoin.pdf"  target="_blank" rel="noopener"
+    >比特币的原始论文</a>中，没有说明使用哪一个特定的数据库。所以，使用什么数据库完全取决于开发者。 <a class="link" href="https://github.com/bitcoin/bitcoin"  target="_blank" rel="noopener"
+    >Bitcoin Core</a> ，最初由中本聪发布的，现在是比特币的一个参考实现，它使用的是<a class="link" href="https://github.com/google/leveldb"  target="_blank" rel="noopener"
+    >LevelDB</a>（虽然它在2012年才发布客户端）。而我们将要使用的是&hellip;</p>
+<h2 id="boltdb">BoltDB</h2>
+<p>原因：</p>
+<ol>
+<li>它非常简单便捷。</li>
+<li>它是由Go语言实现的。</li>
+<li>它不需要运行任何一个服务器。</li>
+<li>它允许我们想要的数据结构。</li>
+</ol>
+<p>在__BoltDB__ <a class="link" href="https://github.com/boltdb/bolt"  target="_blank" rel="noopener"
+    >Github上的README</a>写道：</p>
+<blockquote>
+<p>Bolt 是一个纯键值存储的 Go 数据库，启发自 Howard Chu 的 LMDB. 它旨在为那些无须一个像 Postgres 和 MySQL 这样有着完整数据库服务器的项目，提供一个简单，快速和可靠的数据库。</p>
+<p>由于 Bolt 意在用于提供一些底层功能，简洁便成为其关键所在。它的 API 并不多，并且仅关注值的获取和设置。仅此而已。</p>
+</blockquote>
+<p>听起来很完美的契合了我们的需求！让我们快速的回顾一下它：</p>
+<p>__BoltDB__是一个键值存储结构，这就意味着它不像关系型数据库（MySQL、PostgreSQL等）有表，没有行、列。相反的，数据以一种key-value（键值对）的组合形式存储（就像Go语言中的__map__结构）。键值对存储在桶中，这是有意的给键值对分组（这有些像关系型数据库中的表）。因此，为了获得一个值，你需要知道一个桶（bucket）和一个键（key）。</p>
+<p>关于__BoltDB__一个重要的点是它没有数据类型：键和值都是以字节数组的形式存储。由于我们要存储Go的数据结构（具体来说是__Block__），我们需要将它们进行序列化。也就是说，实现一个可以将Go结构体转化为字节数组并可以从字节数组恢复到Go结构体的机制。我们将使用<a class="link" href="https://golang.org/pkg/encoding/gob/"  target="_blank" rel="noopener"
+    >encoding/gob</a>来实现这个，但是JSON、XML、Protocol Buffers等也是可以的。我们使用<a class="link" href="https://golang.org/pkg/encoding/gob/"  target="_blank" rel="noopener"
+    >encoding/gob</a>是因为它简单而且是Go的标准库。</p>
+<h2 id="数据库结构">数据库结构</h2>
+<p>在开始实现持久化的逻辑之前，我们需要决定怎样将数据存储到数据库中。为此，我们参考比特币的做法。</p>
+<p>简单来说，比特币使用了两个桶（bucket）来存储数据：</p>
+<ol>
+<li>__blocks__存储链上区块的元数据描述。</li>
+<li>__chainstate__存储链的状态，也就是目前所有的未花费交易输出以及一些数据。</li>
+</ol>
+<p>同时，区块被存储为磁盘上不同的文件。出于对性能的考虑：加载单个的区块不需要从内存中加载所有（或者部分）文件。我们不需要实现这些。</p>
+<p>在 <strong>blocks</strong> 中， <strong>key -&gt; value</strong> 对应关系是这样的：</p>
+<ol>
+<li><strong>‘b’ + 32 字节的区块 hash -&gt; 区块索引记录</strong></li>
+<li><strong>‘f’ + 4 字节文件数字 -&gt; 文件信息记录</strong></li>
+<li><strong>‘l’ -&gt; 4 字节文件数字： 最后一个使用过的区块文件数字</strong></li>
+<li><strong>‘R’ -&gt; 1 字节布尔值： 我们是否要去重新索引</strong></li>
+<li><strong>‘F’ + 1 字节标志名长度 + 标志名 -&gt; 1 字节布尔值： 开或关的多种标志</strong></li>
+<li><strong>‘t’ + 32 字节交易 hash -&gt; 交易索引记录</strong></li>
+</ol>
+<p>在 <strong>chainstate</strong>, <strong>key -&gt; value</strong> 对应关系是这样的：</p>
+<ol>
+<li><strong>‘c’ + 32 字节交易 hash -&gt; 未使用的交易出账记录</strong></li>
+<li><strong>‘B’ -&gt; 32 字节区块 hash： 数据库应该表示的未使用交易出账的区块哈希</strong></li>
+</ol>
+<p>（更详细的解释可以在<a class="link" href="https://en.bitcoin.it/wiki/Bitcoin_Core_0.11_%28ch_2%29:_Data_Storage"  target="_blank" rel="noopener"
+    >这里</a>找到）</p>
+<p>因为我们现在还不需要交易，我们只需要有一个__blocks__桶就可以。同时，就像前面说的，我们将以单个文件的形式存储在数据库中，不需要在分开的文件中存储区块。所以我们也不需要任何与文件相关的数字编号。因此，我们只需要这些键值的对应关系：</p>
+<ol>
+<li><strong>32 字节区块 hash -&gt; 区块数据(序列化后的)</strong></li>
+<li><strong>‘l’ -&gt; 链上最后一个区块的 hash</strong></li>
+</ol>
+<p>以上，是我们在实现持久化之前所需要知道的全部。</p>
+<h2 id="序列化">序列化</h2>
+<p>如前文所说，在__BoltDB__中数据只能是__[]byte__的形式，我们想存储__Block__结构在数据库中。我们将使用<a class="link" href="https://golang.org/pkg/encoding/gob/"  target="_blank" rel="noopener"
+    >encoding/gob</a>来对结构体进行序列化。</p>
+<p>让我们实现区块的__Serialize__方法（为了简洁，我们暂时忽略错误处理）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Block</span>) <span style="color:#a6e22e">Serialize</span>() []<span style="color:#66d9ef">byte</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">result</span> <span style="color:#a6e22e">bytes</span>.<span style="color:#a6e22e">Buffer</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">encoder</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gob</span>.<span style="color:#a6e22e">NewEncoder</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">result</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">encoder</span>.<span style="color:#a6e22e">Encode</span>(<span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">result</span>.<span style="color:#a6e22e">Bytes</span>()
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这个模块非常直接了当：首先，我们为所要序列化的数据定义了一个buffer来存储；然后我们初始化了一个__gob encoder__并且对区块进行编码；结果以一个字节数组的形式返回。</p>
+<p>接下来，我们需要一个反序列化的函数接受输入的字节数组并返回一个__Block__区块。这不是一个方法而是一个独立的函数：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">DeserializeBlock</span>(<span style="color:#a6e22e">d</span> []<span style="color:#66d9ef">byte</span>) <span style="color:#f92672">*</span><span style="color:#a6e22e">Block</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">block</span> <span style="color:#a6e22e">Block</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">decoder</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gob</span>.<span style="color:#a6e22e">NewDecoder</span>(<span style="color:#a6e22e">bytes</span>.<span style="color:#a6e22e">NewReader</span>(<span style="color:#a6e22e">d</span>))
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">decoder</span>.<span style="color:#a6e22e">Decode</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">block</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">block</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这就是反序列化了！</p>
+<h2 id="持久化">持久化</h2>
+<p>让我们开始__NewBlockchain__函数。目前，它创建一个新的__Blockchain__并且添加一个创世纪块进去。我们希望它可以做：</p>
+<ol>
+<li>打开一个数据库文件。</li>
+<li>检查里面是否以及存在一个区块链在里面。</li>
+<li>如果这里已经有了一个区块链：
+<ol>
+<li>创建一个新的区块链实例。</li>
+<li>设置这个区块链实例的__tip__为数据库中最后一个区块的哈希。</li>
+</ol>
+</li>
+</ol>
+<p>代码中，它看起来像：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewBlockchain</span>() <span style="color:#f92672">*</span><span style="color:#a6e22e">Blockchain</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">tip</span> []<span style="color:#66d9ef">byte</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">db</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bolt</span>.<span style="color:#a6e22e">Open</span>(<span style="color:#a6e22e">dbFile</span>, <span style="color:#ae81ff">0600</span>, <span style="color:#66d9ef">nil</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">db</span>.<span style="color:#a6e22e">Update</span>(<span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">tx</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">bolt</span>.<span style="color:#a6e22e">Tx</span>) <span style="color:#66d9ef">error</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">b</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tx</span>.<span style="color:#a6e22e">Bucket</span>([]byte(<span style="color:#a6e22e">blocksBucket</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">b</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">genesis</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">NewGenesisBlock</span>()
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">b</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tx</span>.<span style="color:#a6e22e">CreateBucket</span>([]byte(<span style="color:#a6e22e">blocksBucket</span>))
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">Put</span>(<span style="color:#a6e22e">genesis</span>.<span style="color:#a6e22e">Hash</span>, <span style="color:#a6e22e">genesis</span>.<span style="color:#a6e22e">Serialize</span>())
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">Put</span>([]byte(<span style="color:#e6db74">&#34;l&#34;</span>), <span style="color:#a6e22e">genesis</span>.<span style="color:#a6e22e">Hash</span>)
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">tip</span> = <span style="color:#a6e22e">genesis</span>.<span style="color:#a6e22e">Hash</span>
+</span></span><span style="display:flex;"><span>		} <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">tip</span> = <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">Get</span>([]byte(<span style="color:#e6db74">&#34;l&#34;</span>))
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>	})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">bc</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">Blockchain</span>{<span style="color:#a6e22e">tip</span>, <span style="color:#a6e22e">db</span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">bc</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>让我们分开来看：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">db</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bolt</span>.<span style="color:#a6e22e">Open</span>(<span style="color:#a6e22e">dbFile</span>, <span style="color:#ae81ff">0600</span>, <span style="color:#66d9ef">nil</span>)
+</span></span></code></pre></div><p>这是打开一个__BoltDB__数据库文件的标准形式。需要注意的是，如果没有文件它是不会返回错误的。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">db</span>.<span style="color:#a6e22e">Update</span>(<span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">tx</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">bolt</span>.<span style="color:#a6e22e">Tx</span>) <span style="color:#66d9ef">error</span> {
+</span></span><span style="display:flex;"><span><span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>在__BoltDB__中，数据库通过一个事务进行操作。这里有两种事务：只读（read-only）和读写（read-write）。这里我们开启一个读写事务（<strong>db.Update(&hellip;)</strong>），因为我们希望将创世纪块写入数据库。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">b</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tx</span>.<span style="color:#a6e22e">Bucket</span>([]byte(<span style="color:#a6e22e">blocksBucket</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">b</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">genesis</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">NewGenesisBlock</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">b</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tx</span>.<span style="color:#a6e22e">CreateBucket</span>([]byte(<span style="color:#a6e22e">blocksBucket</span>))
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">Put</span>(<span style="color:#a6e22e">genesis</span>.<span style="color:#a6e22e">Hash</span>, <span style="color:#a6e22e">genesis</span>.<span style="color:#a6e22e">Serialize</span>())
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">Put</span>([]byte(<span style="color:#e6db74">&#34;l&#34;</span>), <span style="color:#a6e22e">genesis</span>.<span style="color:#a6e22e">Hash</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">tip</span> = <span style="color:#a6e22e">genesis</span>.<span style="color:#a6e22e">Hash</span>
+</span></span><span style="display:flex;"><span>} <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">tip</span> = <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">Get</span>([]byte(<span style="color:#e6db74">&#34;l&#34;</span>))
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这是这个函数的核心。在这里，我们获得了一个bucket去存储我们的区块：如果它存在，我们从里面读取键值&quot;l&quot;（字母L小写，不是1）；如果不存在，我们就生成一个创世纪块，创建一个桶，将区块保存进去，之后更新&quot;l&quot;键，使其存储区块链的最后一个区块的哈希。</p>
+<p>同时，注意一下创建__Blockchain__的新方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">bc</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">Blockchain</span>{<span style="color:#a6e22e">tip</span>, <span style="color:#a6e22e">db</span>}
+</span></span></code></pre></div><p>我们不再存储所有的区块，取而代之的是仅仅存储区块链的__tip__。同时我们也保存一个数据库连接，因为我们想只打开它一次，并且让它在程序运行的过程中一直保持着连接。所以，__Blockchain__结构看起来就像这样：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Blockchain</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">tip</span> []<span style="color:#66d9ef">byte</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">db</span>  <span style="color:#f92672">*</span><span style="color:#a6e22e">bolt</span>.<span style="color:#a6e22e">DB</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>接下来我们想做的就是更新__AddBlock__方法：现在添加区块到区块链上不是简单的向数组中添加一个元素了。从现在开始我们将把区块存储到数据库中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">bc</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Blockchain</span>) <span style="color:#a6e22e">AddBlock</span>(<span style="color:#a6e22e">data</span> <span style="color:#66d9ef">string</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">lastHash</span> []<span style="color:#66d9ef">byte</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bc</span>.<span style="color:#a6e22e">db</span>.<span style="color:#a6e22e">View</span>(<span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">tx</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">bolt</span>.<span style="color:#a6e22e">Tx</span>) <span style="color:#66d9ef">error</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">b</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tx</span>.<span style="color:#a6e22e">Bucket</span>([]byte(<span style="color:#a6e22e">blocksBucket</span>))
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">lastHash</span> = <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">Get</span>([]byte(<span style="color:#e6db74">&#34;l&#34;</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>	})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">newBlock</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">NewBlock</span>(<span style="color:#a6e22e">data</span>, <span style="color:#a6e22e">lastHash</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">bc</span>.<span style="color:#a6e22e">db</span>.<span style="color:#a6e22e">Update</span>(<span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">tx</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">bolt</span>.<span style="color:#a6e22e">Tx</span>) <span style="color:#66d9ef">error</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">b</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tx</span>.<span style="color:#a6e22e">Bucket</span>([]byte(<span style="color:#a6e22e">blocksBucket</span>))
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">Put</span>(<span style="color:#a6e22e">newBlock</span>.<span style="color:#a6e22e">Hash</span>, <span style="color:#a6e22e">newBlock</span>.<span style="color:#a6e22e">Serialize</span>())
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">Put</span>([]byte(<span style="color:#e6db74">&#34;l&#34;</span>), <span style="color:#a6e22e">newBlock</span>.<span style="color:#a6e22e">Hash</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">bc</span>.<span style="color:#a6e22e">tip</span> = <span style="color:#a6e22e">newBlock</span>.<span style="color:#a6e22e">Hash</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>	})
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>让我们一部分一部分进行分析：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bc</span>.<span style="color:#a6e22e">db</span>.<span style="color:#a6e22e">View</span>(<span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">tx</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">bolt</span>.<span style="color:#a6e22e">Tx</span>) <span style="color:#66d9ef">error</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">b</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tx</span>.<span style="color:#a6e22e">Bucket</span>([]byte(<span style="color:#a6e22e">blocksBucket</span>))
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">lastHash</span> = <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">Get</span>([]byte(<span style="color:#e6db74">&#34;l&#34;</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>这是__BoltDB__数据库的另一种事务：只读（read-only）。这里我们从数据库中得到了最后一个区块的哈希，用来挖新的区块哈希。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">newBlock</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">NewBlock</span>(<span style="color:#a6e22e">data</span>, <span style="color:#a6e22e">lastHash</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">b</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tx</span>.<span style="color:#a6e22e">Bucket</span>([]byte(<span style="color:#a6e22e">blocksBucket</span>))
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">Put</span>(<span style="color:#a6e22e">newBlock</span>.<span style="color:#a6e22e">Hash</span>, <span style="color:#a6e22e">newBlock</span>.<span style="color:#a6e22e">Serialize</span>())
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">Put</span>([]byte(<span style="color:#e6db74">&#34;l&#34;</span>), <span style="color:#a6e22e">newBlock</span>.<span style="color:#a6e22e">Hash</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">bc</span>.<span style="color:#a6e22e">tip</span> = <span style="color:#a6e22e">newBlock</span>.<span style="color:#a6e22e">Hash</span>
+</span></span></code></pre></div><p>在挖出新区块之后，我们将其序列化特征值存储到数据库中，并且更新&quot;l&quot;键，让它保存最新区块的哈希。</p>
+<p>完成了！并不是很难，对吗！</p>
+<h2 id="检查区块链">检查区块链</h2>
+<p>所有的新区块现在保存在数据库中，所以我们现在可以重新打开这条链并且向其中添加新的区块。但是在实现了这些后，我们失去了一个非常好的特性：我们不能打印区块链中的区块了，因为我们不再像以前那样存储区块了。让我们修复这个瑕疵！</p>
+<p>__BoltDB__数据库允许对桶里的所有key进行迭代，但是所有的key都以字节顺序存储，我们又想以区块在区块链中的顺序进行打印。而且，因为我们不想加载内存中所有的区块（我们的区块链存储数据可能非常庞大！或者假装是这样），我们将把它们一个一个读出来。为此，我们需要一个区块链迭代器：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">BlockchainIterator</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">currentHash</span> []<span style="color:#66d9ef">byte</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">db</span>          <span style="color:#f92672">*</span><span style="color:#a6e22e">bolt</span>.<span style="color:#a6e22e">DB</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>每一个迭代器将在区块链中的区块需要迭代时创建，并且它将会保存当前迭代区块的哈希和一个数据库连接。因为后面的，一个迭代器附属于一个区块（这里的区块链是指存储了一个数据库连接的__Blockchain__实例），因此我们需要通过__Blockchain__方法进行创建：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">bc</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Blockchain</span>) <span style="color:#a6e22e">Iterator</span>() <span style="color:#f92672">*</span><span style="color:#a6e22e">BlockchainIterator</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">bci</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">BlockchainIterator</span>{<span style="color:#a6e22e">bc</span>.<span style="color:#a6e22e">tip</span>, <span style="color:#a6e22e">bc</span>.<span style="color:#a6e22e">db</span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">bci</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>注意的是，最初一个迭代器初始指向区块链的tip，所以区块将会被从顶到底获取，从最近创建的到最久之前创建的获取（我们这里把区块链想象成一个桶，最早创建的落在桶底，最晚（新）创建的在上面）。实际上，<strong>选择一个tip就意味着给一条链投票</strong>。一条区块链可以有多个分支，最长的那条被认为是主分支。在得到tip之后（它可以是区块链中的任意一个区块）我们就可以复现整条链，找到它的长度和构建它所需要的工作。这也同样意味着，一个tip也就是区块链的一种标识符。</p>
+<p>__BlockchainIterator__将只做一件事情：从一条区块链中返回下一个区块。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">i</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">BlockchainIterator</span>) <span style="color:#a6e22e">Next</span>() <span style="color:#f92672">*</span><span style="color:#a6e22e">Block</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">block</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Block</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">i</span>.<span style="color:#a6e22e">db</span>.<span style="color:#a6e22e">View</span>(<span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">tx</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">bolt</span>.<span style="color:#a6e22e">Tx</span>) <span style="color:#66d9ef">error</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">b</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tx</span>.<span style="color:#a6e22e">Bucket</span>([]byte(<span style="color:#a6e22e">blocksBucket</span>))
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">encodedBlock</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">Get</span>(<span style="color:#a6e22e">i</span>.<span style="color:#a6e22e">currentHash</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">block</span> = <span style="color:#a6e22e">DeserializeBlock</span>(<span style="color:#a6e22e">encodedBlock</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>	})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">i</span>.<span style="color:#a6e22e">currentHash</span> = <span style="color:#a6e22e">block</span>.<span style="color:#a6e22e">PrevBlockHash</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">block</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这就是数据库部分！</p>
+<h2 id="命令行接口cli">命令行接口（CLI）</h2>
+<p>截止到目前，我们的实现没有提供任何程序交互接口：我们只是很简单的在__main__函数中执行__NewBlockchain__和__bc.AddBlock__。是时候改进它了！我们想要这样的命令：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">blockchain_go</span> <span style="color:#a6e22e">addblock</span> <span style="color:#e6db74">&#34;Pay 0.031337 for a coffee&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">blockchain_go</span> <span style="color:#a6e22e">printchain</span>
+</span></span></code></pre></div><p>所有的与命令行相关的操作将交给__CLI__结构体进行处理：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">CLI</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">bc</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Blockchain</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>它的入口在__Run__函数中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">cli</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">CLI</span>) <span style="color:#a6e22e">Run</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">cli</span>.<span style="color:#a6e22e">validateArgs</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">addBlockCmd</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">flag</span>.<span style="color:#a6e22e">NewFlagSet</span>(<span style="color:#e6db74">&#34;addblock&#34;</span>, <span style="color:#a6e22e">flag</span>.<span style="color:#a6e22e">ExitOnError</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">printChainCmd</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">flag</span>.<span style="color:#a6e22e">NewFlagSet</span>(<span style="color:#e6db74">&#34;printchain&#34;</span>, <span style="color:#a6e22e">flag</span>.<span style="color:#a6e22e">ExitOnError</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">addBlockData</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">addBlockCmd</span>.<span style="color:#a6e22e">String</span>(<span style="color:#e6db74">&#34;data&#34;</span>, <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#e6db74">&#34;Block data&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">switch</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Args</span>[<span style="color:#ae81ff">1</span>] {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">case</span> <span style="color:#e6db74">&#34;addblock&#34;</span>:
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">addBlockCmd</span>.<span style="color:#a6e22e">Parse</span>(<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Args</span>[<span style="color:#ae81ff">2</span>:])
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">case</span> <span style="color:#e6db74">&#34;printchain&#34;</span>:
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">printChainCmd</span>.<span style="color:#a6e22e">Parse</span>(<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Args</span>[<span style="color:#ae81ff">2</span>:])
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">default</span>:
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">cli</span>.<span style="color:#a6e22e">printUsage</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Exit</span>(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">addBlockCmd</span>.<span style="color:#a6e22e">Parsed</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">addBlockData</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;&#34;</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">addBlockCmd</span>.<span style="color:#a6e22e">Usage</span>()
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Exit</span>(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">cli</span>.<span style="color:#a6e22e">addBlock</span>(<span style="color:#f92672">*</span><span style="color:#a6e22e">addBlockData</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">printChainCmd</span>.<span style="color:#a6e22e">Parsed</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">cli</span>.<span style="color:#a6e22e">printChain</span>()
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>我们使用标准包__<a class="link" href="https://golang.org/pkg/flag/"  target="_blank" rel="noopener"
+    >flag</a>__来解析命令行参数。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">addBlockCmd</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">flag</span>.<span style="color:#a6e22e">NewFlagSet</span>(<span style="color:#e6db74">&#34;addblock&#34;</span>, <span style="color:#a6e22e">flag</span>.<span style="color:#a6e22e">ExitOnError</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">printChainCmd</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">flag</span>.<span style="color:#a6e22e">NewFlagSet</span>(<span style="color:#e6db74">&#34;printchain&#34;</span>, <span style="color:#a6e22e">flag</span>.<span style="color:#a6e22e">ExitOnError</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">addBlockData</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">addBlockCmd</span>.<span style="color:#a6e22e">String</span>(<span style="color:#e6db74">&#34;data&#34;</span>, <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#e6db74">&#34;Block data&#34;</span>)
+</span></span></code></pre></div><p>首先，我们创建两个子命令__addblock__和__printchain__，然后我们添加__-data__标志在其中。__printchain__不需要任何标志。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">switch</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Args</span>[<span style="color:#ae81ff">1</span>] {
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">case</span> <span style="color:#e6db74">&#34;addblock&#34;</span>:
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">addBlockCmd</span>.<span style="color:#a6e22e">Parse</span>(<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Args</span>[<span style="color:#ae81ff">2</span>:])
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">case</span> <span style="color:#e6db74">&#34;printchain&#34;</span>:
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">printChainCmd</span>.<span style="color:#a6e22e">Parse</span>(<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Args</span>[<span style="color:#ae81ff">2</span>:])
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">default</span>:
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">cli</span>.<span style="color:#a6e22e">printUsage</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Exit</span>(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>然后，我们检查用户提供的命令并且解析相关的__flag__子命令。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">addBlockCmd</span>.<span style="color:#a6e22e">Parsed</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">addBlockData</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;&#34;</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">addBlockCmd</span>.<span style="color:#a6e22e">Usage</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Exit</span>(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">cli</span>.<span style="color:#a6e22e">addBlock</span>(<span style="color:#f92672">*</span><span style="color:#a6e22e">addBlockData</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">printChainCmd</span>.<span style="color:#a6e22e">Parsed</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">cli</span>.<span style="color:#a6e22e">printChain</span>()
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>接下来，我们检查哪个子命令被解析了然后运行相关的函数：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">cli</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">CLI</span>) <span style="color:#a6e22e">addBlock</span>(<span style="color:#a6e22e">data</span> <span style="color:#66d9ef">string</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">cli</span>.<span style="color:#a6e22e">bc</span>.<span style="color:#a6e22e">AddBlock</span>(<span style="color:#a6e22e">data</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;Success!&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">cli</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">CLI</span>) <span style="color:#a6e22e">printChain</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">bci</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">cli</span>.<span style="color:#a6e22e">bc</span>.<span style="color:#a6e22e">Iterator</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">block</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bci</span>.<span style="color:#a6e22e">Next</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Prev. hash: %x\n&#34;</span>, <span style="color:#a6e22e">block</span>.<span style="color:#a6e22e">PrevBlockHash</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Data: %s\n&#34;</span>, <span style="color:#a6e22e">block</span>.<span style="color:#a6e22e">Data</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Hash: %x\n&#34;</span>, <span style="color:#a6e22e">block</span>.<span style="color:#a6e22e">Hash</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">pow</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">NewProofOfWork</span>(<span style="color:#a6e22e">block</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;PoW: %s\n&#34;</span>, <span style="color:#a6e22e">strconv</span>.<span style="color:#a6e22e">FormatBool</span>(<span style="color:#a6e22e">pow</span>.<span style="color:#a6e22e">Validate</span>()))
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> len(<span style="color:#a6e22e">block</span>.<span style="color:#a6e22e">PrevBlockHash</span>) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这部分非常类似于我们前面的那个。唯一的不同是我们现在使用了一个__BlockchainIterator__去迭代区块链中的区块。</p>
+<p>当然也不要忘了__main__函数中相应的修改：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">bc</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">NewBlockchain</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">bc</span>.<span style="color:#a6e22e">db</span>.<span style="color:#a6e22e">Close</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">cli</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">CLI</span>{<span style="color:#a6e22e">bc</span>}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">cli</span>.<span style="color:#a6e22e">Run</span>()
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>注意，无论提供哪一个命令行参数都会创建一个新的区块链。</p>
+<p>完事儿了！让我们检查一切的运行是否如我们所愿：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">$</span> <span style="color:#a6e22e">blockchain_go</span> <span style="color:#a6e22e">printchain</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">No</span> <span style="color:#a6e22e">existing</span> <span style="color:#a6e22e">blockchain</span> <span style="color:#a6e22e">found</span>. <span style="color:#a6e22e">Creating</span> <span style="color:#a6e22e">a</span> <span style="color:#a6e22e">new</span> <span style="color:#a6e22e">one</span><span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Mining</span> <span style="color:#a6e22e">the</span> <span style="color:#a6e22e">block</span> <span style="color:#a6e22e">containing</span> <span style="color:#e6db74">&#34;Genesis Block&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">000000</span><span style="color:#a6e22e">edc4a82659cebf087adee1ea353bd57fcd59927662cd5ff1c4f618109b</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Prev</span>. <span style="color:#a6e22e">hash</span>:
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Data</span>: <span style="color:#a6e22e">Genesis</span> <span style="color:#a6e22e">Block</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Hash</span>: <span style="color:#ae81ff">000000</span><span style="color:#a6e22e">edc4a82659cebf087adee1ea353bd57fcd59927662cd5ff1c4f618109b</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">PoW</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">$</span> <span style="color:#a6e22e">blockchain_go</span> <span style="color:#a6e22e">addblock</span> <span style="color:#f92672">-</span><span style="color:#a6e22e">data</span> <span style="color:#e6db74">&#34;Send 1 BTC to Ivan&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Mining</span> <span style="color:#a6e22e">the</span> <span style="color:#a6e22e">block</span> <span style="color:#a6e22e">containing</span> <span style="color:#e6db74">&#34;Send 1 BTC to Ivan&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">000000</span><span style="color:#a6e22e">d7b0c76e1001cdc1fc866b95a481d23f3027d86901eaeb77ae6d002b13</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Success</span>!
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">$</span> <span style="color:#a6e22e">blockchain_go</span> <span style="color:#a6e22e">addblock</span> <span style="color:#f92672">-</span><span style="color:#a6e22e">data</span> <span style="color:#e6db74">&#34;Pay 0.31337 BTC for a coffee&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Mining</span> <span style="color:#a6e22e">the</span> <span style="color:#a6e22e">block</span> <span style="color:#a6e22e">containing</span> <span style="color:#e6db74">&#34;Pay 0.31337 BTC for a coffee&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">000000</span><span style="color:#a6e22e">aa0748da7367dec6b9de5027f4fae0963df89ff39d8f20fd7299307148</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Success</span>!
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">$</span> <span style="color:#a6e22e">blockchain_go</span> <span style="color:#a6e22e">printchain</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Prev</span>. <span style="color:#a6e22e">hash</span>: <span style="color:#ae81ff">000000</span><span style="color:#a6e22e">d7b0c76e1001cdc1fc866b95a481d23f3027d86901eaeb77ae6d002b13</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Data</span>: <span style="color:#a6e22e">Pay</span> <span style="color:#ae81ff">0.31337</span> <span style="color:#a6e22e">BTC</span> <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">a</span> <span style="color:#a6e22e">coffee</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Hash</span>: <span style="color:#ae81ff">000000</span><span style="color:#a6e22e">aa0748da7367dec6b9de5027f4fae0963df89ff39d8f20fd7299307148</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">PoW</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Prev</span>. <span style="color:#a6e22e">hash</span>: <span style="color:#ae81ff">000000</span><span style="color:#a6e22e">edc4a82659cebf087adee1ea353bd57fcd59927662cd5ff1c4f618109b</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Data</span>: <span style="color:#a6e22e">Send</span> <span style="color:#ae81ff">1</span> <span style="color:#a6e22e">BTC</span> <span style="color:#a6e22e">to</span> <span style="color:#a6e22e">Ivan</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Hash</span>: <span style="color:#ae81ff">000000</span><span style="color:#a6e22e">d7b0c76e1001cdc1fc866b95a481d23f3027d86901eaeb77ae6d002b13</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">PoW</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Prev</span>. <span style="color:#a6e22e">hash</span>:
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Data</span>: <span style="color:#a6e22e">Genesis</span> <span style="color:#a6e22e">Block</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Hash</span>: <span style="color:#ae81ff">000000</span><span style="color:#a6e22e">edc4a82659cebf087adee1ea353bd57fcd59927662cd5ff1c4f618109b</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">PoW</span>: <span style="color:#66d9ef">true</span>
+</span></span></code></pre></div><blockquote>
+<p>Github的译者版本附加的测试：</p>
+<p><img src="https://i.loli.net/2019/09/06/J2CDZjOVmgfW1qN.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+</blockquote>
+<p>(看起来可以开酒（🍷or🍺）了)</p>
+<h2 id="总结">总结</h2>
+<p>接下来我们将实现地址、钱包以及交易（或许也有）。尽情期待！</p>
+<p>Links：</p>
+<ol>
+<li><a class="link" href="https://github.com/Jeiwan/blockchain_go/tree/part_3"  target="_blank" rel="noopener"
+    >Full source codes</a></li>
+<li><a class="link" href="https://en.bitcoin.it/wiki/Bitcoin_Core_0.11_%28ch_2%29:_Data_Storage"  target="_blank" rel="noopener"
+    >Bitcoin Core Data Storage</a></li>
+<li><a class="link" href="https://github.com/boltdb/bolt"  target="_blank" rel="noopener"
+    >boltdb</a></li>
+<li><a class="link" href="https://golang.org/pkg/encoding/gob/"  target="_blank" rel="noopener"
+    >encoding/gob</a></li>
+<li><a class="link" href="https://golang.org/pkg/flag/"  target="_blank" rel="noopener"
+    >flag</a></li>
+</ol>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/golang/">Golang</a>
+        
+            <a href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE/">区块链</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/%E4%BD%BF%E7%94%A8golang%E6%9E%84%E5%BB%BA%E5%8C%BA%E5%9D%97%E9%93%BEpart2%E5%B7%A5%E4%BD%9C%E9%87%8F%E8%AF%81%E6%98%8E/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">使用Golang构建区块链Part2：工作量证明</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E4%BD%BF%E7%94%A8golang%E6%9E%84%E5%BB%BA%E5%8C%BA%E5%9D%97%E9%93%BEpart1%E5%9F%BA%E6%9C%AC%E5%8E%9F%E5%9E%8B/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">使用Golang构建区块链Part1：基本原型</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/golang%E5%AE%9E%E7%8E%B0%E6%9C%80%E7%AE%80%E5%8D%95%E7%9A%84%E9%93%BE/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Golang实现最简单的链</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E8%A7%A3%E5%86%B3win%E4%B8%8B%E4%BD%BF%E7%94%A8gojieba%E7%BC%96%E8%AF%91%E6%97%B6%E7%9A%84gcc%E6%8A%A5%E9%94%99/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">解决win下使用gojieba编译时的gcc报错</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/golang%E5%AE%9E%E7%8E%B0%E5%9F%BA%E7%A1%80simhash%E7%AE%97%E6%B3%95/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Golang实现基础Simhash算法</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

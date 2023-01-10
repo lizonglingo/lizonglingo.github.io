@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Git on Li Duo</title>
+        <link>https://lizonglingo.github.io/tags/git/</link>
+        <description>Recent content in Git on Li Duo</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-CN</language>
+        <lastBuildDate>Fri, 15 Jan 2021 23:14:56 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/git/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Git使用</title>
+        <link>https://lizonglingo.github.io/p/git%E4%BD%BF%E7%94%A8/</link>
+        <pubDate>Fri, 15 Jan 2021 23:14:56 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/git%E4%BD%BF%E7%94%A8/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;有关git使用中的学习记录&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;clone速度太慢&#34;&gt;clone速度太慢&lt;/h2&gt;
+&lt;h3 id=&#34;方法一&#34;&gt;方法一&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;调整http提交缓存(亲测有效，使用https方式clone)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ git config --global http.postBuffer &lt;span style=&#34;color:#ae81ff&#34;&gt;524288000&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;调整前：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://i.loli.net/2021/01/15/giAKeOhscXGqUrN.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;LA0@`KKOXC5IKFKPJ~PRX.png&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;调整后：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://i.loli.net/2021/01/15/hlJu5ioR4yxzrvg.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;5DU1LP__L__P_K482P_C83O.png&#34;
+	
+	
+&gt;&lt;/p&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Linux on Li Duo</title>
+        <link>https://lizonglingo.github.io/categories/linux/</link>
+        <description>Recent content in Linux on Li Duo</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-CN</language>
+        <lastBuildDate>Sun, 17 Jan 2021 19:13:49 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/categories/linux/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>VMware使用宿主机的小飞机</title>
+        <link>https://lizonglingo.github.io/p/vmware%E4%BD%BF%E7%94%A8%E5%AE%BF%E4%B8%BB%E6%9C%BA%E7%9A%84%E5%B0%8F%E9%A3%9E%E6%9C%BA/</link>
+        <pubDate>Sun, 17 Jan 2021 19:13:49 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/vmware%E4%BD%BF%E7%94%A8%E5%AE%BF%E4%B8%BB%E6%9C%BA%E7%9A%84%E5%B0%8F%E9%A3%9E%E6%9C%BA/</guid>
+        <description>&lt;p&gt;首先，在小飞机客户端设置允许本地代理允许来自局域网的连接&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://i.loli.net/2021/01/17/lyS2NionqGdw6Hc.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image.png&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;然后，设置VMware的网络适配器的网络连接为桥接模式，复制连接物理网络状态，设置Ubuntu的网络，所有代理和主机都设置为宿主机的IP（如果宿主机为无线连接到网络就是WLAN的IPv4），注意端口号&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://i.loli.net/2021/01/17/fvbXAFNuGBZSx3i.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image.png&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;最后，设置Ubuntu的IP地址、网关、DNS信息，与宿主机在同一局域网&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://i.loli.net/2021/01/17/y51ZmLcb3i7hsS2.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image.png&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;Apply&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://i.loli.net/2021/01/17/6t4dfXCBHNG29RK.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image.png&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;转载自：&lt;a class=&#34;link&#34; href=&#34;https://bbs.huaweicloud.com/blogs/107105&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;VMware下ubuntu通过主机Shadowsocks上外网VMware下ubuntu通过主机Shadowsocks上外网-云社区-华为云 (huaweicloud.com)&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='这个实验书上的示例是6台机器（虚拟机），我在本机部署时由于内存原因只用了4台虚拟机，但效果还是基本达到了，只有在模拟某台管理节点宕机时，出现'>
+<title>使用Docker Swarm管理服务集群</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/%E4%BD%BF%E7%94%A8docker-swarm%E7%AE%A1%E7%90%86%E6%9C%8D%E5%8A%A1%E9%9B%86%E7%BE%A4/'>
+
+<link rel="stylesheet" href="/scss/style.min.8191399262444ab68b72a18c97392f5349be20a1615d77445be51e974c144cff.css"><meta property='og:title' content='使用Docker Swarm管理服务集群'>
+<meta property='og:description' content='这个实验书上的示例是6台机器（虚拟机），我在本机部署时由于内存原因只用了4台虚拟机，但效果还是基本达到了，只有在模拟某台管理节点宕机时，出现'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/%E4%BD%BF%E7%94%A8docker-swarm%E7%AE%A1%E7%90%86%E6%9C%8D%E5%8A%A1%E9%9B%86%E7%BE%A4/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='docker' /><meta property='article:tag' content='云计算' /><meta property='article:published_time' content='2021-11-16T11:57:32&#43;08:00'/><meta property='article:modified_time' content='2021-11-16T11:57:32&#43;08:00'/>
+<meta name="twitter:title" content="使用Docker Swarm管理服务集群">
+<meta name="twitter:description" content="这个实验书上的示例是6台机器（虚拟机），我在本机部署时由于内存原因只用了4台虚拟机，但效果还是基本达到了，只有在模拟某台管理节点宕机时，出现">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description">子标题</h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://twitter.com'
+                        target="_blank"
+                        title="Twitter"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#docker-swarm">Docker Swarm</a></li>
+    <li><a href="#搭建swarm集群">搭建Swarm集群</a>
+      <ul>
+        <li><a href="#初始化swarm">初始化Swarm</a></li>
+        <li><a href="#高可用性ha">高可用性HA</a></li>
+        <li><a href="#安全机制">安全机制</a></li>
+        <li><a href="#锁定swarm">锁定Swarm</a></li>
+      </ul>
+    </li>
+    <li><a href="#swarm服务">Swarm服务</a>
+      <ul>
+        <li><a href="#查看swarm服务">查看Swarm服务</a></li>
+        <li><a href="#副本服务和全局服务">副本服务和全局服务</a></li>
+        <li><a href="#服务扩缩容">服务扩缩容</a></li>
+        <li><a href="#删除服务">删除服务</a></li>
+        <li><a href="#滚动升级">滚动升级</a></li>
+        <li><a href="#故障排除">故障排除</a></li>
+      </ul>
+    </li>
+    <li><a href="#退出swarm模式">退出Swarm模式</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/docker/" >
+                docker
+            </a>
+        
+            <a href="/categories/%E4%BA%91%E8%AE%A1%E7%AE%97/" >
+                云计算
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/%E4%BD%BF%E7%94%A8docker-swarm%E7%AE%A1%E7%90%86%E6%9C%8D%E5%8A%A1%E9%9B%86%E7%BE%A4/">使用Docker Swarm管理服务集群</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Nov 16, 2021</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 8 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>这个实验书上的示例是6台机器（虚拟机），我在本机部署时由于内存原因只用了4台虚拟机，但效果还是基本达到了，只有在模拟某台管理节点宕机时，出现剩下的唯一一个管理节点无法正常工作的情况（和使用raft共识有关），在对应部分会详细说明。</p>
+<p>本次实验的环境是4台Ubuntu18.04虚拟机，每台2G内存、1核2线程，采用桥接模式共用宿主机网络。</p>
+</blockquote>
+<h2 id="docker-swarm">Docker Swarm</h2>
+<p>Swarm有两层含义：</p>
+<ol>
+<li>一个Docker安全集群：让用户以集群方式管理一个或多个Docker节点，默认内置分布式集群存储，加密网络，公用TLS，安全集群接入令牌，简化的数字证书管理PKI。</li>
+<li>一个微服务编排引擎：通过声明式配置文件部署和管理复杂的微服务应用，支持滚动升级，回滚，以及扩缩容。</li>
+</ol>
+<p>Swarm中的节点分为管理节点和工作节点：</p>
+<ul>
+<li>管理节点：负责集群的控制，监控集群状态，分发任务到工作节点。</li>
+<li>工作节点：接收任务并执行。</li>
+</ul>
+<h2 id="搭建swarm集群">搭建Swarm集群</h2>
+<h3 id="初始化swarm">初始化Swarm</h3>
+<p>在正式搭建之前，每个节点需要开放下面的端口：</p>
+<ul>
+<li>2377/tcp：用于客户端与Swarm安全通信。</li>
+<li>7946/tcp与7946/udp：用于控制面gossip分发。</li>
+<li>4789/udp：用于基于VXLAN的覆盖网络</li>
+</ul>
+<p>我用iptables完成了这些步骤。下面开始创建集群。</p>
+<h4 id="初始化swarm-1">初始化Swarm</h4>
+<p>不包含在Swarm中的Docker节点称为运行于单引擎模式，一旦加入Swarm就切换为Swarm模式。首先通过<code>docker swarm init</code>将第一个节点切换到Swarm模式并设置其为第一个管理节点A。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker swarm init <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; --advertise-addr 10.0.20.25:2377 <span style="color:#ae81ff">\	</span><span style="color:#75715e"># 其他节点用来连接当前管理节点的IP和端口</span>
+</span></span><span style="display:flex;"><span>&gt; --listen-addr 10.0.20.25:2377			<span style="color:#75715e"># 承载Swarm流量的IP和端口</span>
+</span></span><span style="display:flex;"><span>Swarm initialized: current node <span style="color:#f92672">(</span>kwtw0ybgf4uzd1d6bcdpwze1y<span style="color:#f92672">)</span> is now a manager.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>To add a worker to this swarm, run the following command:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    docker swarm join --token SWMTKN-1-2avftcvr1a1lesoqcyjr06tdvjvvof9n0wiz39lepv8aezk6xm-2dai3bks4siwhgetlhcuqnonz 10.0.20.25:2377
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>To add a manager to this swarm, run <span style="color:#e6db74">&#39;docker swarm join-token manager&#39;</span> and follow the instructions.
+</span></span></code></pre></div><p>Swarm给出提示，向集群加入新的管理节点和工作节点需要什么命令，它们需要的token是不同的，比如加入管理节点的命令：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker swarm join-token manager
+</span></span><span style="display:flex;"><span>To add a manager to this swarm, run the following command:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    docker swarm join --token SWMTKN-1-2avftcvr1a1lesoqcyjr06tdvjvvof9n0wiz39lepv8aezk6xm-erhmvcq8z52aure635nv6w8ch 10.0.20.25:2377
+</span></span></code></pre></div><h4 id="下面加入一个工作节点c">下面加入一个工作节点C</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl-c:~$ docker swarm join --token SWMTKN-1-2avftcvr1a1lesoqcyjr06tdvjvvof9n0wiz39lepv8aezk6xm-2dai3bks4siwhgetlhcuqnonz 10.0.20.25:2377 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; --advertise-addr 10.0.20.26:2377 <span style="color:#ae81ff">\	</span><span style="color:#75715e"># 这两个属性虽然是可选的</span>
+</span></span><span style="display:flex;"><span>&gt; --listen-addr 10.0.20.26:2377			<span style="color:#75715e"># 但是最好指明每个节点的网络属性</span>
+</span></span><span style="display:flex;"><span>This node joined a swarm as a worker.
+</span></span></code></pre></div><h4 id="加入其他节点">加入其他节点</h4>
+<p>同样的，我们把第二个管理节点B和第二个工作节点D加入集群。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl-b:~$ docker swarm join --token SWMTKN-1-2avftcvr1a1lesoqcyjr06tdvjvvof9n0wiz39lepv8aezk6xm-erhmvcq8z52aure635nv6w8ch 10.0.20.25:2377 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; --advertise-addr 10.0.20.35:2377 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; --listen-addr 10.0.20.35:2377
+</span></span><span style="display:flex;"><span>This node joined a swarm as a manager.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>lzl@lzl-d:~$ docker swarm join --token SWMTKN-1-2avftcvr1a1lesoqcyjr06tdvjvvof9n0wiz39lepv8aezk6xm-2dai3bks4siwhgetlhcuqnonz 10.0.20.25:2377 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; --advertise-addr 10.0.20.27:2377 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; --listen-addr 10.0.20.27:2377
+</span></span><span style="display:flex;"><span>This node joined a swarm as a worker.
+</span></span></code></pre></div><blockquote>
+<p>这样我们集群中就有了：</p>
+<p>管理节点A：10.0.20.25</p>
+<p>管理节点B：10.0.20.35</p>
+<p>工作节点C：10.0.20.26</p>
+<p>工作节点D：10.0.20.27</p>
+</blockquote>
+<h4 id="查看集群中的节点">查看集群中的节点</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker node ls
+</span></span><span style="display:flex;"><span>ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+</span></span><span style="display:flex;"><span>aez7db9rdqoylqktrk7stcu49     lzl-c      Ready     Active                          20.10.10
+</span></span><span style="display:flex;"><span>jfhjtedzu8mg0y6vzgw0unvw7     lzl-d      Ready     Active                          20.10.10
+</span></span><span style="display:flex;"><span>kwtw0ybgf4uzd1d6bcdpwze1y *   lzl        Ready     Active         Leader           20.10.10
+</span></span><span style="display:flex;"><span>ppvj0ll2jo0smt4htpms9fosw     lzl-b      Ready     Active         Reachable        20.10.10
+</span></span></code></pre></div><p>Swarm已经启动TLS以保证集群安全。</p>
+<ul>
+<li>*：表示当前节点</li>
+<li>Leader：表示管理节点的Leader</li>
+<li>Reachable：表示其他可用的管理节点</li>
+</ul>
+<h3 id="高可用性ha">高可用性HA</h3>
+<p>Swarm使用Raft达成共识，我这里使用两个管理节点实际上是不好的，一个是数量太少，另一个是偶数个管理节点可能发生脑裂现象。最好是<strong>部署奇数个管理节点，也不要太多，3个5个都行</strong>。</p>
+<p>即使一个或多个管理节点出现故障，其他管理节点也会继续工作保证Swarm的运转。<strong>管理节点中的主节点是唯一的会对Swarm发送控制命令的节点，其他管理节点收到的命令会转发给主节点。</strong></p>
+<h3 id="安全机制">安全机制</h3>
+<p>Swarm的安全机制如CA、接入Token、公用TLS、加密网络、加密集群存储、加密节点ID等开箱即用。</p>
+<h3 id="锁定swarm">锁定Swarm</h3>
+<p>Docker提供了自动锁机制锁定Swarm，使得重启的管理节点只有提供集群解锁码后才能重新接入集群。</p>
+<p>在管理节点A启用锁：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker swarm update --autolock<span style="color:#f92672">=</span>true
+</span></span><span style="display:flex;"><span>Swarm updated.
+</span></span><span style="display:flex;"><span>To unlock a swarm manager after it restarts, run the <span style="color:#e6db74">`</span>docker swarm unlock<span style="color:#e6db74">`</span>
+</span></span><span style="display:flex;"><span>command and provide the following key:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    SWMKEY-1-0A98dswMx4EOOmfMwjlVDEL1w1OLncMAQniYV+nPKuk
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Please remember to store this key in a password manager, since without it you
+</span></span><span style="display:flex;"><span>will not be able to restart the manager.
+</span></span></code></pre></div><p>重启另一个管理节点B，发现它加不进去，因为集群上锁了：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl-b:~$ service docker restart
+</span></span><span style="display:flex;"><span>lzl@lzl-b:~$ docker node ls
+</span></span><span style="display:flex;"><span>Error response from daemon: Swarm is encrypted and needs to be unlocked before it can be used. Please use <span style="color:#e6db74">&#34;docker swarm unlock&#34;</span> to unlock it.
+</span></span></code></pre></div><p>我们在管理节点A列出节点试试？</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker node ls
+</span></span><span style="display:flex;"><span>Error response from daemon: rpc error: code <span style="color:#f92672">=</span> Unknown desc <span style="color:#f92672">=</span> The swarm does not have a leader. It<span style="color:#960050;background-color:#1e0010">&#39;</span>s possible that too few managers are online. Make sure more than half of the managers are online.
+</span></span></code></pre></div><p><strong>由于部署2个管理节点，1个节点掉线后，仅剩的管理节点A无法正常工作，因为要求至少半数管理节点在线，所以为什么至少要3、5个管理节点</strong>。</p>
+<p>现在用解锁key启动管理节点B：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl-b:~$ docker swarm unlock
+</span></span><span style="display:flex;"><span>Please enter unlock key: SWMKEY-1-0A98dswMx4EOOmfMwjlVDEL1w1OLncMAQniYV+nPKuk
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>lzl@lzl-b:~$ docker node ls
+</span></span><span style="display:flex;"><span>ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+</span></span><span style="display:flex;"><span>aez7db9rdqoylqktrk7stcu49     lzl-c      Ready     Active                          20.10.10
+</span></span><span style="display:flex;"><span>jfhjtedzu8mg0y6vzgw0unvw7     lzl-d      Ready     Active                          20.10.10
+</span></span><span style="display:flex;"><span>kwtw0ybgf4uzd1d6bcdpwze1y     lzl        Ready     Active         Leader           20.10.10
+</span></span><span style="display:flex;"><span>ppvj0ll2jo0smt4htpms9fosw *   lzl-b      Ready     Active         Reachable        20.10.10
+</span></span></code></pre></div><h2 id="swarm服务">Swarm服务</h2>
+<p>Docker1.12后引入服务，通过Swarm部署服务的多个实例，实现服务的高可用、弹性、滚动升级。</p>
+<p>我们部署一个简单的Web服务：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker service create --name web-fe <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; -p 8080:8080 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; --replicas <span style="color:#ae81ff">3</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; nigelpoulton/pluralsight-docker-ci
+</span></span><span style="display:flex;"><span>image nigelpoulton/pluralsight-docker-ci:latest could not be accessed on a registry to record
+</span></span><span style="display:flex;"><span>its digest. Each node will access nigelpoulton/pluralsight-docker-ci:latest independently,
+</span></span><span style="display:flex;"><span>possibly leading to different nodes running different
+</span></span><span style="display:flex;"><span>versions of the image.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>cz5m15yzyfzvxoilx2czv9s0n
+</span></span><span style="display:flex;"><span>overall progress: <span style="color:#ae81ff">3</span> out of <span style="color:#ae81ff">3</span> tasks 
+</span></span><span style="display:flex;"><span>1/3: running   
+</span></span><span style="display:flex;"><span>2/3: running   
+</span></span><span style="display:flex;"><span>3/3: running   
+</span></span><span style="display:flex;"><span>verify: Service converged 
+</span></span></code></pre></div><ul>
+<li>&ndash;replicas：表示有3个实例</li>
+</ul>
+<p>假设某个节点宕机了，服务实例降为2个，那么Swarm会再实例化一个服务，保证有3个实例提供服务。通过端口映射，每个机器上访问8080端口都可以访问服务。</p>
+<h3 id="查看swarm服务">查看Swarm服务</h3>
+<p>列出服务：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker service ls
+</span></span><span style="display:flex;"><span>ID             NAME      MODE         REPLICAS   IMAGE                                       PORTS
+</span></span><span style="display:flex;"><span>cz5m15yzyfzv   web-fe    replicated   3/3        nigelpoulton/pluralsight-docker-ci:latest   *:8080-&gt;8080/tcp
+</span></span></code></pre></div><p>查看每个服务副本：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker service ps web-fe
+</span></span><span style="display:flex;"><span>ID             NAME       IMAGE                                       NODE      DESIRED STATE   CURRENT STATE                ERROR     PORTS
+</span></span><span style="display:flex;"><span>mexucdagzhx3   web-fe.1   nigelpoulton/pluralsight-docker-ci:latest   lzl-b     Running         Running about a minute ago             
+</span></span><span style="display:flex;"><span>if2hnpkawwhk   web-fe.2   nigelpoulton/pluralsight-docker-ci:latest   lzl-c     Running         Running about a minute ago             
+</span></span><span style="display:flex;"><span>mtkhx4uaazya   web-fe.3   nigelpoulton/pluralsight-docker-ci:latest   lzl-d     Running         Running about a minute ago
+</span></span></code></pre></div><p>查看该服务细节：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker service inspect --pretty web-fe 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ID:		cz5m15yzyfzvxoilx2czv9s0n
+</span></span><span style="display:flex;"><span>Name:		web-fe
+</span></span><span style="display:flex;"><span>Service Mode:	Replicated
+</span></span><span style="display:flex;"><span> Replicas:	<span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>Placement:
+</span></span><span style="display:flex;"><span>UpdateConfig:
+</span></span><span style="display:flex;"><span> Parallelism:	<span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span> On failure:	pause
+</span></span><span style="display:flex;"><span> Monitoring Period: 5s
+</span></span><span style="display:flex;"><span> Max failure ratio: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> Update order:      stop-first
+</span></span><span style="display:flex;"><span>RollbackConfig:
+</span></span><span style="display:flex;"><span> Parallelism:	<span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span> On failure:	pause
+</span></span><span style="display:flex;"><span> Monitoring Period: 5s
+</span></span><span style="display:flex;"><span> Max failure ratio: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> Rollback order:    stop-first
+</span></span><span style="display:flex;"><span>ContainerSpec:
+</span></span><span style="display:flex;"><span> Image:		nigelpoulton/pluralsight-docker-ci:latest
+</span></span><span style="display:flex;"><span> Init:		false
+</span></span><span style="display:flex;"><span>Resources:
+</span></span><span style="display:flex;"><span>Endpoint Mode:	vip
+</span></span><span style="display:flex;"><span>Ports:
+</span></span><span style="display:flex;"><span> PublishedPort <span style="color:#f92672">=</span> <span style="color:#ae81ff">8080</span>
+</span></span><span style="display:flex;"><span>  Protocol <span style="color:#f92672">=</span> tcp
+</span></span><span style="display:flex;"><span>  TargetPort <span style="color:#f92672">=</span> <span style="color:#ae81ff">8080</span>
+</span></span><span style="display:flex;"><span>  PublishMode <span style="color:#f92672">=</span> ingress 
+</span></span></code></pre></div><ul>
+<li>&ndash;pretty：不加会列出更为详细的信息。</li>
+</ul>
+<h3 id="副本服务和全局服务">副本服务和全局服务</h3>
+<ul>
+<li>副本模式：这是默认的模式，将期望数量的副本均匀的分布到整个集群中。</li>
+<li>全局模式：每个节点上仅运行一个副本，使用<code>docker create service --mode global</code>部署全局模式。</li>
+</ul>
+<h3 id="服务扩缩容">服务扩缩容</h3>
+<p>假设3个实例提供服务有些吃力了，我们需要将实例增加到6个。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker service scale web-fe<span style="color:#f92672">=</span><span style="color:#ae81ff">6</span>
+</span></span><span style="display:flex;"><span>web-fe scaled to <span style="color:#ae81ff">6</span>
+</span></span><span style="display:flex;"><span>overall progress: <span style="color:#ae81ff">6</span> out of <span style="color:#ae81ff">6</span> tasks 
+</span></span><span style="display:flex;"><span>1/6: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>2/6: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>3/6: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>4/6: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>5/6: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>6/6: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>verify: Service converged 
+</span></span><span style="display:flex;"><span>lzl@lzl:~$ docker service ls
+</span></span><span style="display:flex;"><span>ID             NAME      MODE         REPLICAS   IMAGE                                       PORTS
+</span></span><span style="display:flex;"><span>cz5m15yzyfzv   web-fe    replicated   6/6        nigelpoulton/pluralsight-docker-ci:latest   *:8080-&gt;8080/tcp
+</span></span><span style="display:flex;"><span>lzl@lzl:~$ docker service ps web-fe 
+</span></span><span style="display:flex;"><span>ID             NAME       IMAGE                                       NODE      DESIRED STATE   CURRENT STATE                ERROR     PORTS
+</span></span><span style="display:flex;"><span>mexucdagzhx3   web-fe.1   nigelpoulton/pluralsight-docker-ci:latest   lzl-b     Running         Running <span style="color:#ae81ff">7</span> minutes ago                  
+</span></span><span style="display:flex;"><span>if2hnpkawwhk   web-fe.2   nigelpoulton/pluralsight-docker-ci:latest   lzl-c     Running         Running <span style="color:#ae81ff">7</span> minutes ago                  
+</span></span><span style="display:flex;"><span>mtkhx4uaazya   web-fe.3   nigelpoulton/pluralsight-docker-ci:latest   lzl-d     Running         Running <span style="color:#ae81ff">7</span> minutes ago                  
+</span></span><span style="display:flex;"><span>ngjcu26etj9l   web-fe.4   nigelpoulton/pluralsight-docker-ci:latest   lzl       Running         Running about a minute ago             
+</span></span><span style="display:flex;"><span>4muhlzldan91   web-fe.5   nigelpoulton/pluralsight-docker-ci:latest   lzl-c     Running         Running about a minute ago             
+</span></span><span style="display:flex;"><span>m4ugu5sz63b8   web-fe.6   nigelpoulton/pluralsight-docker-ci:latest   lzl-d     Running         Running about a minute ago
+</span></span></code></pre></div><p>Swarm自动为我们均衡的增加了服务实例，现在再将实例降回到3个。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker service scale web-fe<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>web-fe scaled to <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>overall progress: <span style="color:#ae81ff">3</span> out of <span style="color:#ae81ff">3</span> tasks 
+</span></span><span style="display:flex;"><span>1/3: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>2/3: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>3/3: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>verify: Service converged 
+</span></span><span style="display:flex;"><span>lzl@lzl:~$ docker service ps web-fe 
+</span></span><span style="display:flex;"><span>ID             NAME       IMAGE                                       NODE      DESIRED STATE   CURRENT STATE            ERROR     PORTS
+</span></span><span style="display:flex;"><span>mexucdagzhx3   web-fe.1   nigelpoulton/pluralsight-docker-ci:latest   lzl-b     Running         Running <span style="color:#ae81ff">10</span> minutes ago             
+</span></span><span style="display:flex;"><span>if2hnpkawwhk   web-fe.2   nigelpoulton/pluralsight-docker-ci:latest   lzl-c     Running         Running <span style="color:#ae81ff">10</span> minutes ago             
+</span></span><span style="display:flex;"><span>mtkhx4uaazya   web-fe.3   nigelpoulton/pluralsight-docker-ci:latest   lzl-d     Running         Running <span style="color:#ae81ff">10</span> minutes ago             
+</span></span><span style="display:flex;"><span>ngjcu26etj9l   web-fe.4   nigelpoulton/pluralsight-docker-ci:latest   lzl       Remove          Running <span style="color:#ae81ff">9</span> seconds ago              
+</span></span><span style="display:flex;"><span>4muhlzldan91   web-fe.5   nigelpoulton/pluralsight-docker-ci:latest   lzl-c     Remove          Running <span style="color:#ae81ff">9</span> seconds ago              
+</span></span><span style="display:flex;"><span>m4ugu5sz63b8   web-fe.6   nigelpoulton/pluralsight-docker-ci:latest   lzl-d     Remove          Running <span style="color:#ae81ff">9</span> seconds ago  
+</span></span></code></pre></div><p>现在有3个服务实例已经被移除。</p>
+<h3 id="删除服务">删除服务</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker service rm web-fe
+</span></span><span style="display:flex;"><span>web-fe
+</span></span></code></pre></div><h3 id="滚动升级">滚动升级</h3>
+<p>下面用一个新的服务演示滚动升级。在此之前，需要创建一个覆盖网络<strong>overlay</strong>。这是一个二层网络，所有接入该网络的容器可以互相通信，即使这些容器的宿主机的底层网络不同。</p>
+<p><img src="https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211116_132014_edit_596230659587665.jpg"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker network create -d overlay uber-net
+</span></span><span style="display:flex;"><span>np6r4rhm4lpsalikwfiahopcy
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>lzl@lzl:~$ docker network ls
+</span></span><span style="display:flex;"><span>NETWORK ID     NAME              DRIVER    SCOPE
+</span></span><span style="display:flex;"><span>72f99c88c853   bridge            bridge    local
+</span></span><span style="display:flex;"><span>9027fdbdc8f6   docker_gwbridge   bridge    local
+</span></span><span style="display:flex;"><span>7a84b4fa35eb   host              host      local
+</span></span><span style="display:flex;"><span>mvd937imkve6   ingress           overlay   swarm
+</span></span><span style="display:flex;"><span>66b37b687b76   none              null      local
+</span></span><span style="display:flex;"><span>np6r4rhm4lps   uber-net          overlay   swarm	<span style="color:#75715e"># 我们新建的覆盖网络</span>
+</span></span></code></pre></div><p>然后新建一个服务，创建8个服务提供实例，并把它接入该网络。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker service create --name uber-svc <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; --network uber-net <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; -p 80:80 --replicas <span style="color:#ae81ff">8</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; nigelpoulton/tu-demo:v1
+</span></span><span style="display:flex;"><span>image nigelpoulton/tu-demo:v1 could not be accessed on a registry to record
+</span></span><span style="display:flex;"><span>its digest. Each node will access nigelpoulton/tu-demo:v1 independently,
+</span></span><span style="display:flex;"><span>possibly leading to different nodes running different
+</span></span><span style="display:flex;"><span>versions of the image.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>v5hohnigjlubbg7itg42habfr
+</span></span><span style="display:flex;"><span>overall progress: <span style="color:#ae81ff">8</span> out of <span style="color:#ae81ff">8</span> tasks 
+</span></span><span style="display:flex;"><span>1/8: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>2/8: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>3/8: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>4/8: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>5/8: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>6/8: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>7/8: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>8/8: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>verify: Service converged 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>lzl@lzl:~$ docker service ls
+</span></span><span style="display:flex;"><span>ID             NAME       MODE         REPLICAS   IMAGE                     PORTS
+</span></span><span style="display:flex;"><span>v5hohnigjlub   uber-svc   replicated   8/8        nigelpoulton/tu-demo:v1   *:80-&gt;80/tcp
+</span></span><span style="display:flex;"><span>lzl@lzl:~$ docker service ps uber-svc 
+</span></span><span style="display:flex;"><span>ID             NAME         IMAGE                     NODE      DESIRED STATE   CURRENT STATE            ERROR     PORTS
+</span></span><span style="display:flex;"><span>3cxuushzkvo4   uber-svc.1   nigelpoulton/tu-demo:v1   lzl-c     Running         Running <span style="color:#ae81ff">49</span> seconds ago             
+</span></span><span style="display:flex;"><span>xjv8k31yxhxt   uber-svc.2   nigelpoulton/tu-demo:v1   lzl-b     Running         Running <span style="color:#ae81ff">49</span> seconds ago             
+</span></span><span style="display:flex;"><span>xzxyzyk9kxy9   uber-svc.3   nigelpoulton/tu-demo:v1   lzl-c     Running         Running <span style="color:#ae81ff">48</span> seconds ago             
+</span></span><span style="display:flex;"><span>tg6zmzqwzab6   uber-svc.4   nigelpoulton/tu-demo:v1   lzl-d     Running         Running <span style="color:#ae81ff">52</span> seconds ago             
+</span></span><span style="display:flex;"><span>y4jl7yg5jsc1   uber-svc.5   nigelpoulton/tu-demo:v1   lzl       Running         Running <span style="color:#ae81ff">49</span> seconds ago             
+</span></span><span style="display:flex;"><span>s8yvzixgbepo   uber-svc.6   nigelpoulton/tu-demo:v1   lzl-d     Running         Running <span style="color:#ae81ff">50</span> seconds ago             
+</span></span><span style="display:flex;"><span>69ghlllr9mi5   uber-svc.7   nigelpoulton/tu-demo:v1   lzl-b     Running         Running <span style="color:#ae81ff">48</span> seconds ago             
+</span></span><span style="display:flex;"><span>mtkg9y3j7dl3   uber-svc.8   nigelpoulton/tu-demo:v1   lzl       Running         Running <span style="color:#ae81ff">51</span> seconds ago  
+</span></span></code></pre></div><ul>
+<li><code>-p 80:80</code>：把所有到达Swarm节点的80端口的流量映射到每个服务副本中的80端口</li>
+<li><code>--network uber-net</code>：服务的所有副本使用这个覆盖网络</li>
+</ul>
+<p>一般的，对于开放端口的处理，默认使用入站模式，此外还有主机模式。</p>
+<ul>
+<li>入站模式：所有Swarm节点都开放端口，即使节点上没有任何服务副本，从任何节点的IP都可以访问到服务，因为节点配置的映射会将请求转发给有服务实例的节点</li>
+<li>主机模式：仅在运行了服务实例的节点开放端口</li>
+</ul>
+<p>下面来看滚动升级，升级策略是每次升级2个副本，间隔20秒。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker service update <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; --image nigelpoulton/tu-demo:v2 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; --update-parallelism <span style="color:#ae81ff">2</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>&gt; --update-delay 20s uber-svc
+</span></span><span style="display:flex;"><span>image nigelpoulton/tu-demo:v2 could not be accessed on a registry to record
+</span></span><span style="display:flex;"><span>its digest. Each node will access nigelpoulton/tu-demo:v2 independently,
+</span></span><span style="display:flex;"><span>possibly leading to different nodes running different
+</span></span><span style="display:flex;"><span>versions of the image.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>uber-svc
+</span></span><span style="display:flex;"><span>overall progress: <span style="color:#ae81ff">2</span> out of <span style="color:#ae81ff">8</span> tasks 
+</span></span><span style="display:flex;"><span>1/8: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>2/8: running   <span style="color:#f92672">[==================================================</span>&gt;<span style="color:#f92672">]</span> 
+</span></span><span style="display:flex;"><span>3/8:   
+</span></span><span style="display:flex;"><span>4/8:   
+</span></span><span style="display:flex;"><span>5/8:   
+</span></span><span style="display:flex;"><span>6/8:   
+</span></span><span style="display:flex;"><span>7/8:   
+</span></span><span style="display:flex;"><span>8/8:   
+</span></span></code></pre></div><ul>
+<li><code>--image nigelpoulton/tu-demo:v2</code>：指定升级的服务镜像</li>
+<li><code>--update-parallelism 2</code>：每次升级2个服务</li>
+<li><code>--update-delay 20s</code>：升级间隔20秒</li>
+</ul>
+<p>在升级过程中，我们查看当前服务实例副本：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker service ps uber-svc 
+</span></span><span style="display:flex;"><span>ID             NAME             IMAGE                     NODE      DESIRED STATE   CURRENT STATE             ERROR     PORTS
+</span></span><span style="display:flex;"><span>3cxuushzkvo4   uber-svc.1       nigelpoulton/tu-demo:v1   lzl-c     Running         Running <span style="color:#ae81ff">6</span> minutes ago               
+</span></span><span style="display:flex;"><span>mc36cqxnh0gs   uber-svc.2       nigelpoulton/tu-demo:v2   lzl-b     Running         Running <span style="color:#ae81ff">37</span> seconds ago              
+</span></span><span style="display:flex;"><span>xjv8k31yxhxt    <span style="color:#ae81ff">\_</span> uber-svc.2   nigelpoulton/tu-demo:v1   lzl-b     Shutdown        Shutdown <span style="color:#ae81ff">39</span> seconds ago             
+</span></span><span style="display:flex;"><span>nok5eng7umqc   uber-svc.3       nigelpoulton/tu-demo:v2   lzl-c     Running         Running <span style="color:#ae81ff">11</span> seconds ago              
+</span></span><span style="display:flex;"><span>xzxyzyk9kxy9    <span style="color:#ae81ff">\_</span> uber-svc.3   nigelpoulton/tu-demo:v1   lzl-c     Shutdown        Shutdown <span style="color:#ae81ff">13</span> seconds ago             
+</span></span><span style="display:flex;"><span>dkxz1gpg4f4f   uber-svc.4       nigelpoulton/tu-demo:v2   lzl-d     Running         Running <span style="color:#ae81ff">37</span> seconds ago              
+</span></span><span style="display:flex;"><span>tg6zmzqwzab6    <span style="color:#ae81ff">\_</span> uber-svc.4   nigelpoulton/tu-demo:v1   lzl-d     Shutdown        Shutdown <span style="color:#ae81ff">39</span> seconds ago             
+</span></span><span style="display:flex;"><span>flgey27vyz35   uber-svc.5       nigelpoulton/tu-demo:v2   lzl       Running         Running <span style="color:#ae81ff">11</span> seconds ago              
+</span></span><span style="display:flex;"><span>y4jl7yg5jsc1    <span style="color:#ae81ff">\_</span> uber-svc.5   nigelpoulton/tu-demo:v1   lzl       Shutdown        Shutdown <span style="color:#ae81ff">13</span> seconds ago             
+</span></span><span style="display:flex;"><span>s8yvzixgbepo   uber-svc.6       nigelpoulton/tu-demo:v1   lzl-d     Running         Running <span style="color:#ae81ff">6</span> minutes ago               
+</span></span><span style="display:flex;"><span>69ghlllr9mi5   uber-svc.7       nigelpoulton/tu-demo:v1   lzl-b     Running         Running <span style="color:#ae81ff">6</span> minutes ago               
+</span></span><span style="display:flex;"><span>mtkg9y3j7dl3   uber-svc.8       nigelpoulton/tu-demo:v1   lzl       Running         Running <span style="color:#ae81ff">6</span> minutes ago  
+</span></span></code></pre></div><p>在滚动升级的过程中，同时存在新版本的服务和旧版本的服务。在这个时候去访问网站，可能会出现有的访问的是新的服务有的访问的是旧的服务。但升级期间我们的服务仍然是正常工作的，在滚动升级完成后，所以服务实例都被升级。</p>
+<h3 id="故障排除">故障排除</h3>
+<p>排障这部分主要是通过Swarm集群工作日志来实现的。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>lzl@lzl:~$ docker service logs uber-svc 
+</span></span><span style="display:flex;"><span>uber-svc.8.mtkg9y3j7dl3@lzl    | <span style="color:#f92672">[</span>2021-11-15 08:03:19 +0000<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>1<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>INFO<span style="color:#f92672">]</span> Starting gunicorn 20.1.0
+</span></span><span style="display:flex;"><span>uber-svc.8.mtkg9y3j7dl3@lzl    | <span style="color:#f92672">[</span>2021-11-15 08:03:19 +0000<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>1<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>INFO<span style="color:#f92672">]</span> Listening at: http://0.0.0.0:80 <span style="color:#f92672">(</span>1<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>uber-svc.8.mtkg9y3j7dl3@lzl    | <span style="color:#f92672">[</span>2021-11-15 08:03:19 +0000<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>1<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>INFO<span style="color:#f92672">]</span> Using worker: sync
+</span></span><span style="display:flex;"><span>uber-svc.8.mtkg9y3j7dl3@lzl    | <span style="color:#f92672">[</span>2021-11-15 08:03:19 +0000<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>6<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>INFO<span style="color:#f92672">]</span> Booting worker with pid: <span style="color:#ae81ff">6</span>
+</span></span><span style="display:flex;"><span>uber-svc.8.mtkg9y3j7dl3@lzl    | <span style="color:#f92672">[</span>2021-11-15 08:03:19 +0000<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>7<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>INFO<span style="color:#f92672">]</span> Booting worker with pid: <span style="color:#ae81ff">7</span>
+</span></span><span style="display:flex;"><span>uber-svc.8.mtkg9y3j7dl3@lzl    | <span style="color:#f92672">[</span>2021-11-15 08:03:19 +0000<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>8<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>INFO<span style="color:#f92672">]</span> Booting worker with pid: <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span>uber-svc.8.mtkg9y3j7dl3@lzl    | <span style="color:#f92672">[</span>2021-11-15 08:03:19 +0000<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>9<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>INFO<span style="color:#f92672">]</span> Booting worker with pid: <span style="color:#ae81ff">9</span>
+</span></span><span style="display:flex;"><span>uber-svc.8.mtkg9y3j7dl3@lzl    | <span style="color:#f92672">[</span>2021-11-15 08:10:54 +0000<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>1<span style="color:#f92672">]</span> <span style="color:#f92672">[</span>INFO<span style="color:#f92672">]</span> Handling signal: term
+</span></span><span style="display:flex;"><span>···
+</span></span></code></pre></div><h2 id="退出swarm模式">退出Swarm模式</h2>
+<p>最后，我们down掉服务后，退出Swarm模式，将集群关闭。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># 在工作节点上使用 </span>
+</span></span><span style="display:flex;"><span>lzl@lzl:~$ docker swarm leave
+</span></span><span style="display:flex;"><span>Node left the swarm.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 在管理节点上使用</span>
+</span></span><span style="display:flex;"><span>lzl@lzl:~$ docker swarm leave --force
+</span></span><span style="display:flex;"><span>Node left the swarm.
+</span></span></code></pre></div>
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/docker/">docker</a>
+        
+            <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">云计算</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/%E4%BD%BF%E7%94%A8docker-compose%E9%83%A8%E7%BD%B2%E5%BA%94%E7%94%A8/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">使用docker-compose部署应用</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E4%BA%91%E8%AE%A1%E7%AE%97%E7%BD%91%E7%BB%9C%E4%B8%8E%E5%AE%89%E5%85%A8%E7%AE%80%E8%AE%B0/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">《云计算网络与安全》简记</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

@@ -1,0 +1,2945 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>阅读笔记 on Li Duo</title>
+        <link>https://lizonglingo.github.io/categories/%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/</link>
+        <description>Recent content in 阅读笔记 on Li Duo</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-CN</language>
+        <lastBuildDate>Sun, 26 Jun 2022 15:00:34 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/categories/%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Sinan: ML-Based and QoS-Aware Resource Management for Cloud Microservices</title>
+        <link>https://lizonglingo.github.io/p/sinan-ml-based-and-qos-aware-resource-management-for-cloud-microservices/</link>
+        <pubDate>Sun, 26 Jun 2022 15:00:34 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/sinan-ml-based-and-qos-aware-resource-management-for-cloud-microservices/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源：ASPLOS&#39;21  ccf-a&lt;/p&gt;
+&lt;p&gt;作者：Cornell University&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;正如题目所说，这篇文章主要就是使用&lt;strong&gt;机器学习&lt;/strong&gt;的方法，针对&lt;strong&gt;微服务架构&lt;/strong&gt;的应用进行&lt;strong&gt;资源配置&lt;/strong&gt;，当然是&lt;strong&gt;保证QoS的前提&lt;/strong&gt;下提高资源分配和使用的效率。&lt;/li&gt;
+&lt;li&gt;利用ML方法帮助调度的决策&lt;/li&gt;
+&lt;li&gt;面向以容器和虚拟机构建及部署的微服务应用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;问题的痛点是什么或是要解决什么问题他们的idea有什么值得学习的地方&#34;&gt;问题的痛点是什么？或是要解决什么问题？他们的idea有什么值得学习的地方？&lt;/h2&gt;
+&lt;h3 id=&#34;先前的工作&#34;&gt;先前的工作&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;为满足QoS而忽视资源利用率，往往有较高的资源分配上限，把边界划定的很远，虽然是为了更好的满足QoS要求但是牺牲了资源&lt;/li&gt;
+&lt;li&gt;针对单体系统而没有考虑微服务架构的特点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;本文idea&#34;&gt;本文idea&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;突出QoS、E2E时延&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;资源分配突出了一个满足QoS要求，并且多次提到OOM错误&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;考虑到微服务架构的层级结构(tier)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;考虑到微服务架构的拓扑图，也就是微服务之间的依赖关系&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;提到了微服务中某些排队队列的环节会因为QoS违规导致更长时间的排队等候，进而提出了需要一个较长时间的预测&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;具体是什么云环境应用以什么样的方式部署&#34;&gt;具体是什么云环境？应用以什么样的方式部署？&lt;/h2&gt;
+&lt;p&gt;Docker + VM组成的云环境。应用以被打包成Docker镜像然后部署在虚拟机上。&lt;/p&gt;
+&lt;h2 id=&#34;使用了什么机器学习方法这个学习解决的是什么问题&#34;&gt;使用了什么机器学习方法？这个学习解决的是什么问题？&lt;/h2&gt;
+&lt;p&gt;文章提出了一个“two-stage model”。第一阶段，使用CNN预测下一个时间步的E2E时延，这对精确性提出了很高的要求；第二阶段，使用Boosted Trees预测QoS违规（需要使用CNN模型的输出）。&lt;/p&gt;
+&lt;p&gt;第一阶段和第二阶段分别代表了短期和长期的预测结果，以辅助调度的决策。&lt;/p&gt;
+&lt;h3 id=&#34;cnn卷积神经网络&#34;&gt;CNN卷积神经网络&lt;/h3&gt;
+&lt;p&gt;CNN模型主要用于短期的性能预测。&lt;/p&gt;
+&lt;p&gt;具体来说，使用CNN来预测下一个时间窗口的时延分布，是秒级的窗口(默认是5秒)。但是文章发现，预测时延是件很困难的事情，并且随着预测时间的增加，效果不理想。&lt;/p&gt;
+&lt;p&gt;因此进一步的，文章将预测策略变为：预测是否出现QoS违规，也就是随后的时间段出现QoS违规的概率。（因为通常将QoS与E2E时延划等号，出现QoS违规相当于E2E时延过长，所以QoS违规给调度决策带来的信息是足够的）&lt;/p&gt;
+&lt;h4 id=&#34;模型使用到的输入数据&#34;&gt;模型使用到的输入数据&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;CPU使用信息&lt;/li&gt;
+&lt;li&gt;内存使用信息（包括常驻内存和缓存）&lt;/li&gt;
+&lt;li&gt;网络使用信息（如接收和发送的数据包）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这些都是用Docker cgroup的接口收集。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;上一个窗口E2E时延的分布&lt;/li&gt;
+&lt;li&gt;能够在下一个时间窗口分配的资源信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;模型的预测输出&#34;&gt;模型的预测输出&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;下一个时间窗口的时延信息，该信息会进一步用于Boosted Tree中&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;boosted-tree&#34;&gt;Boosted Tree&lt;/h3&gt;
+&lt;p&gt;增长树模型主要用于长期的性能预测。具体来说，进行一个二分类问题的预测——接下来的资源分配是否会造成QoS违规，通过这个预测来减少未来预期之外的负面影响。&lt;/p&gt;
+&lt;h4 id=&#34;模型使用到的输入数据-1&#34;&gt;模型使用到的输入数据&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;使用到CNN中的预测输出的时延信息&lt;/li&gt;
+&lt;li&gt;资源分配信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;模型的预测输出-1&#34;&gt;模型的预测输出&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;在接下来时间步k中，是否会出现QoS违规现象&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;系统架构是什么样的如何分配资源&#34;&gt;系统架构是什么样的？如何分配资源？&lt;/h2&gt;
+&lt;h3 id=&#34;系统架构&#34;&gt;系统架构&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202206261434874.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220626143414765&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;中心化的调度器&lt;/li&gt;
+&lt;li&gt;分布式的节点代理&lt;/li&gt;
+&lt;li&gt;单独部署的预测服务&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;系统流程如上图。&lt;/p&gt;
+&lt;h3 id=&#34;资源分配&#34;&gt;资源分配&lt;/h3&gt;
+&lt;p&gt;系统中资源分配的几种动作如下：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202206261443689.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220626144302597&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;评估怎么做的使用了什么应用&#34;&gt;评估怎么做的？使用了什么应用？&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;在本地集群和Google Cloud上面做的实验&lt;/li&gt;
+&lt;li&gt;使用了微服务benchmark套件&lt;strong&gt;DeathStarBench&lt;/strong&gt;(有论文的这个套件)以及其中的应用Hotel Reservation，Social Network。&lt;/li&gt;
+&lt;li&gt;使用Docker Swarm进行部署&lt;/li&gt;
+&lt;li&gt;收集了31302和58499条Hotel和Social Network的数据&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;实验环境&#34;&gt;实验环境&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;本地集群：80core CPU/256GB RAM&lt;/li&gt;
+&lt;li&gt;GCE集群：93containers&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;微服务应用&#34;&gt;微服务应用&lt;/h3&gt;
+&lt;h4 id=&#34;hotel-reservation&#34;&gt;Hotel Reservation&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202206242159386.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220624215932271&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h4 id=&#34;social-network&#34;&gt;Social Network&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202206242159015.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220624215947934&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;做实验时可以参考本文实验设计&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        </item>
+        <item>
+        <title>Cocktail: A Multidimensional Optimization for Model Serving in Cloud</title>
+        <link>https://lizonglingo.github.io/p/cocktail-a-multidimensional-optimization-for-model-serving-in-cloud/</link>
+        <pubDate>Sun, 15 May 2022 21:07:08 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/cocktail-a-multidimensional-optimization-for-model-serving-in-cloud/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源：&lt;a class=&#34;link&#34; href=&#34;https://www.usenix.org/conference/nsdi22/presentation/gunasekaran&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;NSDI&#39;22&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;推荐阅读！&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;摘要&#34;&gt;摘要&lt;/h2&gt;
+&lt;h3 id=&#34;背景&#34;&gt;背景&lt;/h3&gt;
+&lt;p&gt;越来越多的ML模型运行在公有云环境下。&lt;strong&gt;为这些模型服务的框架能够以最小的延迟提供高度准确的预测，并降低部署成本，这一点至关重要。&lt;/strong&gt;&lt;/p&gt;
+&lt;h3 id=&#34;关键点&#34;&gt;关键点&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;模型集成可以通过智能地将不同模型并行组合来解决精度差距问题。然而，在运行时动态地选择合适的模型，以以最小的部署成本、低延迟来满足预期的准确性。&lt;/strong&gt;&lt;/p&gt;
+&lt;h3 id=&#34;本文工作&#34;&gt;本文工作&lt;/h3&gt;
+&lt;p&gt;提出&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;，基于模型集成的成本效益模型服务框架。包含两个关键的组件：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;一个&lt;strong&gt;动态模型选择框架&lt;/strong&gt;，在满足&lt;strong&gt;精度和延迟&lt;/strong&gt;要求的同时，&lt;strong&gt;减少了集成中的模型数量&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;一个采用&lt;strong&gt;分布式主动自动伸缩策略的自适应资源管理&lt;/strong&gt;（RM，Resource Management）框架，有效地为模型分配资源。RM框架利用瞬态虚拟机实例来降低公共云中的部署成本&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;同时在AWS EC2实例中实现了一个原型系统，演示了使用各种工作负载的详尽评估。结果显示Cocktail减少了部署花费1.45x，与最先进的模型服务框架相比，减少了2x延迟，并满足高达96%的请求的目标精度。&lt;/p&gt;
+&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
+&lt;h3 id=&#34;背景及问题引出&#34;&gt;背景及问题引出&lt;/h3&gt;
+&lt;p&gt;背景案例：Facebook为用户交互应用程序提供了数万亿的推理请求，如对新提要进行排名，对照片进行分类等。这些应用程序必须在&lt;strong&gt;亚毫秒延迟&lt;/strong&gt;[27、34、35、39、44、83]提供准确的预测，因为它们严重影响用户体验。&lt;/p&gt;
+&lt;p&gt;随着许多应用使用ML技术增强其用户体验，这种趋势正在扩大。&lt;/p&gt;
+&lt;p&gt;通常这种模型服务运行在云平台上，如一些&lt;em&gt;model-serving&lt;/em&gt;框架[6, 28, 60]。&lt;/p&gt;
+&lt;h3 id=&#34;挑战&#34;&gt;挑战&lt;/h3&gt;
+&lt;p&gt;由于训练数据以及计算和内存资源紧张[59,65,84]造成的高方差一直是设计高精度和低延迟模型的主要障碍&lt;/p&gt;
+&lt;p&gt;不同于单模型推理任务，&lt;code&gt;ensemble learning&lt;/code&gt;集成学习可以进一步提高服务精确度。（如，多模型的图片分类任务会提高最终的精确度）&lt;/p&gt;
+&lt;p&gt;然而，对于集成，由于&lt;strong&gt;每个请求都需要运行大量的模型[27,56]而导致的非常高的资源占用，加剧了公共云的部署成本，并导致延迟的高度变化&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;因此，本文解决的主要问题为：&lt;/p&gt;
+&lt;p&gt;:star:集成单一的模型推理服务；&lt;/p&gt;
+&lt;p&gt;:star:同时提高模型服务的准确度；&lt;/p&gt;
+&lt;p&gt;:star:并最小化部署成本。&lt;/p&gt;
+&lt;h3 id=&#34;现有技术的不足&#34;&gt;现有技术的不足&lt;/h3&gt;
+&lt;p&gt;对最先进的集成模型服务框架进行分析，存在如下不足：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;在像Clipper[27]这样的框架中使用的&lt;strong&gt;集成模型选择策略是静态的，因为它们集成了所有可用的模型，并只专注于最小化准确性损失。这将导致更高的延迟，并进一步扩大资源使用&lt;/strong&gt;，从而加重部署成本。&lt;/li&gt;
+&lt;li&gt;现有的集合权重估计[87]&lt;strong&gt;计算复杂度高&lt;/strong&gt;，在实践中仅限于一小部分现成模型。这导致&lt;strong&gt;精度损失严重&lt;/strong&gt;。此外，采用线性集成技术(如模型平均)计算量大[80]，且对大量可用模型&lt;strong&gt;不可伸缩，缺少弹性&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;现有的集成系统&lt;strong&gt;不关注公共云基础设施中的模型部署&lt;/strong&gt;，没有注意到部署成本和延迟。&lt;/li&gt;
+&lt;li&gt;对单一模型的&lt;strong&gt;资源管理模采用的策略不能直接扩展到集成系统中&lt;/strong&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;因此，重复之前亟待解决的问题：&lt;/p&gt;
+&lt;p&gt;:warning:&lt;strong&gt;如何解决集成框架的成本、精度和延迟等复杂优化问题？&lt;/strong&gt;&lt;/p&gt;
+&lt;h3 id=&#34;本文工作-1&#34;&gt;本文工作&lt;/h3&gt;
+&lt;p&gt;&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;，首个&lt;strong&gt;成本友好&lt;/strong&gt;、&lt;strong&gt;集成多模型&lt;/strong&gt;的ML服务框架，&lt;strong&gt;针对于分类推理任务&lt;/strong&gt;，有很好的&lt;strong&gt;精确度和低延迟&lt;/strong&gt;表现。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;它使用下面三方面解决框架优化问题：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;提出了一种动态模型选择策略，在满足延迟和精度要求的同时，显著减少了集成中使用的模型数量；&lt;/li&gt;
+&lt;li&gt;利用分布式自动伸缩策略来减少托管集成模型的延迟可变性和资源消耗；&lt;/li&gt;
+&lt;li&gt;利用transient VMs技术减少了推理服务部署成本（比传统的虚拟机减少79%-90%的成本）。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;contributions&#34;&gt;Contributions&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;通过&lt;strong&gt;描述集成模型的精度与延迟&lt;/strong&gt;，我们发现在给定的延迟下&lt;strong&gt;谨慎地选择可用模型的子集可以达到目标精度&lt;/strong&gt;。在&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;中利用这一点，&lt;strong&gt;设计了一种新颖的动态模型选择策略，在保证准确性的同时大大减少了模型的数量&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;关注基于分类的推理&lt;/strong&gt;，&lt;strong&gt;最小化来自多个模型的预测偏差&lt;/strong&gt;。&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;采用了一个pre-class加权多数投票政策，这使得它具有&lt;strong&gt;可扩展性&lt;/strong&gt;，与传统加权平均相比，有效地打破了不同模型之间的联系，从而最大限度地提高了准确性。&lt;/li&gt;
+&lt;li&gt;集成模型资源需求的变动会导致资源的过度供应，为了最小化资源，我们构建了一个&lt;strong&gt;分布式的加权自动伸缩策略&lt;/strong&gt;，该策略利用重要&lt;strong&gt;抽样技术主动地为每个模型分配资源&lt;/strong&gt;。&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;使用transient VMs降低模型在云平台上部署的成本。&lt;/li&gt;
+&lt;li&gt;使用AWS EC2的CPU和GPU实例，实现了原型系统&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;并对不同的请求进行了评估。与最先进的模型服务系统相比，部署成本降低1.4x，精确度提升至96%，延迟减少2x。&lt;/li&gt;
+&lt;li&gt;同时表明，集成模型的&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;，&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;可以通过将准确度损失限制在0.6%以内来适应实例故障，对故障容忍性有较大提升。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;background-and-motivation&#34;&gt;Background and Motivation&lt;/h2&gt;
+&lt;p&gt;本章结构如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;分析现有公有云中的集成模型服务；&lt;/li&gt;
+&lt;li&gt;指出这些服务存在的问题；&lt;/li&gt;
+&lt;li&gt;表明&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;基于以上问题需要做的改进。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;model-serving-in-public-cloud&#34;&gt;Model Serving in Public Cloud&lt;/h3&gt;
+&lt;p&gt;现有公有云模型服务架构如下：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220515153406902.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220515153406902&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h4 id=&#34;application层&#34;&gt;Application层&lt;/h4&gt;
+&lt;p&gt;关注SLO，本文指End2End的响应时间。如Ads服务在100ms、推荐服务可以容忍1000ms。&lt;/p&gt;
+&lt;h4 id=&#34;model-层和-framework-层&#34;&gt;Model 层和 Framework 层&lt;/h4&gt;
+&lt;p&gt;部署的如TensorFlow、PyTorch框架。以及提供的不同模型（这里以分类模型为例）：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220515153920197.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220515153920197&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;根据应用程序类型，最大的模型集成尺寸可以从数十到数百个模型不等。&lt;/p&gt;
+&lt;h4 id=&#34;cloud-层&#34;&gt;Cloud 层&lt;/h4&gt;
+&lt;p&gt;以VMs或者Container提供资源隔离和运行环境，基于异构的CPU、GPU实例。&lt;/p&gt;
+&lt;p&gt;其中，&lt;strong&gt;瞬态实例&lt;/strong&gt;[69]与传统的VM类似，但可以由云提供商在任何时间通过中断通知撤销。这些资源的供应延迟、实例持久性和模型打包花费直接影响到托管模型服务的延迟和成本。&lt;/p&gt;
+&lt;p&gt;本文&lt;strong&gt;从模型选择的角度关注于提高准确性和延迟，并从成本的角度考虑实例类型&lt;/strong&gt;。&lt;/p&gt;
+&lt;h3 id=&#34;related-work&#34;&gt;Related Work&lt;/h3&gt;
+&lt;p&gt;下图为本文工作和先前相关工作的对比：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220515172130602.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220515172130602&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;:one:现有的集成模型案例：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Azure ML-studio：最初集成了5个模型，现在逐渐扩展到200个模型。&lt;/li&gt;
+&lt;li&gt;AWS Autogluon：集成了6-12个模型。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;用户可以手动选择模型数量规模。&lt;/p&gt;
+&lt;p&gt;与它们不同的是，&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;的模型选择策略试图在给定延迟的情况下选择合适的集合大小，同时最大化准确性。&lt;/p&gt;
+&lt;p&gt;:two:云上模型服务：&lt;/p&gt;
+&lt;p&gt;InFaas、Clipper 、FrugalML、MArk 、Rafiki、 TF-Serving、 SageMaker、AzureML 、Deep-Studio等。&lt;/p&gt;
+&lt;p&gt;:three:公有云自动缩放：&lt;/p&gt;
+&lt;p&gt;现有相关的资源配置策略能分为两类：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;多路复用不同的实例类型；&lt;/li&gt;
+&lt;li&gt;基于预测策略的主动资源发放。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;使用了类似的负荷预测模型，并在模型集合方面以分布式的方式使用自动缩放虚拟机。&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;的自动缩放策略与Swayam[34]的分布式自动缩放策略有相似之处；然而，我们进一步引入了新颖的&lt;strong&gt;重要采样技术&lt;/strong&gt;，以减少未充分利用的模型的过度供应&lt;/p&gt;
+&lt;h2 id=&#34;引出cocktail&#34;&gt;引出Cocktail&lt;/h2&gt;
+&lt;p&gt;首先回答两个问题：&lt;/p&gt;
+&lt;p&gt;:one:如何减少资源占用:question:&lt;/p&gt;
+&lt;p&gt;通过最小化模型集成数量，减少资源使用。文章通过实验，选取精度前50%的模型进行集成。&lt;/p&gt;
+&lt;p&gt;完全集成的模型选择是一种过度的行为，而静态集成则会导致精度的损失。这就需要一个动态的模型选择策略，该策略可以根据模型选择策略的准确性和可伸缩性准确地确定所需的模型数量。&lt;/p&gt;
+&lt;p&gt;:two:如何减少部署成本:question:&lt;/p&gt;
+&lt;p&gt;大多数云提供商提供瞬态虚拟机，如Amazon Spot实例[69]、谷歌preemptible VMs[9]和Azure Low-priority VMs[7]，可以降低高达10倍的云计算成本。文章**利用这些瞬态VMs(如spot实例)**来大幅降低部署集成模型框架的成本。&lt;/p&gt;
+&lt;h2 id=&#34;cocktail整体设计&#34;&gt;Cocktail整体设计&lt;/h2&gt;
+&lt;p&gt;&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;架构如下：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220515175157818.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220515175157818&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Master VM：运行了模型选择算法；1a）来决定将哪些模型集成；1b）被选中的模型加载到缓存中，在相同请求到来时加快响应速度。&lt;/li&gt;
+&lt;li&gt;Queries：各个请求分派到不同的实例池。&lt;/li&gt;
+&lt;li&gt;Aggregator：用来处理集成模型的返回结果，使用加权多数投票聚合器返回正确的预测。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;为了有效地解决资源管理和可伸缩性的挑战，&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;应用多种策略。它维护专用的实例池服务于各个模型，这简化了每个模型的管理和负载平衡开销。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Resource Controller：主要管理实例的增减，通过 4a）4b）基于CPU和GPU的开销进行实例数量的管理。&lt;/li&gt;
+&lt;li&gt;Load Balancer：将Queries分配给适当的实例，并确保所有获取的实例都被打包到VM中。&lt;/li&gt;
+&lt;li&gt;Autoscaler：利用 6a）预测策略为实例池中的实例预测请求负载，确保资源不会被过度配置；同时使用 6b）重要性抽样算法，通过计算每个模型池在给定时间间隔内所服务的请求的百分比来估计每个模型的重要性。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;动态模型选择策略&#34;&gt;动态模型选择策略&lt;/h3&gt;
+&lt;h4 id=&#34;目标函数&#34;&gt;目标函数&lt;/h4&gt;
+&lt;p&gt;本文使用一个基于窗口的动态模型选择策略，使用下面描述的两个&lt;strong&gt;目标函数&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220515195954517.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;目标时减小延迟和花费并最大化准确率。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;$\mu_{AL}$： latency-accuracy metric&lt;/li&gt;
+&lt;li&gt;$\mu_c$：cost metric&lt;/li&gt;
+&lt;li&gt;$Acc_{target}$：目标准确度&lt;/li&gt;
+&lt;li&gt;$Lat_{target}$：目标延迟&lt;/li&gt;
+&lt;li&gt;$N$：参与集成的模型数量&lt;/li&gt;
+&lt;li&gt;$inst_cost$： VM实例的花费&lt;/li&gt;
+&lt;li&gt;$m$：指每个模型&lt;/li&gt;
+&lt;li&gt;$P_{f_m}$：在单个实例中可以并发执行而不违反延迟指标的推理数量，越大越好&lt;/li&gt;
+&lt;li&gt;$k$：常量，取决于VM的性能配置&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;第一个目标函数&lt;/strong&gt;$O_1$就是满足$Acc_{target}$和$Lat_{target}$时最大化$\mu_{AL}$。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220515200819258.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220515200819258&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;为此，初始模型列表在满足$Lat_{target}$的模型中选择，并尝试集成使其满足$Acc_{target}$。&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;会将每个模型的准确性作为正确概率，然后迭代地构建一个模型列表，其中它们执行分类的联合概率在准确性目标内。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;$Acc_{margin}$：为0.2%&lt;/li&gt;
+&lt;li&gt;$Lat_{margin}$：为5ms&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;第二个目标函数&lt;/strong&gt;$O_2$是最小化$\mu_c$。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;该目标调整模型清单的大小，并进一步调整资源采购。因此最大化$P_{f_m}$，最小化$k$。&lt;/p&gt;
+&lt;p&gt;对于$N$个模型，每个模型都有一个最小精度，因此选取最小精度前50%的模型，数量为${N\over2} + 1$。来保证集成模型达到预期精度。结果正确率如下：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;h4 id=&#34;模型选择和加权多数投票策略&#34;&gt;模型选择和加权多数投票策略&lt;/h4&gt;
+&lt;p&gt;为最小化$\mu_c$，设计了一个模型数量缩减策略，只要有超过${N\over2}+1$的模型选择同一种结果，如下图：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220515205825292.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220515205825292&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h3 id=&#34;资源管理&#34;&gt;资源管理&lt;/h3&gt;
+&lt;h4 id=&#34;资源控制器-resource-controller&#34;&gt;资源控制器 Resource Controller&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;Resource Types： CPU和GPU实例。GPU实例在&lt;strong&gt;打包大量请求&lt;/strong&gt;执行时是划算的。文章提出自适应打包策略，考虑每个实例的$P_f$ 以及在时间$T$到来的请求数量。只有工作负载匹配$P_f$时，才会将负载分发到对应实例。&lt;/li&gt;
+&lt;li&gt;Cost-aware Procurement： 在一个完全封装的实例中执行请求的成本决定了每个实例的开销。在扩展实例之前，需要估计将它们与现有实例一起运行的成本。在时间$T$时，基于预测负载$L_p$和运行实例$R_N$，使用&lt;em&gt;cost-aware greedy&lt;/em&gt;策略来决定要增加的实例数量。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;Load  Balancer： 在每个模型池中维护一个请求队列，为增加实例池中实例的利用率，负载均衡器将来自队列的每个请求提交到剩余空闲槽位（free slots）。文章使用预期超时10分钟的间隔，来回收实例池中没有被使用的实例。贪婪地分配请求可以使负载较轻的实例更早地伸缩。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;自动伸缩器-autoscaler&#34;&gt;自动伸缩器 Autoscaler&lt;/h4&gt;
+&lt;p&gt;我们需要自动伸缩实例数量，来弹性的满足到来的请求负载。&lt;strong&gt;Cocktail&lt;/strong&gt;能准确预测给定时间间隔内的预期负荷。如果需要，&lt;strong&gt;Cocktail&lt;/strong&gt;增加实例到实例池。每隔10秒对SLO违例进行采样，并根据所有实例的资源利用率聚合为每个池生成额外的实例。捕获由于错误预测而导致的SLO违反。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;预测策略：本文设计了DeepARestimator模型。每个模型有1分钟的定期调度间隔$T_s$，在时间$T+T_p$使用预测负责$L_p$，与当前负载$C_p$进行比较，来决定实例数量$I_n$。其中，$T_p$为新实例的平均启动时间。$T_s$设定为1分钟是考虑到AWS  EC2 VMs实例的启动时间。为计算$L_p$，对过去S秒内大小为$W$的相邻窗口的到达率进行采样。使用所有窗口的全局到达率，来预测时间$T$在加减$T_p$时间单元中的$L_p$。$T_p$设置为10分钟，使它有足够的时间来捕捉未来长期的变化。所有这些参数都可以根据系统的需要进行调整。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Importance Sampling： 在自动伸缩中一个重要的问题是模型选择策略为给定的请求约束动态地确定集合中的模型。**基于预测的负载，为每个模型平等地自动伸缩实例，将固有地导致为未充分使用的模型提供过多的实例。**为了解决这个问题，设计了一个加权自动缩放策略，它基于权重智能地为每个池自动缩放实例。算法如下图：&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;自动缩放策略如下：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220515210458324.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220515210458324&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;权重取决于模型被请求(get_popularity)的频率。权重与每个模型池的伸缩实例(launch_workers)的预测负载相乘。这种方法称为Importance Sampling，因为模型池的大小与它们的受欢迎程度成正比。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;本论文实验做得非常充分！可以作为范本。&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        </item>
+        <item>
+        <title>A Case for Task Sampling based Learning  for Cluster Job Scheduling</title>
+        <link>https://lizonglingo.github.io/p/a-case-for-task-sampling-based-learning-for-cluster-job-scheduling/</link>
+        <pubDate>Sat, 14 May 2022 20:09:49 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/a-case-for-task-sampling-based-learning-for-cluster-job-scheduling/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源：&lt;a class=&#34;link&#34; href=&#34;https://www.usenix.org/conference/nsdi22/presentation/jajoo&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;NSDI &amp;lsquo;22&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;摘要&#34;&gt;摘要&lt;/h2&gt;
+&lt;h3 id=&#34;背景&#34;&gt;背景&lt;/h3&gt;
+&lt;p&gt;精确定预估任务运行时间为有效的任务调度提供遍历。现有的任务调度基于历史数据学习，使用任务历史信息预估新任务。但是，&lt;strong&gt;由于部署模式转向快速迭代，快速部署这种方式不再精确&lt;/strong&gt;。&lt;/p&gt;
+&lt;h3 id=&#34;本文工作&#34;&gt;本文工作&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;探索了实时学习任务运行时属性，通过主动采样和调度每个job的部分task，并探究这种方式的可行性和限制。这种方法利用了相同的任务在运行时的相似性。&lt;/li&gt;
+&lt;li&gt;在Azure上使用了3个生产集群，有不同的特性和任务分配。实验表明本文方法更为精确。同时减少了任务完成时间，相对以前的方法提升了1.28x/1.56x/1.32x。&lt;/li&gt;
+&lt;li&gt;同时将基于采样的学习拓展到DAG任务的调度中，也取得了比先前基于历史信息更快的任务完成时间。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
+&lt;h3 id=&#34;问题背景&#34;&gt;问题背景&lt;/h3&gt;
+&lt;p&gt;集群中大数据任务的调度问题。&lt;/p&gt;
+&lt;h3 id=&#34;先前工作&#34;&gt;先前工作&lt;/h3&gt;
+&lt;p&gt;较多的基于历史信息的学习算法，基于此进行任务调度。&lt;/p&gt;
+&lt;p&gt;这样的方法基于几个设定的前提条件：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;这些job是重复性的，它们会多次执行；&lt;/li&gt;
+&lt;li&gt;相似job运行时表现出的特性相同。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;:star:但是，先前工作的假设&lt;strong&gt;前提是有问题&lt;/strong&gt;的：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;很多job不是重复性的；&lt;/li&gt;
+&lt;li&gt;重复性的job每次运行时表现出的特性可能不会相同；&lt;/li&gt;
+&lt;li&gt;历史作业运行时特征具有相当大的变化。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;本文工作-1&#34;&gt;本文工作&lt;/h3&gt;
+&lt;p&gt;一种方法来在线学习分布式作业的运行时属性，以促进集群作业调度。&lt;/p&gt;
+&lt;h4 id=&#34;motivation&#34;&gt;Motivation&lt;/h4&gt;
+&lt;p&gt;基于集群中分布式任务关键信息的检测。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;一个job的空间维度，或者说它包含的许多task信息；&lt;/li&gt;
+&lt;li&gt;job的task(在同一阶段)通常执行相同的代码，并处理大小相似的不同数据。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;上述观测到的信息是如何使用的呢？&lt;/p&gt;
+&lt;p&gt;首先，某个job的task得到了首先调度，然后基于该task，为其他的task提供调度指导。将这种学习方法称为“SLearn”，即“learning in space”。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;这种方式避免了先前工作——基于历史信息学习进行调度的局限性。&lt;/strong&gt;&lt;/p&gt;
+&lt;h4 id=&#34;challenges-of-slearn&#34;&gt;Challenges of SLearn&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;预测精确度受到不同task运行时属性的影响；&lt;/li&gt;
+&lt;li&gt;将job的剩余task延迟到采样任务完成后再调度可能会影响作业的完成时间。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;comprehensive--comparative-study&#34;&gt;Comprehensive  Comparative Study&lt;/h4&gt;
+&lt;p&gt;本文对基于历史的学习（LIT, learning in time）和基于采样的学习（LIS, learning in space）进行综合的分析，提出下述问题：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Learning in space是否比Learning in time更加精确:question:&lt;/li&gt;
+&lt;li&gt;如果时，那是否可以提高剩余task的表现，来弥补上述的问题（剩余task需要依赖首先受到调度的task的信息，对前序task采样后再进行调度，影响作业完成时间）:question:&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;并进行回答&lt;/p&gt;
+&lt;p&gt;问题1：通过定量分析，基于三个生产集群的job追踪（两个Google Cluster Trace数据集和一个2Sigma数据集），进行了回答。&lt;/p&gt;
+&lt;p&gt;问题2：设计了一个通用的job调度器，基于job运行时预估，去优化性能表现。将不同的预测方案接入调度器，如LIT和LIS。&lt;/p&gt;
+&lt;h4 id=&#34;contribution&#34;&gt;Contribution&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;基于三个生产集群追踪数据分析，通过历史表征数据来预测分布式job未来的特性，是不准确和不稳定的。&lt;/li&gt;
+&lt;li&gt;提出SLearn，使用job的空间维度进行采样，对线上job的运行时属性进行学习。&lt;/li&gt;
+&lt;li&gt;通过定量、跟踪和实验分析，证明了SLearn可以比基于历史的方案更准确地预测作业的运行时属性。对于2Sigma、Google 2011和Google 2019集群追踪的数据集，预测结果的中值误差均有显著的优化。&lt;/li&gt;
+&lt;li&gt;在Azure上150个节点的集群实验中发现，对作业任务进行抽样来学习作业运行时属性，虽然延迟了作业剩余任务的调度，但可以通过提高精度来弥补性能损失，减少平均job完成时间。&lt;/li&gt;
+&lt;li&gt;展示了基于采样的学习可以被拓展到DAG job的调度中，实验表明相对于基于历史的学习策略，基于采样的学习可以缩短作业完成时间。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;background-and-related-word&#34;&gt;Background and Related Word&lt;/h2&gt;
+&lt;p&gt;本文的核心点在于预测，那么具体预测什么呢？下图是先前基于历史学习技术进行预测的所做的工作：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220514165707558.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220514165707558&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;本文的将预测结果用于集群调度，使得调度结果满足SLOs要求。&lt;/p&gt;
+&lt;h2 id=&#34;slearn---learning-in-space&#34;&gt;SLEARN - Learning in Space&lt;/h2&gt;
+&lt;p&gt;学习模块与调度是解耦的。&lt;/p&gt;
+&lt;h3 id=&#34;流程概述&#34;&gt;流程概述&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;在job下发后，预测器首先调度一个样本task，叫做&lt;em&gt;pilot tasks&lt;/em&gt;，其产生的数据用于算法去学习job的运行时属性。&lt;/li&gt;
+&lt;li&gt;学习到的信息被注入集群job调度器，调度器执行多种策略以满足SLOs要求。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;slearn细节&#34;&gt;SLEARN细节&lt;/h3&gt;
+&lt;p&gt;本文提出的方案可以有效的兼顾job的空间属性。&lt;/p&gt;
+&lt;p&gt;下图展示了LIT和LIS的不同：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220514171138766.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220514171138766&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;简单总结&#34;&gt;简单总结&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;问题背景：特定的生产集群大数据处理任务的调度问题。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;主要方法：针对基于历史信息预测的调度方法的不足，提出基于时空维度信息预测的调度方法。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;评价指标：job的完成时间，少即使好。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;实验：使用了三个开源生产集群中的Trace数据，在Azure上150个node进行实验。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>RunWild: Resource Management System with Generalized Modeling for Microservices on Cloud</title>
+        <link>https://lizonglingo.github.io/p/runwild-resource-management-system-with-generalized-modeling-for-microservices-on-cloud/</link>
+        <pubDate>Sun, 24 Apr 2022 15:17:07 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/runwild-resource-management-system-with-generalized-modeling-for-microservices-on-cloud/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源：IEEE CLOUD&#39;21&lt;/p&gt;
+&lt;p&gt;作者：IBM&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;star摘要&#34;&gt;:star:摘要&lt;/h2&gt;
+&lt;h3 id=&#34;问题背景&#34;&gt;问题背景&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;微服务内部通信的复杂性，必须考虑资源利用、调度策略和请求均衡之间的平衡，以防止跨微服务级联的服务质量下降。&lt;/strong&gt;&lt;/p&gt;
+&lt;h3 id=&#34;文章做了什么&#34;&gt;文章做了什么&lt;/h3&gt;
+&lt;p&gt;提出资源管理系统&lt;strong&gt;RunWild&lt;/strong&gt;，可以控制所有节点涉及到的微服务管理：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;扩缩容&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;调度&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;自动&lt;/strong&gt;的根据&lt;strong&gt;指定性能表现&lt;/strong&gt;的&lt;strong&gt;负载和性能平衡优化&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;统一的&lt;strong&gt;持续部署方案&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;着重强调了&lt;strong&gt;协同metrics感知&lt;/strong&gt;在&lt;strong&gt;预测资源使用和制定部署计划&lt;/strong&gt;中的重要性。&lt;/p&gt;
+&lt;p&gt;在IBM云进行实验，&lt;strong&gt;以K8s的自动调度为基线&lt;/strong&gt;，减少P90响应时间11%，增加10%的吞吐率，降低30%的资源使用。&lt;/p&gt;
+&lt;h3 id=&#34;贡献&#34;&gt;贡献&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;扩展的部署框架：&lt;strong&gt;适用于K8s的调度框架&lt;/strong&gt;，用来在资源分配、部署、和运行时来控制部署机制；&lt;/li&gt;
+&lt;li&gt;通用的建模方法：综合考虑微服务特性、节点的相对独立性、工作负载和全局协同节点状态感知，通过结合聚类和回归技术预测资源使用；&lt;/li&gt;
+&lt;li&gt;微服务间交互指标：一个称为内聚的指标反映了在同一个&lt;strong&gt;节点上放置高度相互通信的微服务的优势&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;通过&lt;strong&gt;Service Mesh&lt;/strong&gt;对运行时工作负载进行分区：利用服务网格操作流量路由，用其控制能力来划分工作负载以匹配资源的分配。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;star现有技术存在的问题&#34;&gt;:star:现有技术存在的问题&lt;/h2&gt;
+&lt;h3 id=&#34;水平伸缩&#34;&gt;水平伸缩&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;超过某个阈值时，实例的增多与性能表现的增长不匹配，正如收益递减定律所解释的那样；&lt;/li&gt;
+&lt;li&gt;资源过度分配并不会显著增加性能表现；&lt;/li&gt;
+&lt;li&gt;而资源不足会导致性能下降或者致命错误。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;垂直伸缩&#34;&gt;垂直伸缩&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;K8s虽然可以支持HPA和VPA，但是不能一起工作，同时进行HPA和VPA难免会造成干扰。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;此外，复杂的资源依赖，全局的资源调度策略使得伸缩方案受多方面影响。&lt;/p&gt;
+&lt;p&gt;文章的动机是&lt;strong&gt;识别、描述和管理所有因素和维度&lt;/strong&gt;，以实现&lt;strong&gt;统一的部署解决方案&lt;/strong&gt;，而不是运行相互干扰的机制。&lt;/p&gt;
+&lt;h3 id=&#34;部署的三个角度&#34;&gt;部署的三个角度&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;所部署的服务的实例副本数；&lt;/li&gt;
+&lt;li&gt;节点上每个实例所得到的资源；&lt;/li&gt;
+&lt;li&gt;每个实例的网络容量。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;然后引出下面4个重要的问题：&lt;/strong&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;调度所涉及到的策略、资源和具体情景很复杂，要考虑的东西太多；&lt;/li&gt;
+&lt;li&gt;同一节点上部署的服务可能&lt;strong&gt;对资源的争用很敏感&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;微服务之间的通信，亲和性&lt;/strong&gt;等因素会影响到&lt;strong&gt;全局的服务性能表现、响应事件及吞吐量&lt;/strong&gt;，最好的方式是使部署的微服务&lt;strong&gt;减少跨节点的通信&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;如何将&lt;strong&gt;请求负载均衡到不同实例以带来更好的网络表现&lt;/strong&gt;，虽然Service Mesh能够实现负载的分发，但是难以解决上述问题。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;文章列举了一些其他文章做的工作，并对比这些工作解决了上述4个问题中的哪些：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220423213910376.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220423213910376&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;starrunwild&#34;&gt;:star:RunWild&lt;/h2&gt;
+&lt;p&gt;RunWild主要解决：决定实例数量，决定在哪个节点放置实例，如何对工作负载进行分区，如何根据众多资源类型和情景优化部署？&lt;/p&gt;
+&lt;p&gt;涉及到的技术有：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;用循环执行的监控-分析系统对部署进行分析：根据监控和分析环节，设计一个资源使用模型，来预测资源使用。利用automated AI技术获得优化的回归模型来预测资源使用，同时考虑消息请求和节点上资源竞争产生的扰动因素。&lt;/li&gt;
+&lt;li&gt;根据分析制定部署计划：定义一个聚合指标，表示微服务间(通信)的联系程度。部署计划应用于所有机器，包括水平部署、资源分配、放置调度和负载均衡。&lt;/li&gt;
+&lt;li&gt;执行部署：利用Service Mesh提供的运行时链路控制，通过标签动态将工作负载进行分区。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;系统架构&#34;&gt;系统架构&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220424132723898.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220424132723898&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h4 id=&#34;management-module&#34;&gt;Management Module&lt;/h4&gt;
+&lt;p&gt;接收用户提交的部署细节信息。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Specification Handler：管理输入的部署文件并自动化处理；&lt;/li&gt;
+&lt;li&gt;Reconcile Timer：计算并触发每个输入规范的部署自动化过程。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;computation-module&#34;&gt;Computation Module&lt;/h4&gt;
+&lt;p&gt;在全周期中给出部署的解决方案。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Monitor：监控每个实例的资源使用情况和工作负载，文章将工作负载理解为请求的数量；&lt;/li&gt;
+&lt;li&gt;Modeler：用来预测资源使用的模型；&lt;/li&gt;
+&lt;li&gt;Planner：计算部署计划，包括实例数量、节点放置策略、资源预留、工作负载分区。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;execution-module&#34;&gt;Execution Module&lt;/h4&gt;
+&lt;p&gt;用来执行计算的部署结果。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Scaler：更新实例数量；&lt;/li&gt;
+&lt;li&gt;Scheduler：将容器放置到计划的节点；&lt;/li&gt;
+&lt;li&gt;Partitioner：配置链路控制机制，对工作负载进行计划的分区。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;系统实现&#34;&gt;系统实现&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220424140304736.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220424140304736&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;star实验测试&#34;&gt;:star:实验测试&lt;/h2&gt;
+&lt;p&gt;集群包含8个节点，每个节点4vCPU，16GB内存，并部署了Istio和Prometheus。&lt;/p&gt;
+&lt;p&gt;部署70个微服务，600个容器实例，收集了3天的数据。&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>IEEE CLOUD 21 云上资源管理相关合辑</title>
+        <link>https://lizonglingo.github.io/p/ieee-cloud-21-%E4%BA%91%E4%B8%8A%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E7%9B%B8%E5%85%B3%E5%90%88%E8%BE%91/</link>
+        <pubDate>Thu, 21 Apr 2022 14:33:47 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/ieee-cloud-21-%E4%BA%91%E4%B8%8A%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E7%9B%B8%E5%85%B3%E5%90%88%E8%BE%91/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;本篇整理自IEEE CLOUD&#39;21会议中的文章，主题为云背景下的资源管理。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;runwild-resource-management-system-withgeneralized-modeling-for-microservices-on-cloud&#34;&gt;RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud&lt;/h2&gt;
+&lt;h3 id=&#34;star摘要&#34;&gt;:star:摘要&lt;/h3&gt;
+&lt;h4 id=&#34;问题背景&#34;&gt;问题背景&lt;/h4&gt;
+&lt;p&gt;&lt;strong&gt;微服务内部通信的复杂性，必须考虑资源利用、调度策略和请求均衡之间的平衡，以防止跨微服务级联的服务质量下降。&lt;/strong&gt;&lt;/p&gt;
+&lt;h4 id=&#34;文章做了什么&#34;&gt;文章做了什么&lt;/h4&gt;
+&lt;p&gt;提出资源管理系统&lt;strong&gt;RunWild&lt;/strong&gt;，可以控制所有节点涉及到的微服务管理：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;扩缩容&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;调度&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;自动&lt;/strong&gt;的根据&lt;strong&gt;指定性能表现&lt;/strong&gt;的&lt;strong&gt;负载和性能平衡优化&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;统一的&lt;strong&gt;持续部署方案&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;着重强调了&lt;strong&gt;协同metrics感知&lt;/strong&gt;在&lt;strong&gt;预测资源使用和制定部署计划&lt;/strong&gt;中的重要性。&lt;/p&gt;
+&lt;p&gt;在IBM云进行实验，&lt;strong&gt;以K8s的自动调度为基线&lt;/strong&gt;，减少P90响应时间11%，增加10%的吞吐率，降低30%的资源使用。&lt;/p&gt;
+&lt;h4 id=&#34;贡献&#34;&gt;贡献&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;扩展的部署框架：&lt;strong&gt;适用于K8s的调度框架&lt;/strong&gt;，用来在资源分配、部署、和运行时来控制部署机制；&lt;/li&gt;
+&lt;li&gt;通用的建模方法：综合考虑微服务特性、节点的相对独立性、工作负载和全局协同节点状态感知，通过结合聚类和回归技术预测资源使用；&lt;/li&gt;
+&lt;li&gt;微服务间交互指标：一个称为内聚的指标反映了在同一个&lt;strong&gt;节点上放置高度相互通信的微服务的优势&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;通过&lt;strong&gt;Service Mesh&lt;/strong&gt;对运行时工作负载进行分区：利用服务网格操作流量路由，用其控制能力来划分工作负载以匹配资源的分配。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;star现有技术存在的问题&#34;&gt;:star:现有技术存在的问题&lt;/h3&gt;
+&lt;h4 id=&#34;水平伸缩&#34;&gt;水平伸缩&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;超过某个阈值时，实例的增多与性能表现的增长不匹配，正如收益递减定律所解释的那样；&lt;/li&gt;
+&lt;li&gt;资源过度分配并不会显著增加性能表现；&lt;/li&gt;
+&lt;li&gt;而资源不足会导致性能下降或者致命错误。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;垂直伸缩&#34;&gt;垂直伸缩&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;K8s虽然可以支持HPA和VPA，但是不能一起工作，同时进行HPA和VPA难免会造成干扰。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;此外，复杂的资源依赖，全局的资源调度策略使得伸缩方案受多方面影响。&lt;/p&gt;
+&lt;p&gt;文章的动机是&lt;strong&gt;识别、描述和管理所有因素和维度&lt;/strong&gt;，以实现&lt;strong&gt;统一的部署解决方案&lt;/strong&gt;，而不是运行相互干扰的机制。&lt;/p&gt;
+&lt;h4 id=&#34;部署的三个角度&#34;&gt;部署的三个角度&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;所部署的服务的实例副本数；&lt;/li&gt;
+&lt;li&gt;节点上每个实例所得到的资源；&lt;/li&gt;
+&lt;li&gt;每个实例的网络容量。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;然后引出下面4个重要的问题：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;调度所涉及到的策略、资源和具体情景很复杂，要考虑的东西太多；&lt;/li&gt;
+&lt;li&gt;同一节点上部署的服务可能&lt;strong&gt;对资源的争用很敏感&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;微服务之间的通信，亲和性&lt;/strong&gt;等因素会影响到&lt;strong&gt;全局的服务性能表现、响应事件及吞吐量&lt;/strong&gt;，最好的方式是使部署的微服务&lt;strong&gt;减少跨节点的通信&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;如何将&lt;strong&gt;请求负载均衡到不同实例以带来更好的网络表现&lt;/strong&gt;，虽然Service Mesh能够实现负载的分发，但是难以解决上述问题。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;文章列举了一些其他文章做的工作，并对比这些工作解决了上述4个问题中的哪些：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220423213910376.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220423213910376&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;该文会精读，请关注最新的文章。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;fast-and-efficient-performance-tuning-of-microservices&#34;&gt;Fast and Efficient Performance Tuning of Microservices&lt;/h2&gt;
+&lt;h3 id=&#34;star摘要-1&#34;&gt;:star:摘要&lt;/h3&gt;
+&lt;p&gt;针对使用&lt;strong&gt;容器部署的微服务架构应用&lt;/strong&gt;，&lt;strong&gt;以Kubernetes、Docker Swarm容器管理平台为依托&lt;/strong&gt;。在应用正式部署上线之前，也就是在&lt;strong&gt;pre-deployment&lt;/strong&gt;阶段，&lt;strong&gt;迭代的根据资源使用相关指标&lt;/strong&gt;，结合&lt;strong&gt;类多目标优化算法(文章称为heuristic optimization algorithm)&lt;strong&gt;对&lt;/strong&gt;资源分配进行调优&lt;/strong&gt;。&lt;/p&gt;
+&lt;h3 id=&#34;star系统架构&#34;&gt;:star:系统架构&lt;/h3&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ol&gt;
+&lt;li&gt;将应用部署到云平台；&lt;/li&gt;
+&lt;li&gt;进行负载注入；&lt;/li&gt;
+&lt;li&gt;基于Jaeger的监控系统开始进行性能测试和追踪(对每个微服务)，收集数据，如响应时间和资源的使用量；&lt;/li&gt;
+&lt;li&gt;通过Jaeger解析服务调用序列；&lt;/li&gt;
+&lt;li&gt;由Tuning Agent参照服务序列信息、不同类别请求的响应时间和平均资源使用进行调优；&lt;/li&gt;
+&lt;li&gt;Tuning Agent预估每个微服务的新的CPU配额信息；&lt;/li&gt;
+&lt;li&gt;将这些信息存储到Tuning数据库中；&lt;/li&gt;
+&lt;li&gt;编排器根据这些信息对服务进行迭代部署。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;star测量优化的依赖指标&#34;&gt;:star:测量、优化的依赖指标&lt;/h3&gt;
+&lt;p&gt;需要对服务进行&lt;strong&gt;请求的注入&lt;/strong&gt;来进行测量，主要指标是&lt;strong&gt;服务响应时间&lt;/strong&gt;。涉及到&lt;strong&gt;链路追踪、性能监控&lt;/strong&gt;。&lt;/p&gt;
+&lt;h3 id=&#34;star调优模型抽象&#34;&gt;:star:调优模型抽象&lt;/h3&gt;
+&lt;h4 id=&#34;小背景前提和假设&#34;&gt;小背景、前提和假设&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;应用需要一些特定的工作负载$W$&lt;/strong&gt;，这些工作负载发生在特定的情境，例如在线商城的Black Friday。因此，调优过程可以对其他感兴趣的工作负载重放，从而产生一系列特定于工作负载的配置，可以在部署应用程序时适当地使用。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;本文重点关注CPU资源的限制&lt;/strong&gt;，但是该模型可以拓展到其他资源。&lt;/li&gt;
+&lt;li&gt;应用包含**$K$个微服务**，每个微服务运行在自己的container中。&lt;/li&gt;
+&lt;li&gt;每个应用支持**$C$种不同的请求类别**。&lt;/li&gt;
+&lt;li&gt;每个请求类别**$c$关联到不同的响应时间$T_c$**。&lt;/li&gt;
+&lt;li&gt;每类请求**$c$涉及到一个微服务调用序列$S_c$**。&lt;/li&gt;
+&lt;li&gt;因此这个序列中每个&lt;strong&gt;微服务$k$都涉及到一个CPU需求&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;主机上对应的&lt;strong&gt;服务$k$所需的CPU配额表示为$\alpha_k$&lt;/strong&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;资源分配问题抽象&#34;&gt;资源分配问题抽象&lt;/h4&gt;
+&lt;p&gt;问题可以抽象为：在&lt;strong&gt;满足响应时间的需求下，求解对每个微服务CPU配额的最小值&lt;/strong&gt;。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ol&gt;
+&lt;li&gt;目标为最小化CPU配额；&lt;/li&gt;
+&lt;li&gt;需要满足前提条件，即：资源配额能够使某类请求的响应时间$R_c$小于等于目标值$T_c$；&lt;/li&gt;
+&lt;li&gt;其中响应时间$R_c$是工作负载$W$和对$K$个服务CPU配额的函数；&lt;/li&gt;
+&lt;li&gt;最后限制CPU需求总额是有限的。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;star应用案例及实验&#34;&gt;:star:应用案例及实验&lt;/h3&gt;
+&lt;p&gt;使用的微服务案例&lt;strong&gt;Bookstore&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220419153253242.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220419153253242&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h3 id=&#34;star我的问题&#34;&gt;:star:我的问题&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;工作负载的模拟具体如何实现？&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;有哪些开源微服务应用真正可用又具有一定的代表性？&lt;/strong&gt;&lt;/p&gt;
+&lt;h2 id=&#34;skynet-performance-driven-resource-management-for-dynamic-workloads&#34;&gt;Skynet: Performance-driven Resource Management for Dynamic Workloads&lt;/h2&gt;
+&lt;h3 id=&#34;star摘要-2&#34;&gt;:star:摘要&lt;/h3&gt;
+&lt;h4 id=&#34;问题背景和主要矛盾&#34;&gt;问题背景和主要矛盾&lt;/h4&gt;
+&lt;p&gt;云环境下，资源利用率和应用的性能表现之间的矛盾。&lt;/p&gt;
+&lt;h4 id=&#34;难点&#34;&gt;难点&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;用户常会&lt;strong&gt;分配过多的资源&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;应用的&lt;strong&gt;多样性和动态性&lt;/strong&gt;，&lt;strong&gt;工作负载的动态性及难以预测性&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;性能表现取决于&lt;strong&gt;多种不同资源&lt;/strong&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;文章做了什么怎么做的&#34;&gt;文章做了什么，怎么做的&lt;/h4&gt;
+&lt;p&gt;提出Skynet，针对上述三个难点，可以自动对云资源进行管理。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;评估资源需求&lt;strong&gt;依赖的指标&lt;/strong&gt;：Skynet使用performance level objectives(PLOs)准确捕捉用户对所需性能的意图，将用户从资源分配循环中解放。Skynet&lt;strong&gt;通过目标PLO去预估资源需求&lt;/strong&gt;，使用Poportional Integral Derivative(PID)控制器对每个应用调整对应的参数。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;资源需求&lt;strong&gt;计算、分配、调度方法&lt;/strong&gt;：为捕获每个应用对不同资源依赖，&lt;strong&gt;Skynet扩展了传统的一维PID控制器&lt;/strong&gt;(传统的单输入单输出)，实现对CPU、内存、I/O和网络吞吐的预估。Skynet建立一个动态模型，对于每个应用，将目标PLOs映射到资源，同时考虑多种资源和变化的输入负载。事实上，Skynet处于一个&lt;strong&gt;动态循环控制&lt;/strong&gt;来预估资源。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;实现和评估&lt;/strong&gt;：在&lt;strong&gt;kubernetes中将skynetas实现为端到端的定制调度程序&lt;/strong&gt;，并在5个节点的私有集群和60个裸金属服务器AWS上使用真实的工作负载对其进行评估。以K8s为基线，PLO违规降低7.4倍，资源利用提高两倍。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;star系统架构-1&#34;&gt;:star:系统架构&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220421114835655.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220421114835655&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;用户可以指定PLOs，明确对吞吐量、延迟、处理时间等指标的需求。Skynet根据这些PLOs，使用PID[41]预估每个应用的资源需求量。动态的将PLO映射到资源需求，这样一来可以让Skynet适应变化的工作负载和每个应用不同的生命阶段。&lt;/p&gt;
+&lt;h4 id=&#34;示例&#34;&gt;示例&lt;/h4&gt;
+&lt;p&gt;一个web应用PLO为1000请求/秒。Skynet给每个新应用分配一个预定义容器。在执行阶段，Skynet主要使用两个组件：Resource Estimator(RE)和Resource Assigner(RA)，来周期性的调整资源配额以满足PLO：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Skynet周期性监控应用性能指标，如果触发PLO违规，会触发RE。&lt;/li&gt;
+&lt;li&gt;RE基于PLO调整PIDs的参数。&lt;/li&gt;
+&lt;li&gt;基于目标PLO，RE预估应用新的资源需求。&lt;/li&gt;
+&lt;li&gt;当可分配资源满足条件时，RA调整应用容器。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;放置应用以及根据控制器更新应用放置&#34;&gt;放置应用以及根据控制器更新应用放置&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;确定应用资源需求量后，Skynet决定容器的资源限额和放置。具体来说，包括容器打包，节点绑定以及资源配额。其中，容器大小和放置由于需要考虑多种资源的约束，远比打包应用复杂。放置应用的目标是：避免应用间干扰，提高应用性能表现。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;当新应用到来时，Skynet进行扫描，查看是否有某个服务节点可以单独满足应用的资源需求，如果不存在这样的服务节点，就迭代执行下列步骤：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;增加一个容器的数量；&lt;/li&gt;
+&lt;li&gt;在容器之间平均分配资源；&lt;/li&gt;
+&lt;li&gt;找到能够满足容器需求，并且负载最高的服务节点；&lt;/li&gt;
+&lt;li&gt;如果没有，循环执行上述步骤。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;调整应用资源配额。每次请求改变资源需求时，有三种可能：(理解的有些别扭？)&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;资源不够。该情况下，Skynet决定有没有现存的容器可以移除。然后基于节点负载对节点进行排序，移除额外的容器。&lt;/li&gt;
+&lt;li&gt;节点上的可用资源早已被分配给应用。Skynet在容器之间平均增加应用程序的资源，以匹配新的请求。&lt;/li&gt;
+&lt;li&gt;可用资源分布在不同的服务节点上。Skynet以放置新应用的思路放置新的容器。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;总的说，就是处理，&lt;strong&gt;容器应该放置在哪个节点上的问题&lt;/strong&gt;。算法思路如下：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220421143003087.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220421143003087&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h4 id=&#34;在kubernetes上的实现&#34;&gt;在Kubernetes上的实现&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220421132506202.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220421132506202&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;使用Golang实现自定义调度器。使用Prometheus进行监控。代码开源[11]。&lt;/p&gt;
+&lt;h3 id=&#34;star我的问题-1&#34;&gt;:star:我的问题&lt;/h3&gt;
+&lt;h4 id=&#34;关于pid控制理论的补充&#34;&gt;关于PID控制理论的补充&lt;/h4&gt;
+&lt;p&gt;已经不止一次在论文中看到使用PID来调整资源分配了。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://zhuanlan.zhihu.com/p/39573490&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://zhuanlan.zhihu.com/p/39573490&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&#34;如果要使用pid算法再细读&#34;&gt;如果要使用PID算法，再细读&lt;/h4&gt;
+&lt;p&gt;获得监控数据后具体怎处理？&lt;/p&gt;
+&lt;p&gt;分配资源的具体方法？&lt;/p&gt;
+&lt;h2 id=&#34;konveyor-move2kube-automatedreplatforming-of-applications-to-kubernetes&#34;&gt;Konveyor Move2Kube: AutomatedReplatforming of Applications to Kubernetes&lt;/h2&gt;
+&lt;h3 id=&#34;star摘要-3&#34;&gt;:star:摘要&lt;/h3&gt;
+&lt;p&gt;文章提出Move2Kube，一个再部署框架，能够自动调整部署细节，并通过部署pipeline&lt;strong&gt;将非Kubernetes平台部署的应用转移到Kubernetes平台上&lt;/strong&gt;，同时最小限度修改应用架构和实现。&lt;/p&gt;
+&lt;p&gt;此外，文章提出&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;一个最小化的中间表示，不同的应用部署构建都可以转化到这个中间表示上来。&lt;/li&gt;
+&lt;li&gt;一个扩展框架，用于添加对新的部署源平台和目标中间件的支持，同时允许定制化。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Move2Kube已经开源：https://move2kube.konveyor.io/&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&#34;要解决什么问题&#34;&gt;要解决什么问题&lt;/h4&gt;
+&lt;p&gt;在不是K8s平台部署的应用迁移到K8s平台上，同时应该最小限度的修改原系统的实现和软件架构。&lt;/p&gt;
+&lt;h4 id=&#34;挑战难点在哪里&#34;&gt;挑战、难点在哪里&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;应用规模：企业级应用往往有上千个组件，人工迁移费时费力；&lt;/li&gt;
+&lt;li&gt;应用异构：多样的部署平台，多样的应用架构和种类；&lt;/li&gt;
+&lt;li&gt;不同的代码源、组件仓库：代码源或者使用的组件分布在不同的仓库中，很难将其组织到一起，如何分布的数千个目录中找到正确的文件很有挑战；&lt;/li&gt;
+&lt;li&gt;容器化挑战：将应用容器化时，对于优化配置和分层安全很有必要，需要对容器内部、镜像技术和应用配置有深入的理解；&lt;/li&gt;
+&lt;li&gt;目标平台映射：找到正确的不同平台的配置映射关系是困难的，例如如何选择从简单的K8s service转换到Istio的配置中；&lt;/li&gt;
+&lt;li&gt;应用的最佳实践：K8s有最佳实践[6]，如何确保迁移使用K8s的最佳实践；&lt;/li&gt;
+&lt;li&gt;定制化的需求和有效的Day 2 Operation：针对不同应用和需求定制化的配置以适应平台特性需要一定的经验和时间，同时需要考虑Day 2 Operation。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;关于什么是Day 2 Operation：https://jimmysong.io/blog/what-is-day-2-operation/&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&#34;move2kube&#34;&gt;Move2Kube&lt;/h4&gt;
+&lt;p&gt;这个开源框架旨在解决应用迁移到Kubernetes平台过程中出现的上述问题。它提供了标准化的Pipeline，包括&lt;strong&gt;容器化、参数化、配置优化、定制化&lt;/strong&gt;等解决方案，满足面向&lt;strong&gt;特定平台的多源、多服务&lt;/strong&gt;的应用部署迁移。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;该文不太属于资源管理方面。&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        </item>
+        <item>
+        <title>Characterizing microservice dependency and performance: Alibaba trace analysis</title>
+        <link>https://lizonglingo.github.io/p/characterizing-microservice-dependency-and-performance-alibaba-trace-analysis/</link>
+        <pubDate>Tue, 29 Mar 2022 13:40:56 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/characterizing-microservice-dependency-and-performance-alibaba-trace-analysis/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源： SoCC&#39;21&lt;/p&gt;
+&lt;p&gt;作者： Alibaba Group&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;http://cloud.siat.ac.cn/pdca/socc2021-AlibabaTraceAnalysis.pdf&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;http://cloud.siat.ac.cn/pdca/socc2021-AlibabaTraceAnalysis.pdf&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;摘要&#34;&gt;摘要&lt;/h2&gt;
+&lt;h3 id=&#34;背景&#34;&gt;背景&lt;/h3&gt;
+&lt;p&gt;理解微服务的特征，对利用微服务架构的特性很重要。然而，目前还没有对微服务及其相关系统在生产环境下的全面研究。&lt;/p&gt;
+&lt;h3 id=&#34;工作&#34;&gt;工作&lt;/h3&gt;
+&lt;p&gt;我们对阿里巴巴集群中大规模部署微服务进行了详实的分析。研究重点是&lt;strong&gt;描述微服务的依赖关系及其运行时性能&lt;/strong&gt;。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;对微服务调用图进行了深入剖析，以量化它们与数据并行作业的传统DAG之间的区别&lt;/li&gt;
+&lt;li&gt;为合成更有代表性的微服务追踪轨迹，构建了数学模型去模拟调用图&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;结论&#34;&gt;结论&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;通过分析，发现调用图是重尾分布的&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;它们的&lt;strong&gt;拓扑结构类似于树&lt;/strong&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;而且许多微服务都是热点(hot-spots)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;发现三类有意义的调用依赖，可以&lt;strong&gt;用来优化微服务的设计&lt;/strong&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;大多数&lt;strong&gt;微服务对CPU受到的干扰比对内存受到的干扰更加敏感&lt;/strong&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;分析目标有20000个微服务，时间是7天，表征了它们的特性，包括动态的调用图，表征了微服务间调用依赖还有运行时性能分析。&lt;/p&gt;
+&lt;h4 id=&#34;微服务调用图与传统的数据并行处理任务dag图明显不同&#34;&gt;微服务调用图与传统的数据并行处理任务DAG图明显不同&lt;/h4&gt;
+&lt;p&gt;虽然可以看作有向图，但是有下面几个明显的不同：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;调用图的大小遵循重尾分布，有10%的调用图包含超过40个微服务生命阶段，其他大多数只有几个阶段（&lt;strong&gt;因为由于服务运行时的动态性，不同时刻的调用图不同&lt;/strong&gt;）&lt;/li&gt;
+&lt;li&gt;调用图的形状像树，大部分节点只有一条入边，与大数据任务的明显不同&lt;/li&gt;
+&lt;li&gt;存在微服务热点，&lt;strong&gt;5%的微服务被90%的微服务调用&lt;/strong&gt;，而传统的DAG图中不会存在节点共享的情况&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;微服务在运行时有高度动态的调用关系&lt;/strong&gt;，在极端的情况下，同一个在线服务有超过9类拓扑上不同的图&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;微服务的强依赖关系为优化微服务设计提供了方向&#34;&gt;微服务的强依赖关系为优化微服务设计提供了方向&lt;/h4&gt;
+&lt;p&gt;例如，优化两个强依赖关系的调用接口，提升上游、下游微服务间的通信效率，避免形成局部的性能瓶颈。&lt;/p&gt;
+&lt;h4 id=&#34;微服务对cpu扰动比对内存扰动更加敏感&#34;&gt;微服务对CPU扰动比对内存扰动更加敏感&lt;/h4&gt;
+&lt;p&gt;CPU扰动会严重影响到响应时间。例如，CPU利用率在10%和30%时，响应时间相差20%。&lt;/p&gt;
+&lt;p&gt;同时，这表明需要对有效的任务调度策略有极大的需求，以平衡不同机器上CPU的利用率。&lt;/p&gt;
+&lt;h4 id=&#34;随机模型可以很好地模拟动态微服务调用图&#34;&gt;随机模型可以很好地模拟动态微服务调用图&lt;/h4&gt;
+&lt;p&gt;现有的一些调用图不能展现服务运行时的调用状态，在整个生命周期中不会跟随请求的发生而动态改变。&lt;/p&gt;
+&lt;p&gt;为此，文章构建了一个随机模型，通过对微服务进行分类来生成调用图。&lt;/p&gt;
+&lt;h3 id=&#34;contribution&#34;&gt;Contribution&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;首次对生产集群中的微服务进行详细的研究，包括微服务调用图的结构和依赖属性&lt;/li&gt;
+&lt;li&gt;对微服务运行时表现进行详细的表征，对微服务调度和资源管理给出深入的洞见&lt;/li&gt;
+&lt;li&gt;构建图模型来有效的生成大规模的微服务追踪结构，对在模拟图中表征结构性质进行了理论分析&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;microservice-background-and-alibaba-trace-overview&#34;&gt;Microservice Background And Alibaba Trace Overview&lt;/h2&gt;
+&lt;h3 id=&#34;微服务架构&#34;&gt;微服务架构&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220327210505343.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220327210505343&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h3 id=&#34;追踪概览&#34;&gt;追踪概览&lt;/h3&gt;
+&lt;p&gt;收集了超过100亿次调用的追踪。&lt;/p&gt;
+&lt;h4 id=&#34;物理运行环境&#34;&gt;物理运行环境&lt;/h4&gt;
+&lt;p&gt;使用Kubernetes管理裸金属云环境，依赖硬件优化加强集群性能表现，并实现不同服务间的隔离性。如下图：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220327210843935.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220327210843935&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;在线服务和离线服务会存在同一个裸金属节点上，以加强资源利用率&lt;/li&gt;
+&lt;li&gt;在线服务运行在容器中，直接被K8s所管理，而离线任务被分配定量的pods，交给调度器进行调度&lt;/li&gt;
+&lt;li&gt;批处理任务被放到安全容器中来保证安全性&lt;/li&gt;
+&lt;li&gt;有状态应用被部署在专门的节点上，不和其他无状态或是批处理应用共享机器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;微服务系统测量&#34;&gt;微服务系统测量&lt;/h4&gt;
+&lt;p&gt;如Figure 2(b)，微服务监控对每个容器的指标进行测量，隔段时间再求均值。测量的范围从硬件层面的缓存miss率，到操作系统层面的CPU利用率还有内存使用等，还有容器应用层面的例如JVM的堆使用和垃圾回收。&lt;/p&gt;
+&lt;p&gt;测量用Timestamp来作为时间序列的表征。&lt;/p&gt;
+&lt;h4 id=&#34;调用图中的微服务调用指标&#34;&gt;调用图中的微服务调用指标&lt;/h4&gt;
+&lt;p&gt;如Figure 2(c)：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;微服务调用通过TraceID作为请求标识，代表一个调用图&lt;/li&gt;
+&lt;li&gt;interface是上游服务和下游服务的调用接口&lt;/li&gt;
+&lt;li&gt;还记录了上下游服务Pod的IP&lt;/li&gt;
+&lt;li&gt;上下游调用的响应时间&lt;/li&gt;
+&lt;li&gt;&amp;hellip;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;聚合调用&#34;&gt;聚合调用&lt;/h4&gt;
+&lt;p&gt;如Figure 2(d)，微服务的调用情况也会被记录：调用时间戳、响应时间、微服务、调用和被调用的接口、上下游微服务。&lt;/p&gt;
+&lt;h2 id=&#34;解析调用图&#34;&gt;解析调用图&lt;/h2&gt;
+&lt;h3 id=&#34;微服务调用图的特性&#34;&gt;微服务调用图的特性&lt;/h3&gt;
+&lt;p&gt;**微服务调用图的数量呈现重尾分布。**大多数调用图只包含少数微服务，调用层级不超过3层。但有的调用图包含大量的微服务和很深的层次，如下图：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;图中的微服务数量呈现Burr分布&lt;/li&gt;
+&lt;li&gt;超过10%的服务包含超过40个不同的微服务&lt;/li&gt;
+&lt;li&gt;超过40个微服务的大型应用中，大约有50%的微服务是缓存服务（因为系统越庞大，需要缓存来加快系统响应时间，使用缓存比数据库有更高的效率）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;下图是调用图深度的分布：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;平均深度为4.27层&lt;/li&gt;
+&lt;li&gt;深度在3层的服务居多&lt;/li&gt;
+&lt;li&gt;仍有超过4%的调用图超过10层&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;所带来的问题是，&lt;strong&gt;如何使用深度学习方法，为这些服务分配正确的容器数量&lt;/strong&gt;，如[17, 40]。这些方法将不同层次的微服务进行编码，并将实时的资源分配作为神经网络的输入向量。但是这样很容易产生过拟合现象，调用图规模太大，而用于调整模型的负标签太少，如RT violation现象。&lt;/p&gt;
+&lt;p&gt;因此，&lt;strong&gt;急需找到合适的方法有效的为大规模微服务分配资源&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;微服务调用图像一棵树，许多图包含一条较长的链&lt;/strong&gt;。如下图：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220328112852049.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220328112852049&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;当微服务数量不断增加，调用深度逐渐稳定&lt;/li&gt;
+&lt;li&gt;如果一个微服务调用涉及到有状态服务，那么一般来说这条调用链不会再延长，终止于有状态服务&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;关于调用图节点的出边和入边分布如下图：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220328113313961.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220328113313961&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;超过10%的有状态服务至少有5条出边&lt;/li&gt;
+&lt;li&gt;大多数微服务只有一条入边&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;一旦微服务层数大于2时，相关层包含的微服务一般只有一个，如下图：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220328120224056.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220328120224056&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;例如，当层数在10层时，有超过50%的情况是这层只有一个微服务。也就是上面提到的，&lt;strong&gt;为什么深度越深，就越是表现出链式结构&lt;/strong&gt;。此外，这种情况也利于查找微服务调用中出现的瓶颈。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;无状态服务容易成为hot-spots&lt;/strong&gt;。如上面的Figure 4所示，超过5%的微服务在聚合调用后有超过16条入边，这些超级微服务承载力将近90%的调用，涉及到95%的调用。因此这种&lt;strong&gt;松耦合架构展现了严重的负载不平衡&lt;/strong&gt;。这有利于资源扩展，因为系统管理员应该只关注单个微服务的扩展，并为这些超级微服务分配更多的容器。&lt;/p&gt;
+&lt;p&gt;**微服务调用图有很高的动态性。**即使是同一个在线应用，它们生成的调用拓扑图都有显著的差异。例如同一个付款请求，一个有优惠券的用户和一个会员用户或者一个普通用户，请求的调用的微服务都有显著的不同。如下图，所有在线服务都至少有两类图拓扑结构：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220328122519395.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220328122519395&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;另外，还有超过10%的微服务呈现9中调用模式。**这进一步给基于图的微服务预测任务带来了巨大的挑战。**现有的基于CNN的微服务资源管理方法不能描述这些动态特性，也不适用于实际的工业应用。&lt;/p&gt;
+&lt;h3 id=&#34;图学习算法&#34;&gt;图学习算法&lt;/h3&gt;
+&lt;p&gt;该算法的目的在于：将调用图中的微服务进行分类。&lt;strong&gt;关键点是将每个微服务转换为一个向量&lt;/strong&gt;。如InfoGraph算法，这是无监督学习，它将节点信息（如某种微服务），还有边信息（如微服务的调用关系），做成邻接矩阵作为深度神经网络的输入。&lt;/p&gt;
+&lt;p&gt;通过综合训练集的信息，InfoGraph可以为每个图生成一个嵌入向量。&lt;/p&gt;
+&lt;p&gt;文章分别训练每个在线服务，并在嵌入的20维向量上使用K-means聚类，将该服务生成的所有调用图分组为多个类。聚类的数量在[2,10]中，&lt;strong&gt;并用来生成平均轮廓系数&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;在聚类后，使用通用方法Graph Kernel，用来生成两个图间的相似度。&lt;/p&gt;
+&lt;p&gt;对图进行聚类和相似判断的算法如下：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;h3 id=&#34;详细分析&#34;&gt;详细分析&lt;/h3&gt;
+&lt;h4 id=&#34;无状态微服务的调用模式在不同的层上有很大的不同&#34;&gt;无状态微服务的调用模式在不同的层上有很大的不同&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;通常无状态服务没有下游微服务，调用图一般不会在无状态服务处继续扩展&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;消息队列对减少深层次的调用图的端到端时延很有帮助&#34;&gt;消息队列对减少深层次的调用图的端到端时延很有帮助&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;对于依赖缓存的服务，当缓存未命中时，会花费大量时间调用数据库服务&lt;/li&gt;
+&lt;li&gt;当深度增加时，无状态微服务和数据库(即S2D)之间的通信百分比呈亚线性增长&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;下图中：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;图a展示不同类型的无状态服务对调用层数的影响&lt;/li&gt;
+&lt;li&gt;图b展示了随着深度增加，服务间通信类型，请求类型的占比&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;无状态服务间依赖&#34;&gt;无状态服务间依赖&lt;/h2&gt;
+&lt;p&gt;上文中提到，无状态服务过多依赖其他的存储服务，一些时候不可避免的带来服务资源占用。通过研究无状态服务间依赖以避免通信过载和死锁的发生。&lt;/p&gt;
+&lt;h3 id=&#34;循环依赖关系&#34;&gt;循环依赖关系&lt;/h3&gt;
+&lt;p&gt;下图为循环依赖关系的简单实例：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;这种依赖分为：强依赖关系和弱依赖关系。强循环依赖如果设计不合理，会导致死锁。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;强循环依赖关系：上游的输入接口与下游的应答接口相同，直接的就是I1=I3&lt;/li&gt;
+&lt;li&gt;弱循环依赖关系：I1 != I3&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;循环依赖关系在调用图同不可忽视&#34;&gt;循环依赖关系在调用图同不可忽视&lt;/h4&gt;
+&lt;p&gt;下图展示循环依赖的占比以及这些依赖使用的通信方式：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;大多数通信模式使用RPC进行&lt;/li&gt;
+&lt;li&gt;在所有的循环依赖中，2.7%是强依赖关系&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;耦合依赖高频率的调用次数和长调用时间&#34;&gt;耦合依赖：高频率的调用次数和长调用时间&lt;/h3&gt;
+&lt;p&gt;对于调用率和调用次数的计算如下：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;Count(X)：上游Y调用下游M的次数（相邻两层中，X可能会被Y多次调用）&lt;/p&gt;
+&lt;p&gt;Sum：表示所有调用图中由Y触发的两层调用的数量&lt;/p&gt;
+&lt;p&gt;N：为两层调用中X被调用的数量&lt;/p&gt;
+&lt;p&gt;如果Call Probability和Call Time的值超过2和0.9，就说这两个服务是耦合依赖的。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;对于有强耦合依赖的服务，可以将它们的接口做到一起以优化，减轻网络拥塞&lt;/strong&gt;。&lt;/p&gt;
+&lt;h3 id=&#34;并行依赖&#34;&gt;并行依赖&lt;/h3&gt;
+&lt;p&gt;并行依赖可以减轻上游服务的响应时间。但是在这种情况下建议将服务做进一个微服务中。&lt;/p&gt;
+&lt;h2 id=&#34;微服务运行时表现&#34;&gt;微服务运行时表现&lt;/h2&gt;
+&lt;p&gt;理解微服务运行时的情况有利于保证服务质量。在本节中，文章研究图拓扑和资源干扰以及微服务调用率(MCR)对响应时间的影响。&lt;/p&gt;
+&lt;h3 id=&#34;微服务调用率&#34;&gt;微服务调用率&lt;/h3&gt;
+&lt;p&gt;MCR记录了每个容器每分钟接收调用的次数。如果MCR过大，可能意味着资源紧张。&lt;/p&gt;
+&lt;p&gt;使用Spearman相关系数来评估MCR序列和微服务容器运行时的序列。如下图：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220329130343180.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220329130343180&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;上图展示了MCR和多种不同的系统层面和应用层面的资源调用的累积分布。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;微服务调用率与CPU利用率和Young GC高度相关，但与内存利用率无关&lt;/li&gt;
+&lt;li&gt;说明CPU利用率和Young GCs最能反应资源紧张程度&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;微服务响应时间表现&#34;&gt;微服务响应时间表现&lt;/h3&gt;
+&lt;p&gt;本部分研究调用图的复杂性、资源竞争和MCR以及其他因素对微服务响应时间表现的影响。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;端到端时延在拓扑结构类似的调用图中较为稳定，而在拓扑结构不同的调用图中显得很大不同。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;通过上面的图聚类算法将调用图进行分类，对每类图中的响应时间进行计算。这进一步说明图拓扑结构对端到端RT有很大的影响。此外，文章&lt;strong&gt;设计的图学习算法可以用于预测RT性能。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;端到端性能会由于CPU的高占用而下降。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;**在微服务调用率变化时，时延并没有太大波动，**这是由于在集群中及时处理了调用请求避免消息堆积。&lt;/p&gt;
+&lt;h2 id=&#34;用概率模型生成微服务图&#34;&gt;用概率模型生成微服务图&lt;/h2&gt;
+&lt;p&gt;涉及到的算法暂时没看太懂&amp;hellip;&lt;/p&gt;
+&lt;h2 id=&#34;相关工作&#34;&gt;相关工作&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Microservice benchmarks&lt;/li&gt;
+&lt;li&gt;Serverless benchmarks&lt;/li&gt;
+&lt;li&gt;Cloud workloads&lt;/li&gt;
+&lt;li&gt;Cloud trace analysis&lt;/li&gt;
+&lt;li&gt;Performance characterization of online services&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>MLaaS in the Wild: Workload Analysis and Scheduling in Large-Scale Heterogeneous GPU Clusters</title>
+        <link>https://lizonglingo.github.io/p/mlaas-in-the-wild-workload-analysis-and-scheduling-in-large-scale-heterogeneous-gpu-clusters/</link>
+        <pubDate>Mon, 21 Mar 2022 21:05:51 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/mlaas-in-the-wild-workload-analysis-and-scheduling-in-large-scale-heterogeneous-gpu-clusters/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源： NSDI&#39;22&lt;/p&gt;
+&lt;p&gt;作者：Alibaba Group&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;摘要&#34;&gt;摘要&lt;/h2&gt;
+&lt;p&gt;在ML as a Service中，数据中心为ML提供算力保证。而多样的ML工作负载面对&lt;strong&gt;异构GPU集群&lt;/strong&gt;时会出现一些问题。通过两个月的数据收集，采集了超过&lt;strong&gt;6000个GPU&lt;/strong&gt;的生产数据。并发现集群调度面临的一些问题：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;低GPU利用率&lt;/li&gt;
+&lt;li&gt;长队列延迟&lt;/li&gt;
+&lt;li&gt;需要高端GPU的任务调度难度大&lt;/li&gt;
+&lt;li&gt;异构机器负载不均衡&lt;/li&gt;
+&lt;li&gt;CPU潜在的瓶颈问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;文章对上述问题提供了一些解决方案。&lt;/p&gt;
+&lt;p&gt;本文的最大贡献是提供了一个真实的大规模生产级别的ML集群的追踪数据，并在此基础之上进行分析，为ML as a Service - 云环境下的ML工作负载调度提供了重要的一手数据。&lt;/p&gt;
+&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;在ML框架下的任务需要不同的调度策略，例如GPU局部性、群调度，而且需要调配跨数量级的资源。同时集群中的机器是异构的，一些配置如下图：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220320210534789.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220320210534789&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;而异构的运行环境给资源管理和调度带来新的困难。&lt;/p&gt;
+&lt;h4 id=&#34;gpu碎片化使用带来的低利用率&#34;&gt;GPU碎片化使用带来的低利用率&lt;/h4&gt;
+&lt;p&gt;例如一个任务实例只使用GPU资源的一部分。流处理程序的GPU利用率的中位数值只有0.042GPU。&lt;strong&gt;粗粒度的GPU分配&lt;/strong&gt;使得资源使用率低下。&lt;/p&gt;
+&lt;p&gt;为解决这个问题，文章提出了&lt;strong&gt;GPU sharing&lt;/strong&gt;，一种可以以&lt;strong&gt;时分复用的方式让多个任务共享GPU&lt;/strong&gt;的控制方式。使用该方式，将许多低GPU的工作负载整合起来，使用一个GPU，提高资源使用效率。此外，这种共享方式&lt;strong&gt;不会引起资源争用干扰&lt;/strong&gt;，资源竞争的概率十分小。&lt;/p&gt;
+&lt;h4 id=&#34;短任务面临的长排队延迟&#34;&gt;短任务面临的长排队延迟&lt;/h4&gt;
+&lt;p&gt;短时间运行的任务实例容易由于队列头阻塞而导致长队列延迟，&lt;strong&gt;大约9%的任务排队等待的时间超过他们的执行时间&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;一种有效的解决方案是&lt;strong&gt;预测任务运行时间&lt;/strong&gt;，&lt;strong&gt;并将短任务优先级尽可能提高&lt;/strong&gt;，避免与长任务竞争。通过仔细的特征工程，我们可以预测大多数重复任务的持续时间，误差在25%以内，这足以根据之前的工作建议做出质量调度决策（因为，通过观察，集群中有65%的任务有重复的工作负载）。跟踪驱动的仿真结果表明，通过预测任务持续时间采用最短作业优先调度，平均完成时间减少63%以上。&lt;/p&gt;
+&lt;h4 id=&#34;高gpu使用的作业难以进行调度&#34;&gt;高GPU使用的作业难以进行调度&lt;/h4&gt;
+&lt;p&gt;集群中的&lt;strong&gt;一些任务要求无共享的使用GPU，以利用高级硬件特性，达到加速训练的目的&lt;/strong&gt;，如NVLink[12]，因此，对这些任务难以进行调度。&lt;/p&gt;
+&lt;p&gt;集群中的调度器使用一个简单的 reserving-and-packing 策略在集群中分辨出这样的任务。它&lt;strong&gt;保留高端的GPU机器&lt;/strong&gt;，如，V100 with NVLinks，用于少数具有挑剔调度要求的高GPU任务，同时将其他工作负载打包到不太高级的机器上，使用GPU共享策略&lt;strong&gt;保证资源的利用率&lt;/strong&gt;。此外，该策略还&lt;strong&gt;提升了平均队列等待延迟，加快了任务调度&lt;/strong&gt;。&lt;/p&gt;
+&lt;h4 id=&#34;负载不均衡&#34;&gt;负载不均衡&lt;/h4&gt;
+&lt;p&gt;明显的是，&lt;strong&gt;低端GPU比高端GPU更加拥挤&lt;/strong&gt;，前者被分配了70%的GPU和CPU资源，而后者只被分配35%的CPU和49%的GPU资源。&lt;/p&gt;
+&lt;p&gt;工作负载和机器之间也存在供应不匹配的问题。例如，工作在8GPU的工作负载对CPU的需求是那些可以提供12GPU的1.9倍，简而言之就是，那些&lt;strong&gt;性能更弱的机器被分配了与其能力不匹配的工作负载&lt;/strong&gt;。&lt;/p&gt;
+&lt;h4 id=&#34;cpu瓶颈&#34;&gt;CPU瓶颈&lt;/h4&gt;
+&lt;p&gt;一些机器学习、深度学习作业不仅仅需要GPU，有的也需要CPU资源，这造成CPU瓶颈。同时发现， 工作在高CPU利用率机器上的任务容易减速。&lt;/p&gt;
+&lt;h2 id=&#34;工作负载特征分析&#34;&gt;工作负载特征分析&lt;/h2&gt;
+&lt;h3 id=&#34;追踪概述&#34;&gt;追踪概述&lt;/h3&gt;
+&lt;p&gt;关于数据集的数据内容和下载请查看&lt;a class=&#34;link&#34; href=&#34;https://github.com/alibaba/clusterdata&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;clusterdata&lt;/a&gt;。实际上并不能明确的知道容器里执行的到底是什么类型的训练任务，但是可以从作业名中得到一些线索。&lt;/p&gt;
+&lt;p&gt;下图为PAI和Trace的架构：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;h4 id=&#34;jobs-tasks-and-instances&#34;&gt;Jobs, tasks, and instances&lt;/h4&gt;
+&lt;p&gt;用户提交jobs，一个job有一个或多个tasks来扮演不同的计算角色，每个task使用Docker运行一个或多个instances。&lt;/p&gt;
+&lt;p&gt;例如，一个分布式训练job有一个参数服务task，该task有两个实例，此外还有一个worker task有10个实例。一个task的所有instances有相同的资源需求，并且需要gang-schedule。&lt;/p&gt;
+&lt;p&gt;我们主要&lt;strong&gt;关注任务实例，也就是instance这一级别的工作&lt;/strong&gt;。&lt;/p&gt;
+&lt;h4 id=&#34;heavy-skewed-instance-distribution&#34;&gt;Heavy-skewed instance distribution&lt;/h4&gt;
+&lt;p&gt;PAI追踪了120万个tasks，超过750万个instances，由超过1300个用户提交。下图展示了用户提交的task instance的分布，表现出严重的不平衡：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;5%的用户提交了大概77%的task instances，大概每个用户运行1.75万instance。而50%的用户每人运行少于180个instances。&lt;/p&gt;
+&lt;h4 id=&#34;the-prevalence-of-gang-scheduling&#34;&gt;The prevalence of gang-scheduling&lt;/h4&gt;
+&lt;p&gt;分布式的任务需要gang-schedule（认为超过2个GPU的调度），如下图：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;大约85%的任务需要这样的需求，有20%的任务需要超过100个GPU的调度，还有的甚至要进行超过1000个GPU的调度。&lt;/p&gt;
+&lt;h4 id=&#34;gpu-locality&#34;&gt;GPU locality&lt;/h4&gt;
+&lt;p&gt;除了gang-schedule，一个任务可能会在同一台机器上的多个GPU上运行它的所有实例，也就是存在&lt;strong&gt;GPU局部性&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;虽然这种情况会引发调度延迟的加剧（一些任务等待调度的时间延长），但是在单节点的GPU上进行训练减少了GPU to GPU的通信时间。&lt;/p&gt;
+&lt;p&gt;但是通过增强GPU局部性，可以&lt;strong&gt;让某些任务的训练速度加快10倍&lt;/strong&gt;。&lt;/p&gt;
+&lt;h4 id=&#34;gpu-sharing&#34;&gt;GPU sharing&lt;/h4&gt;
+&lt;p&gt;GPU sharing利用时分复用的原理使得多用户可共享一个GPU进行训练。&lt;/p&gt;
+&lt;h4 id=&#34;various-gpu-types-to-choose-from&#34;&gt;Various GPU types to choose from&lt;/h4&gt;
+&lt;p&gt;PAI提供异构的GPU可供任务选择。在集群中只有6%的训练任务需要运行在特定的GPU上，其他的任务则对GPU类型没有限制。&lt;/p&gt;
+&lt;h3 id=&#34;时间模型&#34;&gt;时间模型&lt;/h3&gt;
+&lt;p&gt;从时间角度来观察PAI工作负载。&lt;/p&gt;
+&lt;h4 id=&#34;diurnal-task-submissions-and-resource-requests&#34;&gt;Diurnal task submissions and resource requests&lt;/h4&gt;
+&lt;p&gt;下图是一周中task和instance的提交情况，还有总体的资源请求情况：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220321104136979.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220321104136979&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;从中可以得到以下几点信息：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;周中提交数量多余周末&lt;/li&gt;
+&lt;li&gt;夜晚也有任务提交的高峰&lt;/li&gt;
+&lt;li&gt;大多数在夜间提交的任务并非计算密集型&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;instance-run-time-in-a-wide-range&#34;&gt;Instance run-time in a wide range&lt;/h4&gt;
+&lt;p&gt;下图展示了instance运行时间的分布：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;运行时间的变化范围很大，有4个数量级&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;non-uniform-queueing-delays&#34;&gt;Non-uniform queueing delays&lt;/h4&gt;
+&lt;p&gt;理解为在队列中等待调度的时间。这段时间指task提交到instance执行的时间，如下图：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;对比long-task，short-task通常花费更多比例的时间在等待调度上&lt;/li&gt;
+&lt;li&gt;大约9%的短作业实例花费超过完成时间的一半去等待调度，而长左右这个数值只有3%&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;此外，task instance的队列延迟还取决于GPU的需求，如下图：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;那些可以共享GPU的instance（GPU需求为0-1）可以更快的被调度，其等待调度的等待时间P90值为497s&lt;/li&gt;
+&lt;li&gt;而不支持共享GPU的任务的这一值为1150&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;同时，长队列等待时间也出现在一些需要高端GPU的任务中，如下图：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;例如在V100和V100M32上的instance需要更多等待时间&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;空间模型&#34;&gt;空间模型&lt;/h3&gt;
+&lt;p&gt;通过分析资源请求和使用，分析了PAI task instance的空间模型。每15s进行一次测量，并使用虚拟化工具[2, 25]去分析用户的负载模式和他们的资源需求。&lt;/p&gt;
+&lt;h4 id=&#34;heavy-tailed-distribution-of-resource-requests&#34;&gt;Heavy-tailed distribution of resource requests&lt;/h4&gt;
+&lt;p&gt;如下图：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;图5(a)(b)(c)中的蓝色实现表示，大约20%的实例占用了80%的资源，而其余的只要很少一部分资源&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;以P95和中位数比较，P95需要12vCPU、1GPU、59GB内存，而中位数只要6vCPU、0.5GPU和29GB内存。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;uneven-resource-usage-low-on-gpu-but-high-on-cpu&#34;&gt;Uneven resource usage: Low on GPU but high on CPU&lt;/h4&gt;
+&lt;p&gt;集群中instance的资源使用中位数在1.4vCPU、0.042GPU和3.5GB内存，远小于资源请求的中位数。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;观察到存在GPU空闲和CPU不够用的情况，并推断GPU的低利用率不是因为对GPU的需求少，而是CPU瓶颈限制了GPU的使用&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;从5(b)中也可以看到，对GPU的实际使用远小于GPU资源的需求&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;从5(d)中，对应X坐标&amp;gt;1的值表示CPU的使用量大于申请的量，有19%的instance出现这种情况，而超量使用GPU的只有约3%的实例，对内存来说这一值也只有9%&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;gpu利用率&#34;&gt;GPU利用率&lt;/h2&gt;
+&lt;h3 id=&#34;计算资源利用率&#34;&gt;计算资源利用率&lt;/h3&gt;
+&lt;p&gt;包括CPU、GPU和Memory。监控系统每15s收集数据，并存到时间序列数据库中。&lt;/p&gt;
+&lt;p&gt;如下图：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;相比内存来说，GPU和CPU利用率普遍高，也说明大部分任务不是内存集中型&lt;/li&gt;
+&lt;li&gt;GPU利用率的P90跨度很广，这与GPU使用有突发性相关，同时也与调度策略有关&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;网络和io的低利用率&#34;&gt;网络和I/O的低利用率&lt;/h3&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;网络中数据接收量普遍较低&lt;/li&gt;
+&lt;li&gt;网络带宽普遍不能达到指定数值(如不能达到保证的10Gbps、32Gbps)&lt;/li&gt;
+&lt;li&gt;iowait模式比usr和kernel模式少三个数量级，这意味着CPU大多数时间在进行计算而不是在等待I/O&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;优化集群管理的方向&#34;&gt;优化集群管理的方向&lt;/h2&gt;
+&lt;p&gt;在PAI中，集群管理有两个优化目标：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;实现GPU的高利用率&lt;/li&gt;
+&lt;li&gt;缩短task的运行时间&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;gpu共享&#34;&gt;GPU共享&lt;/h3&gt;
+&lt;p&gt;与CPU不同，GPU天生就没有共享特性。PAI以&lt;strong&gt;时分复用和空分复用（内存）方式&lt;/strong&gt;，使多个任务实例可以共享一个GPU。&lt;/p&gt;
+&lt;h4 id=&#34;benefits-of-gpu-sharing&#34;&gt;Benefits of GPU sharing&lt;/h4&gt;
+&lt;p&gt;下图将是否使用GPU sharing的表现进行对比：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;平均而言，共享只需要50%的GPU资源，可节省高达73%的费用，节省大量的GPU资源&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;does-gpu-sharing-cause-contention&#34;&gt;Does GPU sharing cause contention?&lt;/h4&gt;
+&lt;p&gt;随着利用率的增加，运行在共享GPU上的实例开始争夺资源。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;由于大多数高利用率的GPU上面运行单个实例(平均4.5%的GPU运行多个实例)，因此不会发生争用，所以认为GPU共享不会在集群中引起严重的争用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;预测重复任务的持续时间&#34;&gt;预测重复任务的持续时间&lt;/h3&gt;
+&lt;p&gt;文章认为预测ML认为实例的运行时间是实现更好调度的关键。现存的预测方案基于迭代次数、损耗曲线、目标精度和训练速度等指标。&lt;/p&gt;
+&lt;h4 id=&#34;the-prevalence-of-recurring-tasks&#34;&gt;The prevalence of recurring tasks&lt;/h4&gt;
+&lt;p&gt;文章发现大多数任务都是重复的，并且它们的实例运行时可以很好地从过去的执行中预测出来。通过对任务的元数据，如：脚本、命令行参数、数据源和输出，进行hash得到Group tag来标识重复的任务。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;约65%的任务在trace中至少运行5轮&lt;/li&gt;
+&lt;li&gt;大多数重复任务每个周期都有相似的运行时间&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;instance-duration-prediction-for-recurring-tasks&#34;&gt;Instance duration prediction for recurring tasks&lt;/h4&gt;
+&lt;p&gt;实际的预测使用三个特征作为输入：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;task&amp;rsquo;s username - User&lt;/li&gt;
+&lt;li&gt;resource request - Resource including GPU and other resources&lt;/li&gt;
+&lt;li&gt;group tag - Group&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;利用上述特征，基于CART(Classification And Regression Tress)算法预测实例的平均运行时间。作为评估，使用至少重复5轮的任务，下图为预测详情：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;从上图得知：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Group是重要指标&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;benefits-for-scheduling&#34;&gt;Benefits for scheduling&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220417180125631.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220417180125631&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;上图展示不同调度方法。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;SJF-Oracle明显好于其他算法，该算法基于真实的任务持续时间和预测算法&lt;/li&gt;
+&lt;li&gt;给的特征越多，效果越好&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;调度面临的挑战&#34;&gt;调度面临的挑战&lt;/h2&gt;
+&lt;p&gt;本部分使用两个案例：典型的ML tasks，分别有高/低GPU资源需求的特性。&lt;/p&gt;
+&lt;h3 id=&#34;高gpu需求任务的研究&#34;&gt;高GPU需求任务的研究&lt;/h3&gt;
+&lt;p&gt;集群中一些任务有计算密集型实例，需要很高的GPU资源。&lt;/p&gt;
+&lt;h4 id=&#34;nlp-with-advanced-language-models&#34;&gt;NLP with advanced language models&lt;/h4&gt;
+&lt;p&gt;NLP任务中，73%的有大规模的输入，需要16GB或更高的内存。下图展示了NLP实例对GPU资源的需求和使用情况：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;约40%的实例需要超过1个GPU，超过那些常规的任务&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;image-classification-with-massive-output&#34;&gt;Image classification with massive output&lt;/h4&gt;
+&lt;p&gt;集群中还有些任务需要GPU to GPU的高效率通信，GPU局部性可以提高通信效率。典型代表就是图像分类模型，其中存在规模庞大的全连接层，要求在工作实例之间进行大量的梯度更新，需要使用大量的通信资源，使通信成为瓶颈。&lt;/p&gt;
+&lt;p&gt;如图14(b)中，启用NVLink极大缩短了任务的运行时间。&lt;/p&gt;
+&lt;h3 id=&#34;低gpu需求的任务研究&#34;&gt;低GPU需求的任务研究&lt;/h3&gt;
+&lt;p&gt;使用三种广泛使用的任务进行研究。一些CPU密集型的任务可能会导致GPU的利用率低下。&lt;/p&gt;
+&lt;h4 id=&#34;ctr-prediction-model-training-and-inference&#34;&gt;CTR prediction model training and inference&lt;/h4&gt;
+&lt;p&gt;在追踪中，有6.7%的广告点击率预测系统（ advertisement click- through rate (CTR) prediction）使用了CTR模型。其中有25%的实例负责训练，75%的实例负责推理工作。这些实例的CPU和GPU资源分布如下：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;与训练相比，执行推理任务的实例具有更高的CPU利用率，因为它们处理源源不断到达的大量数据&lt;/li&gt;
+&lt;li&gt;有近75%的实例使用的GPU小于0.1&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;下图展示了这些模型运行时资源情况：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;CPU资源的使用明显高于其他资源&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;gnn-training&#34;&gt;GNN training&lt;/h4&gt;
+&lt;p&gt;图神经网络也是计算密集型任务， CPU的使用率远超GPU，如下图所示：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;在模型训练阶段，需要进行大量的CPU操作&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;reinforcement-learning&#34;&gt;Reinforcement learning&lt;/h4&gt;
+&lt;p&gt;加强学习算法通过并行模拟迭代生成一批数据将生成的数据放到GPU上进行训练，以改进学习策略。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;有72%的任务需要超过10个实例来完成，加大调度难度&lt;/li&gt;
+&lt;li&gt;但是大多数RL任务对GPU的需求极低&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;部署调度策略&#34;&gt;部署调度策略&lt;/h3&gt;
+&lt;h4 id=&#34;reserving-and-packing&#34;&gt;Reserving-and-packing&lt;/h4&gt;
+&lt;p&gt;集群中有&lt;strong&gt;意保留高端GPU资源&lt;/strong&gt;，而尽可能将任务打包在一起，共享使用低端GPU资源。&lt;/p&gt;
+&lt;p&gt;对于每个任务，调度程序生成一个有序的分配计划序列；每个计划指定了预期的GPU设备，并与尝试超时值相关联。&lt;/p&gt;
+&lt;p&gt;对于需要高端GPU的任务，先尝试高端GPU的分配，然后再尝试较低端GPU的分配；对于其他任务，顺序颠倒过来，GPU调度器是在基于局部树的调度系统Fuxi[26,71]上实现的。&lt;/p&gt;
+&lt;h4 id=&#34;load-balancing&#34;&gt;Load-balancing&lt;/h4&gt;
+&lt;p&gt;在Reserving-and-packing的前提下，调度器还会优先将实例调度到分配率较低的机器上，分配率衡量为已分配的CPU、内存和GPU的加权总和，这些资源按机器的容量进行标准化。&lt;/p&gt;
+&lt;h4 id=&#34;benefits&#34;&gt;Benefits&lt;/h4&gt;
+&lt;p&gt;具体对应两种调度方法：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;简单地使用渐进式填充的负载平衡机器(总是将任务的实例调度到利用率最低的节点)&lt;/li&gt;
+&lt;li&gt;不考虑负载均衡，只执行Reserving-and-packing&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;下图展示了这两种策略的实际表现：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;请注意，任务的排队延迟也包括在它的组调度实例的排队延迟&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;在这两个策略下，超过90%的实例和任务会立即启动&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;与负载均衡算法相比，Reserving-and-packing算法将平均任务排队率降低了45%，主要原因是尾部延迟的显著缩短超过10000秒&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;进一步比较了业务关键型任务和请求V100的实例的排队延迟，在两种策略下，GPU的平均任务排队延迟减少了68%&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;其他待解决的问题&#34;&gt;其他待解决的问题&lt;/h3&gt;
+&lt;h4 id=&#34;mismatch-between-machine-specs-and-instance-requests&#34;&gt;Mismatch between machine specs and instance requests&lt;/h4&gt;
+&lt;p&gt;该问题带来的影响如下图：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220417191055419.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220417191055419&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;这直接导致：相较于高端机器来说，低端机器明显更拥挤，它们的资源使用率也高于高端机器&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;overcrowded-weak-gpu-machines&#34;&gt;Overcrowded weak-GPU machines&lt;/h4&gt;
+&lt;h4 id=&#34;imbalanced-load-in-high-end-machines&#34;&gt;Imbalanced load in high-end machines&lt;/h4&gt;
+&lt;h4 id=&#34;cpu-can-be-the-bottleneck&#34;&gt;CPU can be the bottleneck&lt;/h4&gt;
+</description>
+        </item>
+        <item>
+        <title>Service-Level Fault Injection Testing</title>
+        <link>https://lizonglingo.github.io/p/service-level-fault-injection-testing/</link>
+        <pubDate>Thu, 24 Feb 2022 19:25:41 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/service-level-fault-injection-testing/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源：ACM SoCC&#39;21&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://acmsocc.org/2021/accepted-papers.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://acmsocc.org/2021/accepted-papers.html&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;摘要为什么需要服务级别的故障注入测试&#34;&gt;摘要——为什么需要服务级别的故障注入测试&lt;/h2&gt;
+&lt;p&gt;由于微服务架构的特点，负责每个模块的工程师只需专注自己的部分而不需要过多关注整个应用系统。这些应用程序的开发人员不一定都是分布式系统工程师，因此无法预计系统出现部分故障：一旦部署到生产环境中，他们的服务会面临一个或多个依赖项不可用的问题。&lt;/p&gt;
+&lt;p&gt;作者提出了一种称为服务级故障注入测试的方法和一种称为 Filibuster 的原型实现，可用于在微服务应用程序开发的早期系统地识别弹性问题。&lt;/p&gt;
+&lt;p&gt;Filibuster 将静态分析和 concolic-style 执行与一种新颖的动态缩减算法相结合，以扩展现有的功能测试套件，以最少的开发人员工作量覆盖故障场景。&lt;/p&gt;
+&lt;p&gt;并使用 4 个真实工业微服务应用程序的语料库来进行实验。&lt;/p&gt;
+&lt;h2 id=&#34;贡献&#34;&gt;贡献&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;一种测试微服务应用程序弹性的方法：服务级故障注入测试 (SFIT) &lt;strong&gt;结合了静态分析和 concolic 测试&lt;/strong&gt;，以探索微服务之间所有可能的故障，从现有的通过功能测试套件开始。&lt;/li&gt;
+&lt;li&gt;一种新颖的动态缩减算法： SFIT 使用一种算法，通过利用将应用程序分解为独立的微服务来&lt;strong&gt;减少搜索空间的组合爆炸&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;实现了SFIT的原型Filibuster：这个基于 Python 的工具可用于测试与 HTTP 通信的服务。我们的原型允许在本地测试服务的弹性，并证明它可以在 Amazon CodeBuild CI/CD 环境中运行，以便在问题进入生产之前检测它们。&lt;/li&gt;
+&lt;li&gt;用 Python 实现的微服务应用程序和错误的语料库：该语料库包含 8 个小型微服务应用程序，每个应用程序都展示了微服务应用程序中使用的单一模式；和 4 个从公开会议演讲中重新实现的行业示例：Audible、Expedia、Mailchimp 和 Netflix。&lt;/li&gt;
+&lt;li&gt;在该语料库上对Filibuster进行评价：证明 Filibuster 可用于识别语料库中的所有错误。我们展示了通过动态缩减可能进行的优化，并提供了有关如何最好地设计微服务应用程序以实现可测试性的见解。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;难点&#34;&gt;难点&lt;/h2&gt;
+&lt;p&gt;缺乏开源微服务工业应用程序及其相关的错误报告（这两个主要的语料库通常有助于软件测试领域的研究），回答这些错误是否可以在开发过程的早期检测到的问题并不简单。&lt;/p&gt;
+&lt;p&gt;最终作者构建了4个案例语料库。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Audible：一家提供有声读物流媒体移动应用程序的公司。在他们的演示文稿中，他们描述了一个错误，即应用程序服务器在从 Amazon S3 读取数据时不会收到 NotFound 错误。此错误在代码中未处理，并通过一般错误消息传播回移动客户端。他们使用混沌工程发现了这个错误。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Expedia：一家提供旅行预订的公司。他们讨论了使用混沌工程来验证如果他们的应用程序服务器尝试从基于相关性对它们进行排序的服务中检索酒店评论，并且该服务不可用，他们将回退到另一个提供按时间排序的评论。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Mailchimp：一款用于电子邮件通讯管理的产品。在他们的演示中，他们讨论了两个错误。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;遗留代码无法处理其数据库服务器返回的指示其为只读情况的错误代码。&lt;/li&gt;
+&lt;li&gt;一项服务变得不可用并将未处理的错误返回给应用程序。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Netflix：讨论了他们使用混沌工程基础设施发现的几个错误。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;错误配置的超时，某个服务调用不正确配置，导致请求花费比预期更长的时间，但保持在超时间隔内。&lt;/li&gt;
+&lt;li&gt;服务配置了回退指向错误的服务。&lt;/li&gt;
+&lt;li&gt;关键的为服务没有配置回退。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;架构概述&#34;&gt;架构概述&lt;/h2&gt;
+&lt;p&gt;SFIT 采用开发人员优先的方法，尽早将故障注入测试集成到开发过程中，而无需开发人员使用特定的规范语言编写规范。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;SFIT 建立在开发微服务应用程序的以下三个关键点上。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;微服务独立开发：由于微服务之间可以通过约定的API进行通信，负责其他模块的个别团队成员通常不能很好地理解超出其控制范围的服务的状态或内部结构，无法编写应用程序的详细规范以使用模型检查器自动验证它。&lt;/li&gt;
+&lt;li&gt;Mock测试可以防止问题出现：虽然编写模拟测试可以查出一些问题，但是由于这费时费力，对开发来说效益太少，所以开发人员很少进行测试。&lt;/li&gt;
+&lt;li&gt;功能测试的重要性：开发人员编写多个验证应用程序行为的端到端功能测试，而不是编写规范。任何成功的故障注入方法都应该从功能测试开始。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;sfit的实现思路&#34;&gt;SFIT的实现思路&lt;/h3&gt;
+&lt;p&gt;基于上述三个关键点及下面的两个简单假设：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;服务通过HTTP进行通信。&lt;/li&gt;
+&lt;li&gt;一个单一的功能测试可以实现所有应用程序行为。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;测试流程概述&#34;&gt;测试流程概述&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;假设从一个通过的功能测试开始，该测试由开发人员编写，在一些未失败的场景下执行应用程序，并验证一些应用程序行为。我们假设通过测试已经排除了逻辑错误。&lt;/li&gt;
+&lt;li&gt;在该测试点注入故障。如果请求出现多种错误，则为每一个错误安排一次测试。这些后续执行被放置在堆栈上，并递归地应用该策略，直到所有路径都被探索。这种算法的灵感来自于DART的concolic测试算法[28]。&lt;/li&gt;
+&lt;li&gt;以Audible App的例子来说，第一个请求发现内容分发服务出现了&lt;em&gt;Timeout or ConnectionError&lt;/em&gt;。然后我们向堆栈中追加两次测试执行。&lt;/li&gt;
+&lt;li&gt;接着对内容分发服务进行堆栈中的测试，如果测试中暴露出新的问题，就可以寻找新的错误路径，内容交付引擎的故障可能会导致另一条路径暴露给日志服务。我们继续探索，直到所有的道路都被充分探索。（如：内容交付引擎的故障可能是由于日志服务暴露出的问题，因此搜索到日志服务路径。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在本例中，多个服务具有相互依赖关系；例如，音频下载服务与所有权服务、激活服务和统计服务对话。在这种情况下，我们必须安排覆盖整个失败空间的执行——每个服务可能独立失败的所有方式，以及由于微服务相互影响而导致失败的所有组合。在第4节中，我们将讨论如何减少冗余的路径搜索。&lt;/p&gt;
+&lt;p&gt;此外，在进行故障注入测试时，需要根据故障情况调整功能测试。为此作者开发了帮助组件使得开发者可以编写条件断言来判断错误的出现。还提供了一个机制来重现错误。&lt;/p&gt;
+&lt;h4 id=&#34;故障注入&#34;&gt;故障注入&lt;/h4&gt;
+&lt;p&gt;该注入方法可以对远程调用继续注入，并通过远程库改变响应。例如一些HTTP、gRPC的库。故障注入的设计思路如下：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;不返回远程服务的实际响应&lt;/li&gt;
+&lt;li&gt;基于注入的故障返回故障响应（通过修改远程服务响应）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;故障识别&#34;&gt;故障识别&lt;/h4&gt;
+&lt;p&gt;故障识别主要包含&lt;strong&gt;识别具体的故障&lt;/strong&gt;和&lt;strong&gt;识别故障发生于哪一个微服务&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;注入的故障类型都源自于微服务可能发生的故障类型。通常有以下两种错误：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;服务调用端故障。如Python的&lt;em&gt;request&lt;/em&gt;库在发出请求时会有23中意外情况。可以通过指定包含异常的模块或者配置中手动指定这些问题，依此识别故障。这里作者将该类请求中的&lt;em&gt;Timeout&lt;/em&gt;和&lt;em&gt;ConnectionError&lt;/em&gt;作为主要考虑的错误类型。&lt;/li&gt;
+&lt;li&gt;被调用端故障。被调用的服务也可能返回一个错误响应。例如一个服务依赖的另一个微服务抛出了&lt;em&gt;Timeout&lt;/em&gt;，那这个服务就可能返回&lt;em&gt;500&lt;/em&gt;。作者通过对程序源码使用静态分析技术对类似的响应进行识别。例如在Flask框架中查找&lt;em&gt;return&lt;/em&gt;或&lt;em&gt;raise&lt;/em&gt;语句。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但还存在一个问题：在使用HTTP做请求时，&lt;strong&gt;请求的URL并不能作为识别服务本体的标识&lt;/strong&gt;。为解决这个问题，使用额外的工具记录调用的服务。该工具放置在接收服务请求的Web框架上，因此可以在被调用之前记录被调用者的服务信息。在获取该被调用者的信息后，将信息传给中台，以便进行后续的测试。&lt;/p&gt;
+&lt;h4 id=&#34;注入故障后对功能的调整&#34;&gt;注入故障后对功能的调整&lt;/h4&gt;
+&lt;p&gt;开发者需要根据故障注入的结果去调整功能，修复没有考虑到的问题。作者提供了一个帮助模块去编写故障断言，例如：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;a&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;fault&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;was&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;injected&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;on&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Service&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;A&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;...&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;对系统行为在失败的情况下进行捕获和处理。开发人员应将这些条件断言添加到现有的功能测试中。&lt;/p&gt;
+&lt;p&gt;一个典型的流程如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;开发者进行功能测试并通过。&lt;/li&gt;
+&lt;li&gt;注入故障&lt;/li&gt;
+&lt;li&gt;原有的功能测试因为故障的注入出现问题&lt;/li&gt;
+&lt;li&gt;开发者通过提供的帮助工具，可以对新出现的故障进行断言，从而捕获因故障注入出现的故障。例如：Audible会报出&lt;code&gt;if a fault was injected on the stats ser- vice, the service should still play the audiobook.&lt;/code&gt;。基于此，开发者可以使用反例来重现先前的测试，以证明这些断言。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;故障搜索路径动态缩减&#34;&gt;故障搜索路径动态缩减&lt;/h2&gt;
+&lt;p&gt;为了识别尽可能多的错误，必须理想地探索服务失败的组合。为了实现故障空间的最大覆盖所需的测试执行次数是非常多的。&lt;/p&gt;
+&lt;p&gt;但是，可将应用分解成多个独立的微服务来显著减少搜索空间并且保证完整性。以下图为例：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220224122453207.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220224122453207&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h3 id=&#34;对于ads服务&#34;&gt;对于ADS服务&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;先只考虑服务子集的故障，如ADS下载服务和CDS内容分发服务以及他们的依赖项。&lt;/li&gt;
+&lt;li&gt;对于ADS可能产生的故障，需要考虑三种依赖类别：
+&lt;ol&gt;
+&lt;li&gt;Ownership：验证某个用户是否拥有某本书的所有权；&lt;/li&gt;
+&lt;li&gt;Activation：验证用户的请求；&lt;/li&gt;
+&lt;li&gt;Stats：对本次事件改变的状态进行记录；&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;如果上面三个依赖服务中的任何一个出现失败，那么ADS服务就会返回错误。但需要注意，Stats的失败不会影响这次请求的结果（因为“where stats failures are ignored”）。&lt;/li&gt;
+&lt;li&gt;因此，Ownership和Activation的失败会导致ADS返回&lt;em&gt;500&lt;/em&gt;，但Stats的失败不会影响ADS，如果Ownership和Activation成功而Stats失败，ADS仍返回&lt;em&gt;200&lt;/em&gt;。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;对于cds服务&#34;&gt;对于CDS服务&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;CDS服务依赖的微服务子集是Asset Metadata和Audio Assets，我们需要考虑这两个服务会发生的故障以及他们组合起来会发生的故障。&lt;/li&gt;
+&lt;li&gt;但是，由于ADS的请求URL&lt;code&gt;/user/&amp;lt;uesr_id&amp;gt;/books/&amp;lt;book_id&amp;gt;&lt;/code&gt;与Stats的URL相同，又因为CDS服务依赖于ADS服务，所以也应当将Stats服务考虑进去。&lt;/li&gt;
+&lt;li&gt;所以实际包含的CDS子服务应是：Asset Metadata+Audio Asset+Stats。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;三条准则&#34;&gt;三条准则&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;充分考虑服务依赖项的所有失败方式，让我们知道每个服务和多个依赖服务失败时会发生什么行为，返回什么结果。&lt;/li&gt;
+&lt;li&gt;我们需要明确将故障注入后会对服务产生什么样的影响，并依据此简化注入。例如我们已经知道CDS的某个依赖项在发生错误时会返回&lt;em&gt;500&lt;/em&gt;，那么就可以直接在CDS中注入&lt;em&gt;500&lt;/em&gt;错误响应。&lt;/li&gt;
+&lt;li&gt;如果已经在服务中注入了故障，那么就不用进行测试了，因为已经观察到了程序的行为。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;动态缩减算法&#34;&gt;动态缩减算法&lt;/h3&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;该算法将测试的搜索空间指数级缩小，基本思路是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;缩减前：数量级是&lt;strong&gt;服务请求总数&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;缩减后：数量级变成&lt;strong&gt;给定服务最大能发出的请求数&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;具体来说如图2：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;缩减前：最大有8条边需要处理，整个应用有8个请求路径&lt;/li&gt;
+&lt;li&gt;缩减后：最大仅需要处理3条边，因为ADS是依赖项最多的服务，有3个请求发送路径&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;另外依据的一个前提是，&lt;strong&gt;微服务调用链拓扑结构上深度优先比广度优先更为明显&lt;/strong&gt;。&lt;/p&gt;
+&lt;h2 id=&#34;原型实现filibuster&#34;&gt;原型实现：Filibuster&lt;/h2&gt;
+&lt;p&gt;使用Python及相关的开源组件，如使用opentelemetry来实现请求链路追踪、识别服务依赖关系。&lt;/p&gt;
+&lt;h3 id=&#34;组件功能&#34;&gt;组件功能&lt;/h3&gt;
+&lt;p&gt;系统的组件可以实现服务请求识别、服务依赖关系分析，并于Filibuster通信。服务器负责在本地进程、Docker Compose 或 Kubernetes 中启动与应用程序关联的所有服务。&lt;strong&gt;运行功能测试、记录和维护要执行的测试执行堆栈、执行功能测试断言、报告测试失败并聚合测试覆盖率&lt;/strong&gt;。服务器提供了一个 API，&lt;strong&gt;功能测试可以使用该 API 来编写条件断言，并使用反例文件允许测试重放&lt;/strong&gt;。测试覆盖率由服务器从每个单独的服务中聚合而成。&lt;/p&gt;
+&lt;h3 id=&#34;静态分析&#34;&gt;静态分析&lt;/h3&gt;
+&lt;p&gt;Filibuster需要进行静态分析，以识别每个服务可以返回的错误类型。&lt;strong&gt;作者使用词法分析技术，遍历源代码的抽象语法树来识别错误&lt;/strong&gt;。Flask中的&lt;em&gt;raise&lt;/em&gt;语句可以被分析道，然后捕获这些语句要发送的HTTP错误响应及状态码。&lt;/p&gt;
+&lt;h3 id=&#34;注入故障&#34;&gt;注入故障&lt;/h3&gt;
+&lt;p&gt;Filibuster可以注入下面类型的故障；&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;调用端异常：这些异常由&lt;em&gt;request&lt;/em&gt;库抛出，如指示&lt;code&gt;Timeout&lt;/code&gt;的等错误。&lt;/li&gt;
+&lt;li&gt;响应异常：来自被调用端返回异常。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;应用语料库&#34;&gt;应用语料库&lt;/h2&gt;
+&lt;p&gt;一个包含8种变体示例的电影订票程序，每个示例都展示了微服务应用程序中观察到的特定模式。还有 4 个行业示例：Audible、Expedia、Mailchimp 和 Netflix。&lt;/p&gt;
+&lt;p&gt;每个示例都包含单元测试以及验证应用程序功能行为的功能测试。这些示例可以在Docker或K8s环境中运行。&lt;/p&gt;
+&lt;h3 id=&#34;电影院订票应用示例&#34;&gt;电影院订票应用示例&lt;/h3&gt;
+&lt;p&gt;该应用由4个微服务组成：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Showtimes: returns the show times for movies;&lt;/li&gt;
+&lt;li&gt;Movies: returns information for a given movie;&lt;/li&gt;
+&lt;li&gt;Bookings: given a username, returns information about the bookings for that user;&lt;/li&gt;
+&lt;li&gt;Users: 存储用户信息并处理用户订票请求，并在过程中为用户展示电影信息。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;它的另外7个变体有：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;bookings talks directly to the movies;&lt;/li&gt;
+&lt;li&gt;same as 1, but the users service has a retry loop around its calls to the bookings service;&lt;/li&gt;
+&lt;li&gt;same as 1, but each service talks to &lt;strong&gt;an external service before issuing any requests&lt;/strong&gt;, the users service makes a request to IMDB, the bookings service makes a request to Fandango, the movies service makes a request to Rotten Tomatoes;&lt;/li&gt;
+&lt;li&gt;all requests happen regardless of failure; in the event of failure, a hardcoded, default, response is used;&lt;/li&gt;
+&lt;li&gt;adds a second replica of bookings, that is contacted in the event of failure of the primary replica;&lt;/li&gt;
+&lt;li&gt;same as 5, but the users service makes a call to a health check endpoint on the primary bookings replica before issuing the actual request;&lt;/li&gt;
+&lt;li&gt;example is collapsed into monolith（单体结构） where an API server makes requests to the it with a retry loop.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;工业级应用&#34;&gt;工业级应用&lt;/h3&gt;
+&lt;h4 id=&#34;audible&#34;&gt;Audible&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220224122453207.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220224122453207&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;架构如上图2所示。包含如下服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Content Delivery Service (CDS):
+&lt;ul&gt;
+&lt;li&gt;IN： book_id 和 user_id&lt;/li&gt;
+&lt;li&gt;OUT：（在验证之后） 音频内容和元数据&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Content Delivery Engine (CDE):
+&lt;ul&gt;
+&lt;li&gt;IN： book_id 和 user_id&lt;/li&gt;
+&lt;li&gt;OUT：相关CDS的URL&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Audible App：模拟移动应用
+&lt;ul&gt;
+&lt;li&gt;首先向CDE请求获得内容的URL&lt;/li&gt;
+&lt;li&gt;再根据URL请求CDS&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Audible Download Service: 鉴权、授权并记录日志
+&lt;ul&gt;
+&lt;li&gt;IN： book_id 和 user_id&lt;/li&gt;
+&lt;li&gt;OUT：权限鉴别结果&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Ownership: 验证读者对图书的所有权
+&lt;ul&gt;
+&lt;li&gt;IN：book_id 和 user_id&lt;/li&gt;
+&lt;li&gt;OUT：鉴权结果&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Activation：为用户激活DRM许可证
+&lt;ul&gt;
+&lt;li&gt;IN：book_id&lt;/li&gt;
+&lt;li&gt;OUT：DRM Access&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Stats：记录读者和图书许可的信息
+&lt;ul&gt;
+&lt;li&gt;IN：book_id 和 user_id&lt;/li&gt;
+&lt;li&gt;OUT：记录结果&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Asset Metadata：存储音频元数据，如章节信息
+&lt;ul&gt;
+&lt;li&gt;IN：book_id 和 license&lt;/li&gt;
+&lt;li&gt;OUT：检索到的音频XML信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Audio Assets：提供音频存储服务
+&lt;ul&gt;
+&lt;li&gt;IN：book_id 和 license&lt;/li&gt;
+&lt;li&gt;OUT：检索到的音频文件&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;作者在实际部署上进行了一些调整：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Asset Metadata和Audio Assets是 AWS S3 存储桶。为了模拟这一点创建 HTTP 服务，如果可用，则返回包含资产的 200 OK，如果资产不存在，则返回 404 Not Found。&lt;/li&gt;
+&lt;li&gt;Ownership和Activation是 AWS RDS 实例。为了模拟这一点创建了实现 REST 模式的 HTTP 服务：如果用户不拥有该书，则返回 403 Forbidden，如果该书不存在，则返回 404 Not Found，否则返回 200 OK。&lt;/li&gt;
+&lt;li&gt;Stats 服务是一个 AWS DynamoDB 实例。为了模拟这一点，我们创建了一个返回 200 OK 的 HTTP 服务。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;对于功能测试的尝试是为用户下载有声读物的测试。如果缺少图书的章节信息，Asset Metadata可以返回 404 Not Found 响应：这是 Audible 演示中讨论的错误，会导致在移动应用程序中向用户显示一般错误。&lt;/p&gt;
+&lt;h4 id=&#34;expedia&#34;&gt;Expedia&lt;/h4&gt;
+&lt;p&gt;包含如下三个微服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Review ML：按相关性顺序返回评论&lt;/li&gt;
+&lt;li&gt;Review Time：按时间顺序返回评论&lt;/li&gt;
+&lt;li&gt;API Gateway：根据服务可用性，从 Review ML 或 Review Time 将评论返回给用户&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;mailchimp&#34;&gt;Mailchimp&lt;/h4&gt;
+&lt;p&gt;包含五个微服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Requestmapper：将电子邮件活动中的 URL 映射到实际资源&lt;/li&gt;
+&lt;li&gt;DB Primary：数据库的主要副本&lt;/li&gt;
+&lt;li&gt;DB Secondary：数据库次要副本&lt;/li&gt;
+&lt;li&gt;App Server：向 Requestmapper 服务发出请求以解析 URL，然后对数据库执行读后写请求，并在主数据库不可用的情况下回退到辅助数据库副本&lt;/li&gt;
+&lt;li&gt;Load Balancer：对请求进行负载均衡&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;同样的，在实际部署时做出一些调整：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;DB Primary 和 Secondary 服务是 MySQL 实例。为了模拟这一点创建一个 HTTP 服务，该服务要么在成功读取或写入时返回 200 OK，要么在数据库为只读时返回 403 Forbidden。&lt;/li&gt;
+&lt;li&gt;负载均衡器服务是一个 HAProxy 实例。为了模拟这一点创建一个 HTTP 代理做负载均衡。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;故障信息有两个：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;MySQL instance is read-only：当 MySQL 实例为只读时，数据库会返回一个在代码的一个区域中未处理的错误。由于 Mailchimp 使用 PHP，这个错误会直接呈现到页面的输出中，我们通过将 403 Forbidden 响应转换为直接插入页面的输出来模拟这一点。&lt;/li&gt;
+&lt;li&gt;Requestmapper is unavailable：当 Requestmapper 服务不可用时，App Server 无法正确处理错误，向负载均衡器返回 500 Internal Server Error。但是，负载均衡器仅配置为通过返回格式化的错误页面来处理 503 Service Unavailable 错误。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;netflix&#34;&gt;Netflix&lt;/h4&gt;
+&lt;p&gt;包含十个微服务。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Client：模拟移动客户端&lt;/li&gt;
+&lt;li&gt;API Gateway：展示用户主页&lt;/li&gt;
+&lt;li&gt;User Profile：返回用户信息&lt;/li&gt;
+&lt;li&gt;Bookmarks：返回最后查看的位置&lt;/li&gt;
+&lt;li&gt;My List：返回用户的电影列表&lt;/li&gt;
+&lt;li&gt;User Recs.：返回用户推荐的电影&lt;/li&gt;
+&lt;li&gt;Ratings：返回用户的评分&lt;/li&gt;
+&lt;li&gt;Telemetry： 记录日志信息&lt;/li&gt;
+&lt;li&gt;Trending：返回电影观看趋势&lt;/li&gt;
+&lt;li&gt;Global Recs.：返回推荐电影&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;对于功能测试，我们有一个尝试为用户加载 Netflix 主页的功能测试。&lt;/p&gt;
+&lt;p&gt;故障信息有三个：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Misconfigured timeouts：User Profile服务以 10 秒的超时时间调用日志服务；但是，API Gateway会以 1 秒的超时时间调用用户配置文件服务。&lt;/li&gt;
+&lt;li&gt;Fallbacks to the same server：如果我My List服务不可用，系统将重试。&lt;/li&gt;
+&lt;li&gt;Critical services with no fallbacks：User Profile服务没配置回退。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;实验评估&#34;&gt;实验评估&lt;/h2&gt;
+&lt;p&gt;在具有 15 GB 内存和 8 个 vCPU 的 AWS CodeBuild 实例上运行了所有示例。在 Filibuster 运行开始时，启动了每个示例的所有服务，等待这些服务上线并在测试结束时终止它们，不会在测试执行之间重新启动服务。&lt;/p&gt;
+&lt;h3 id=&#34;tests-generated-and-increased-coverage&#34;&gt;Tests Generated and Increased Coverage&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Test Gen/DR Gen：表示 Filibuster 生成和执行的测试数量。由于每个示例只有一个功能测试，因此这些数字包括该测试的总数，因为 Filibuster 必须首先执行初始通过的功能测试，以确定在哪里注入故障。在语料库中包含错误的所有示例中，可以使用Filibuster 识别错误。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Coverage After：表示报表覆盖率的增加。通过生成涵盖可能故障的测试，我们能够增加应用程序的覆盖率。这些数字仅用于功能测试。生成的测试增加了与未经修改的功能测试未执行的错误处理代码相关的覆盖率。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Time w/DR：表示启用动态缩减的执行时间。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;TG Overhead：表示生成测试的总开销时间。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220224182652863.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220224182652863&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h3 id=&#34;dynamic-reduction&#34;&gt;Dynamic Reduction&lt;/h3&gt;
+&lt;p&gt;当应用程序以服务图的深度而不是广度的方式构建时，应用程序可以从动态缩减中显着受益，例如Audible就是服务调用关系具有一定的深度。&lt;/p&gt;
+&lt;h3 id=&#34;mocks&#34;&gt;Mocks&lt;/h3&gt;
+&lt;p&gt;实现语料库时，作者为每个示例中的每个服务编写了单元测试，使用模拟来解释可能的远程服务故障。 在编写这些测试时，只测试了独立的故障。&lt;/p&gt;
+&lt;p&gt;如图 2 的 Audible 下载服务，其单元测试包含一个模拟三个依赖项的失败：Ownership、Active和State。在这里省略了服务特定故障的列表，请读者参考图表获取列表。&lt;/p&gt;
+&lt;p&gt;同时为&lt;em&gt;Timeout&lt;/em&gt;和&lt;em&gt;ConnectionError&lt;/em&gt;这两个异常分别编写了一个模拟。&lt;/p&gt;
+&lt;h2 id=&#34;不足和未来工作&#34;&gt;不足和未来工作&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;语料库中的示例用HTTP 服务取代了真实云服务和数据库的使用，但在实际生产环境中，服务间的通信方式还包括如gRPC等多种服务通信。作者已经开始努力通过 gRPC 支持和对 AWS DynamoDB 和 AWS RDS 等云服务的支持来扩展系统原型。&lt;/li&gt;
+&lt;li&gt;该设计不考虑服务响应的损坏，而是关注假设的响应或指示失败的响应。&lt;/li&gt;
+&lt;li&gt;系统中将返回错误码就看作请求失败，但是在生产环境中，往往对一些错误响应会给出处理。在某些情况下，可能会提示开发人员编写异常处理程序和其他条件错误处理，以处理实际上可能不会在生产中发生的故障。&lt;/li&gt;
+&lt;li&gt;动态缩减在微服务依赖呈现更大的调用深度时表现更好，广度更大时难以起到明显的作用。&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</title>
+        <link>https://lizonglingo.github.io/p/showar-right-sizing-and-efficient-scheduling-of-microservices/</link>
+        <pubDate>Tue, 22 Feb 2022 13:45:25 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/showar-right-sizing-and-efficient-scheduling-of-microservices/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源：ACM SoCC&#39;21&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://acmsocc.org/2021/accepted-papers.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://acmsocc.org/2021/accepted-papers.html&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;概述&#34;&gt;概述&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;解决了什么问题：提出一个微服务资源调度框架，解决微服务的调度问题，具体来说从&lt;strong&gt;水平扩缩容——增减服务实例&lt;/strong&gt;和&lt;strong&gt;垂直扩缩容——控制每个服务CPU和内存等资源的配额&lt;/strong&gt;两个维度对微服务进行调度&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;适用于什么环境：该资源调度框架应用于&lt;strong&gt;使用K8s部署的微服务&lt;/strong&gt;上&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;实验的实施和结果：&lt;strong&gt;使用多个微服务应用和现实世界中的负载情况进行实验&lt;/strong&gt;，资源利用表现提高22%，用户端到端实验降低20%&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;目标和宗旨：找到一个最佳资源分配大小，&lt;strong&gt;保持良好服务质量的同时尽可能提高资源利用率&lt;/strong&gt;，减少资源配额&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;微服务调度存在的问题和挑战&#34;&gt;微服务调度存在的问题和挑战&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;确定微服务应用对资源的需求是个复杂工作，难以预先确定&lt;/li&gt;
+&lt;li&gt;如果分配过多的资源会造成集群资源利用率低，增加开销&lt;/li&gt;
+&lt;li&gt;分配资源过少则导致服务性能下降甚至服务不可用，带来更严重的问题&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;贡献&#34;&gt;贡献&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;垂直和水平扩缩容框架，旨在提高资源分配的效率&lt;/li&gt;
+&lt;li&gt;调度亲和性和反亲和性规则，为K8s调度程序生成更好的微服务调度规则，提高调度效率&lt;/li&gt;
+&lt;li&gt;实现上述要点并评估&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;设计思路&#34;&gt;设计思路&lt;/h2&gt;
+&lt;h3 id=&#34;概述-1&#34;&gt;概述&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;垂直扩缩容：参照&lt;strong&gt;历史资源利用率&lt;/strong&gt;来寻找每个微服务的最佳资源配额，调度的资源是每个服务占用的CPU、RAM、Disk等资源&lt;/li&gt;
+&lt;li&gt;水平扩缩容：使用Linux内核线程调度程序队列的指标（如&lt;strong&gt;eBPF runq latency&lt;/strong&gt;）为扩缩容指标，同时利用控制理论的思想，在微服务运行时对实例数量进行控制。并设计了一个&lt;em&gt;proportional-integral-derivative&lt;/em&gt;控制器，利用历史扩缩容操作和当前的运行时状态来做出下一个水平扩缩容决策，并保持服务的稳定，调度的资源是增减服务实例数量&lt;/li&gt;
+&lt;li&gt;服务间依赖：同时考虑了&lt;strong&gt;服务间依赖关系&lt;/strong&gt;，优先调度应用中负载压力大的微服务（如某个微服务作为其他微服务的引用）&lt;/li&gt;
+&lt;li&gt;服务性能：在找到一个最佳配额后，会协助集群调度微服务以获得更好的端到端性能&lt;/li&gt;
+&lt;li&gt;K8s亲和性与反亲和性：通过不同微服务的历史资源使用情况为K8s生成调度规则（如某种微服务和某类资源有正相关性或负相关性）&lt;/li&gt;
+&lt;li&gt;调度效率：能够快速适应工作负载变化&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;垂直扩缩容&#34;&gt;垂直扩缩容&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;调度依据指标：实例的历史资源使用情况（CPU、RAM、Disk、Network等）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;需要达成的效果有：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;在运行时为服务找到合适的资源需求&lt;/li&gt;
+&lt;li&gt;最大限度减少过度配置导致的资源使用松弛（松弛度=资源配额-资源使用量）&lt;/li&gt;
+&lt;li&gt;最大限度减少OOM错误和CPU负载过高的情况，保证服务质量&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;垂直扩缩容的局限：每个实例的资源占有量最大不会超过虚拟机的资源量，所以某些情况下即使将虚拟机的所有资源都给到实例也难以满足要求，这就需要水平扩缩容&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;水平扩缩容&#34;&gt;水平扩缩容&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;调度依赖指标：eBPF指标数据&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;eBPF：允许在内核级别允许安全和低开销的程序，从内核级别收集准确的事件信息，如CPU调度程序决策事件、内存分配事件和网络堆栈中的数据包事件。已经被广泛用于微服务检测、性能提升、链路追踪、负载均衡、网络监控和安全中。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;具体思路&#34;&gt;具体思路&lt;/h3&gt;
+&lt;h4 id=&#34;垂直自动扩缩容&#34;&gt;垂直自动扩缩容&lt;/h4&gt;
+&lt;p&gt;K8s（Google Autopilot也是类似）通过检测一段时间窗口（几分钟到几天）中的CPU和内存使用量来设置下一个事件窗口中的资源。通过一个&lt;code&gt;margin&lt;/code&gt;和观测到的如P95、P99的百分位值，目的是为资源增加一些宽裕度，尽可能减少OOM错误和CPU不够用的情况发生。&lt;strong&gt;作者认为这还不够节约，存在资源浪费的情况发生&lt;/strong&gt;。$\alpha$为宽限额度，$\pi$是某个测量的百分位数值。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220221103059.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;而SHOWAR使用“three-sigma”经验法则去分配资源&lt;/strong&gt;。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;SHOWAR收集持续时间W秒的最后一个窗口的每种资源使用的统计数据，每秒收集一次，用于递归计算该窗口上的资源使用平均值$\mu$和方差$\sigma^2$。&lt;/li&gt;
+&lt;li&gt;计算$s=\mu + 3\sigma$，这里$s$就是特定资源的一个估计量&lt;/li&gt;
+&lt;li&gt;然后每经过T秒（T &amp;laquo; W）评估资源使用量是否发生了很大的变化（如超过15%），一旦超过预期值就实施资源重新分配。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220221104502.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;作者认为使用百分数值的3-σ法则能在保证服务良好运行的情况下最大限度的减少资源浪费，同时使用一个阈值来决定是否进行资源重新分配操作能在资源使用差异较小时不会过度配置资源。虽然$\mu+3\sigma$和$\pi(1+\alpha)$都有明确的统计解释，但是使用$3\sigma$可以更加准确的看到均值的分布。如果方差非常小，则分布几乎是恒定的，这是关于 Pod 资源使用情况的单独有用信息。然而，在$\pi(1+\alpha)$方法中，当方差非常小时，尾部百分位数不能传达有用的信息。此外，安全宽裕度参数 $\alpha$的选择可能是任意的，如果未正确指定，可能会导致资源利用率低下或更多OOM错误。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;关于P90、P95等百分位数值的补充资料：https://www.cnblogs.com/hunternet/p/14354983.html&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&#34;水平自动扩缩容&#34;&gt;水平自动扩缩容&lt;/h4&gt;
+&lt;p&gt;水平自动扩缩容目前存在一些缺陷：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;由于水平扩缩容的主要形式是通过增减服务实例数量来调整资源分配，服务实例在遇到负载激变发生资源使用抖动时，可能导致极端过度配置或者配置严重不足。为了解决这种情况，有些自动缩放策略引入冷却期的概念，在最后一次操作之后的一段时间内不进行扩缩容。如果出现瞬时负载峰值过高的情况也会因为处于冷却期而避免不必要的扩容操作。&lt;/li&gt;
+&lt;li&gt;系统不会将系统微服务的依赖关系考虑在内，而是单独处理某个微服务。实践表明在不考虑微服务相关性的前提下的资源分配和缩放效率低下，并且不一定有助于应对负载变化和保证服务质量。如下图对某个后端服务在5s时注入高负载，然后经过一段时间，后端的高延迟情况传到了前端，如果考虑微服务间依赖关系，那么仅扩容后端微服务就可以解决这个问题。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220221112213.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;以往通常使用CPU利用率作为缩放指标，力求在所有微服务中保持目标 CPU 利用率。但CPU 利用率并不是自动缩放和资源分配的最有效指标，随着负载的增加，几乎所有微服务的 CPU 利用率都会增加，而上图的前端微服务的尾部延迟并不总是随着 CPU 利用率的增加而增加（主要是由于后端微服务的高延迟导致的）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;SHOWAR旨在解决上述问题，使用控制理论基本框架来设计有状态的水平缩放系统，在满足SLO指标下保证服务稳定。&lt;/p&gt;
+&lt;p&gt;通过观测值与目标值的差别来控制缩放是不准确的：$e=observation-target$​​，为此作者设计了更复杂的控制器&lt;em&gt;pro-portional–integral–derivative (PID) controller&lt;/em&gt;：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220221113150.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;对资源的检测使用我们使用&lt;strong&gt;eBPF Linux&lt;/strong&gt;调度程序&lt;strong&gt;runq 延迟度量&lt;/strong&gt;，它表示线程可运行与获取CPU并运行之间的时间。使用Runq延迟的P95作为目标点。&lt;strong&gt;与CPU利用率不同，高runq延迟与每个单独的微服务的高请求尾延迟高度相关，这表明runq延迟可以用作水平自动缩放的合适指标，以防止请求延迟增加。直观地说，runq延迟优于CPU利用率的原因是它表明应用程序线程如何竞争CPU资源，因此需要更多（或更少）的CPU资源&lt;/strong&gt;。在SHOWAR中，使用者要指定目标runq的延迟值作为配置的一部分。&lt;/p&gt;
+&lt;p&gt;水平扩缩容的传递函数很简单，如果runq超出目标值，则系统必须向外扩展并增加副本数量，反正小于目标值则缩减服务实例（这里目标是是一个范围？我是这么认为的）。为了防止执行过多的自动缩放操作以响应 runq 延迟指标中的快速变化和瞬时突发性，作者在目标周围设置了一个可配置的界限$\alpha%$​​（默认为 20%）作为缓冲区并且不执行自动缩放操作。自动缩放的增加或减少量是微服务当前副本数量的可配置 𝛽 百分比（默认为 10%），如果实际缩放副本数小于1则默认是1（我的理解是，如该实例有20个副本，则扩容20×0.1=2个副本，如果是4个副本4×0.1=0.4&amp;lt;1即扩容1个副本）。算法如下：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220221120450.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;水平自动扩缩容的两种架构：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;One For All：单个控制器负责自动扩展所有微服务类型。在每个自动缩放决策中，所有微服务都会根据所有微服务中当前度量值观察的平均值一次缩放。虽然这种方法受益于 PID 控制器，但它没有考虑微服务的微服务依赖关系图。&lt;/li&gt;
+&lt;li&gt;One For Each：控制器负责每个微服务。每个控制器监控其相应微服务的自动缩放指标runq，根据上述算法进行缩放。控制器输出的绝对值被排序，具有最高值（最大扩展需求）的那些被优先考虑。对于相等的控制器输出，我们会考虑微服务的依赖关系图，并将后端服务优先于依赖的前端服务（在图的拓扑排序之后）。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;将二者串联&#34;&gt;将二者串联&lt;/h4&gt;
+&lt;p&gt;在K8s等部署平台上推荐的方法是：一次部署仅使用一类缩放器（如为每个微服务确定固定的实例数量的前提下，部署垂直缩放器，自动调整每个实例的资源分配量；或是确定好资源分配量后，令服务通过水平缩放器自动进行实例数量的增减）。&lt;/p&gt;
+&lt;p&gt;SHOWAR通过允许串联部署这二者。首先，作者将任何垂直自动缩放决策优先于任何水平自动缩放决策。因为，例如在内存自动缩放的情况下，如果 Pod 的内存不足，应用程序会遇到OOM错误并停止执行，而不管其副本数如何，所以水平自动缩放器无法解决OOM问题。因此，在水平自动缩放控制器动作之前，它首先检查共享通道以查看该微服务是否正在进行垂直自动缩放，如果是则不会继续操作。类似地，在垂直Pod自动缩放器动作之前，它会通过共享通道发送消息通知水平自动缩放器，然后执行其操作。&lt;/p&gt;
+&lt;p&gt;此外，由于谷歌云平台的 Kubernetes 最佳实践，建议大多数 Pod 不需要超过一个核心，作者根据这个建议将其合并到 SHOWAR 的垂直自动缩放器设计中：如果垂直自动缩放器决定为 Pod 设置多个核心，它会改为通过共享通道向水平自动缩放器发出信号，并且不会继续执行垂直自动缩放操作。即：核心数增加转化为实例数量增加。&lt;/p&gt;
+&lt;h4 id=&#34;利用k8s亲和性和反亲和性获取更好的调度性能&#34;&gt;利用K8s亲和性和反亲和性获取更好的调度性能&lt;/h4&gt;
+&lt;p&gt;关于K8s的亲和性和反亲和性可以概括为：服务𝑆2与服务𝑆1的亲和性意味着调度程序将始终（或最好）尝试将服务 𝑆1 的 Pod 调度到服务 𝑆2 所在的节点上。类似地，服务𝑆2与服务𝑆1的反亲和性意味着调度程序永远不会（或最好不）这样做。&lt;/p&gt;
+&lt;p&gt;SHOWAR监控和使用微服务的历史（即最后（可配置）时间窗口）CPU、内存和网络使用情况，并计算每对微服务使用模式之间的Paerson相关系数来计算相关性：给定两种微服务类型𝑋和𝑌的CPU（或内存或网络I/O）使用分布，𝑋和𝑌之间的相关系数$\rho$​为：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222104614.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;对于两个微服务𝑆1和𝑆2，资源使用模式（例如CPU或内存）的正相关性越高，它们之间对该资源的资源争用就越高。同样，负相关越低，两个服务之间对该资源的争用就越低。这是 SHOWAR 对 CPU、内存和网络 I/O 等计算资源的亲和性和反亲和性规则的简单基础。&lt;/p&gt;
+&lt;p&gt;进一步产生亲和性和反亲和性规则，规则生成机制如下：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;CPU和NetWork：如果两个服务s1、s2的CPU和网络是用呈现强负相关（$\rho_{s1s2}\leq-0.8$​​​​​）,则为其生成亲和性规则。&lt;/li&gt;
+&lt;li&gt;Memeory：如果任何一对微服务s1和s2在它们的内存使用模式中具有强正相关（例如$\rho_{s1s2}\geq-0.8$​），则SHOWAR 为调度程序生成s1和s2的反亲和性规则。(实际上也是负相关$\Longrightarrow$亲和性)。&lt;/li&gt;
+&lt;li&gt;此外，为避免调度冲突，每个微服务在任意时间最多参与一个亲和性或反亲和性规则。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;实现&#34;&gt;实现&lt;/h2&gt;
+&lt;h3 id=&#34;系统架构&#34;&gt;系统架构&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222110542.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h3 id=&#34;monitoring-agents&#34;&gt;Monitoring Agents&lt;/h3&gt;
+&lt;p&gt;使用Prometheus从节点和容器收集不同的指标。通过集群中的每个节点上启动一个监控代理来收集容器指标，例如CPU使用率、内存使用率、网络带宽使用率等。代理被配置为每秒收集和报告一次指标。Prometheus附带一个时间序列数据库，代理存储收集到的指标。此外，还提供了一种查询语言来查询其他模块使用的时间序列数据库以利用收集的指标。&lt;/p&gt;
+&lt;p&gt;此外作者还开发了一个eBPF程序作为监控代理部署在集群中的每个节点上，以收集水平自动缩放器使用的 &lt;em&gt;runq latency&lt;/em&gt;指标。该指标是每个Pod的CPU线程在获取CPU之前所经历的延迟的直方图。程序每 1 秒收集一次&lt;em&gt;runq latency&lt;/em&gt;直方图，并将其存储在Prometheus时间序列数据库中。&lt;/p&gt;
+&lt;h3 id=&#34;the-vertical-autoscaler&#34;&gt;The Vertical Autoscaler&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;垂直自动缩放器是一个简单的循环，每分钟发生一次。&lt;/li&gt;
+&lt;li&gt;它会在前5分钟的窗口中为每种资源类型r（CPU和内存）评估$s_r = \mu_r + 3*\sigma_r$，如果s的值变化超过 15%，它会更新服务的资源需求s。&lt;/li&gt;
+&lt;li&gt;触发垂直自动缩放器的另一个条件是微服务报告 OOM 错误。&lt;/li&gt;
+&lt;li&gt;在应用微服务的新资源需求之前，垂直自动缩放器通过共享通道向水平自动缩放器发送一条消息，以不继续任何水平自动缩放操作，因为&lt;strong&gt;垂直自动缩放操作优先于水平自动缩放&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;如果微服务的CPU数量超过一个CPU核心，垂直自动缩放器也不会继续执行微服务的自动缩放操作，在这种情况下，它会通过另一个共享通道向水平自动缩放器以触发水平自动缩放操作。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;the-horizontal-autoscaler&#34;&gt;The Horizontal Autoscaler&lt;/h3&gt;
+&lt;p&gt;对于给定的目标&lt;em&gt;runq latency&lt;/em&gt;，它对该微服务执行水平自动缩放操作，使其始终具有目标值的&lt;em&gt;runq latency&lt;/em&gt;。控制器每1分钟决定eBPF程序收集60个度量直方图实例（每秒1个）。对于每个直方图，选择第 95个百分位数，控制器使用这60个数据点的平均值作为其当前观察值（也称为测量值）来执行其控制动作。每个水平扩展操作添加或删除至少1个或可配置百分比（默认为 10%）的微服务当前副本数，分别用于扩缩容。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222112427.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;PID控制参数的初始值取为$k_P=k_I=k_D=1/3$​​（每个参数限制为∈[0,10]，这几个参数会影响控制器的速度、稳定性和准确性）。这些参数的增量变化是 10%（我们通过实验发现 10% 可以提供非常好的性能）。控制器输出的波动是进行此类更改的基础，使用之前的N =10个样本进行测量。此外，控制器的“速度”被测量为达到区间[target(1 − 𝛼), target(1 + 𝛼)] 所需的迭代次数，因为 𝛼 =10%。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;增加$k_P$​会导致控制器速度执行增加（以达到稳定状态），同时过高的值可能引发不稳定性。&lt;/li&gt;
+&lt;li&gt;增加$k_I$​也会增加控制器的速度并可能导致不稳定，但增加它会降低控制器的噪声（变化和波动）和稳态误差。&lt;/li&gt;
+&lt;li&gt;增加$k_D$​会增加控制器的速度（达到稳态）以及不稳定的可能性，同时会显著放大控制器的噪声。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;控制器从系数的相等值开始。&lt;/li&gt;
+&lt;li&gt;随后这些系数基于监控的工作负载性能和控制器状态进行自适应和增量自调整。&lt;/li&gt;
+&lt;li&gt;如果当前指标值（尤其是runq延迟）远离目标指标值，则在每次迭代中增加$k_P$和$k_I$，以提高稳定性以及达到目标指标值的速度。&lt;/li&gt;
+&lt;li&gt;此外，如果观察到度量值的波动（在控制器中称为噪声），$k_D$​会逐渐减小以减少工作负载突发性引入的噪声。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;the-affinity-rule-generator&#34;&gt;The Affinity Rule Generator&lt;/h3&gt;
+&lt;p&gt;亲和性规则生成器每5分钟使用一次CPU、内存和网络利用率，这是一个由300个数据点组成的向量（每个数据点是微服务副本的平均值）来计算每个资源类型之间的相关系数一对微服务。为消除弱相关或无相关实例，[−0.8,+0.8]中的任何值都会被丢弃。其他强负相关和强正相关的微服务用于生成亲和性和反亲和性规则。资源使用模式会随着工作负载的变化（也称为工作负载转移）而变化，因此如果在随后的5分钟时间窗口内强烈的负相关或正相关变化超过20%（可配置），SHOWAR会撤销亲和性（或那对微服务的反亲和性）规则。&lt;/p&gt;
+&lt;h3 id=&#34;其他要点&#34;&gt;其他要点&lt;/h3&gt;
+&lt;p&gt;SHOWAR是作为Kubernetes控制器构建的，对于自动扩缩器和其他类型的控制器具有高度可插入性。此外，SHOWAR使用常用的Kubernetes监控代理（例如Prometheus）和一个自定义的eBPF指标监控代理。因此，与默认的Kubernetes自动缩放器相比，&lt;strong&gt;SHOWAR不会引入任何额外的开销&lt;/strong&gt;。此外，自动缩放器被调度在控制器节点上，并且不与调度在工作节点上的应用程序 Pod 共享资源。&lt;/p&gt;
+&lt;h2 id=&#34;实验&#34;&gt;实验&lt;/h2&gt;
+&lt;p&gt;在AWS部署K8s集群，用Google Autopilot和K8s默认的调度程序作比较。资源利用率提升22%，延迟降低20%。&lt;/p&gt;
+&lt;h3 id=&#34;实验设置&#34;&gt;实验设置&lt;/h3&gt;
+&lt;h4 id=&#34;applications&#34;&gt;Applications&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;社交网络应用：包含36个微服务，可以关注他人、撰写帖子、阅读他人帖子并与之互动。&lt;/li&gt;
+&lt;li&gt;火车票应用：包含41个微服务的应用程序，允许其用户在线预订门票并进行支付。&lt;/li&gt;
+&lt;li&gt;谷歌云平台的线上精品店：由 10 个微服务组成，用户可以通过他们的在线购物车购买在线商品并进行支付。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;实验将runq延迟的目标值设置为15𝑚𝑠，即 Linux 内核 sysctl_sched_latency[31] 调度程序参数的 2.5𝑥。&lt;/p&gt;
+&lt;h4 id=&#34;cluster-setup&#34;&gt;Cluster Setup&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;在AWS上进行的。&lt;/li&gt;
+&lt;li&gt;使用 𝑚5.𝑥𝑙𝑎𝑟𝑔𝑒 VM 实例，每个实例具有 4 个 vCPU、16 GB 内存和 0.192 美元/ℎ𝑟 价格。&lt;/li&gt;
+&lt;li&gt;运行Ubuntu 18.04 LTS，配置为支持运行eBPF程序。&lt;/li&gt;
+&lt;li&gt;除非另有说明，否则集群都是由25个VM实例组成。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;workload-and-load-generation&#34;&gt;Workload and Load Generation&lt;/h4&gt;
+&lt;p&gt;我们使用Wikipedia访问跟踪[59]作为我们的主要工作负载。它是用户与Wikipedia网站交互的真实世界轨迹，由流量模式组成，包括&lt;strong&gt;泊松到达时间、短期突发性和昼夜水平变化&lt;/strong&gt;。由于我们正在评估的微服务是面向用户的应用程序，因此工作负载必须反映真实的用户行为。因此，维基百科访问跟踪非常适合我们的评估。我们以分布式方式使用&lt;strong&gt;locust&lt;/strong&gt; [26]作为我们的工作负载生成器。 Locust客户端驻留在与托管应用程序的主集群不同的VM实例上。&lt;/p&gt;
+&lt;h4 id=&#34;baselines&#34;&gt;Baselines&lt;/h4&gt;
+&lt;p&gt;Kubernetes默认自动缩放器和 Google Autopilot。&lt;/p&gt;
+&lt;h3 id=&#34;vertical-autoscaling&#34;&gt;Vertical Autoscaling&lt;/h3&gt;
+&lt;p&gt;首先评估 SHOWAR 的垂直自动缩放器（禁用水平自动缩放器）在减少相对内存松弛方面的有效性。&lt;/p&gt;
+&lt;p&gt;使用来下图中所示的 Wikipedia 访问跟踪的一小时长的工作负载进行评估。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222120133.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;每5分钟记录一次垂直自动缩放器为每个微服务设置的内存限制以及微服务的实际使用情况，以计算其内存使用松弛（即松弛 = 限制 - 使用）。&lt;/p&gt;
+&lt;p&gt;下图描绘了社交应用所有微服务相对内存使用松弛的&lt;strong&gt;累积分布函数&lt;/strong&gt;（the cumulative distribution function，CDF）。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222120655.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;可以看出，通过历史资源使用的变化（使用3-σ规则），SHOWAR 的垂直自动缩放器与Autopilot 和 Kubernetes 的垂直自动缩放器相比能够改善内存使用松弛度。特别是，对于95%的服务实例，相对内存使用松弛率小于46%，而 Kubernetes 和 Autopilot 分别为 63% 和 66%。这 20% 的内存使用松弛可用于调度更多的服务实例或在集群中使用更少的 VM 资源，这将明显降低成本（见 5.5 小节）。我们还观察到 Kubernetes 的性能优于 Autopilot，因为它在设置限制方面采用了更激进的方法（使用 P95 × 1.15 的过去使用量与最大值相比）。&lt;/p&gt;
+&lt;p&gt;虽然低内存或 CPU 使用松弛可以导致高效且具有成本效益的资源分配，但它可能导致更高的 OOM 率或 CPU 节流，从而降低服务性能。下图显示了实验过程中 OOM 的数量。可以看出，虽然与 Kubernetes 相比，SHOWAR 的 OOM 数量相当，但与 Autopilot 相比，它们在内存扩展方面的激进方法导致了更多的 OOM。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222124148.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;下图则描绘了在实验过程中微服务的平均 CPU 节流（CPU 紧松弛的结果）。当 Pod 的 CPU 使用率超过其分配的 CPU 资源时，容器运行时（使用𝑐𝑔𝑟𝑜𝑢𝑝𝑠）会限制 Pod 的 CPU 份额。可以看出，由于微服务 CPU 使用率的高波动（方差），SHOWAR 的 CPU 节流与基线相当。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222124339.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;根据以上三图的分析，&lt;strong&gt;资源松弛度（也反映了资源使用效率）和系统稳定性之间存在权衡&lt;/strong&gt;。SHOWAR和K8s在带来更好的资源效率的同时回不可避免的导致更多的OOM错误和CPU性能限制。而 Autopilot 会导致更多的松弛和更少的 OOM。&lt;/p&gt;
+&lt;p&gt;因此，根据任务目标可调整 SHOWAR 和 Kubernetes 以实现更高的稳定性，但代价是更高的资源使用松弛度。例如，在 SHOWAR 中，可以使用 𝑘𝜎 代替 3𝜎 ，其中 𝑘 &amp;gt;3 为单个 Pod 分配更多资源并减轻 OOM 和 CPU 节流。&lt;/p&gt;
+&lt;h3 id=&#34;horizontal-autoscaling&#34;&gt;Horizontal Autoscaling&lt;/h3&gt;
+&lt;p&gt;使用垂直扩缩容相同的工作负载来评估水平扩缩容。将 SHOWAR 的 One for Each 和 One for All 设计与 Autopilot 和 Kubernetes 水平自动缩放器进行比较。Autopilot 和 Kubernetes 在水平自动缩放中使用相同的方法。我们将 Autopilot 和 Kubernetes 的目标 CPU 利用率设置为 65%，这是通常的建议。&lt;/p&gt;
+&lt;p&gt;下图描绘了在实验过程中社交网络应用程序中微服务副本数量的累积分布函数。我们观察到 SHOWAR 的水平自动缩放器都优于 Autopilot 和 Kubernetes 水平自动缩放器，因为它为大多数微服务分配了更少的副本，这反过来又可以更有效地分配资源并节省成本（见 5.5 小节）。通过为每个微服务定制一个控制器，SHOWAR 的 One for Each 设计也优于 One for All。这是因为在 One for All 设计中，单个控制器尝试使用单个目标 runq 延迟值和跨所有微服务的平均 runq 延迟测量来扩展微服务，这会导致不必要的微服务扩展和高 runq 延迟。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222125146.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;再次强调，SHOWAR 的有效性是由于：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;自动缩放器的状态控制器&lt;/li&gt;
+&lt;li&gt;用于自动缩放决策的更好的代表性指标（即 runq 延迟而不是 CPU 利用率）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;我们看到了在单个微服务的自动扩展决策中使用更有意义和代表性的指标的效果。特别是，在评估过程中，我们观察到 Kubernetes 和 Autopilot 通常为 nginx 设置 16 个副本，这主要是因为它的 CPU 利用率很高。但&lt;strong&gt;高 CPU 利用率并不总是对应于微服务性能的大幅提升&lt;/strong&gt;。相比之下，SHOWAR 只为这个微服务设置了 10 个副本。另一方面，对于其他几个微服务所依赖的 User 微服务，Kubernetes 和 Autopilot 通常只为其设置 3 个副本。相比之下，SHOWAR 通常为此微服务设置 6 个副本。&lt;/p&gt;
+&lt;h3 id=&#34;the-effect-of-affinity-and-anti-affinity-rules&#34;&gt;The Effect of Affinity and Anti-Affinity Rules&lt;/h3&gt;
+&lt;p&gt;实验使用不同微服务之间 CPU、内存和网络 I/O 使用率的相关性来评估 SHOWAR 生成的 Pod 亲和性和反亲和性规则的效果。仍使用相同的工作负载并禁用垂直和水平扩缩容控制器，以凸显亲和性和反亲和性生成器的工作效果，以此观察K8s调度器受其的影响。&lt;/p&gt;
+&lt;p&gt;同时观测了这如何影响端到端请求延迟，如下图所示。通过为调度程序提供调度提示（使用亲和性和反亲和性），SHOWAR 能够改善用户体验的 P99 延迟。特别是，使用 SHOWAR 生成的亲和和反亲和规则，请求延迟的 P99 为 6600 毫秒，而使用 Kubernetes 默认调度决策为 9000 毫秒。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222125945.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h3 id=&#34;end-to-end-performance&#34;&gt;End-to-End performance&lt;/h3&gt;
+&lt;p&gt;在端到端性能评估这部分使用三个组件协同工作，使用下图的工作负载进行测试。为了适应工作负载，我们将集群的大小增加到 30 个 VM 实例。结果表明，与基线相比，SHOWAR 改进了资源分配和利用率，同时保持性能的稳定。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222131341.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;下图描述了用户在实验的 24 小时内经历的端到端请求延迟的 CDF。可以看出，使用 SHOWAR 的端到端性能与基线相当，并且使用其亲和性和反亲和性规则生成器以及依赖关系感知的水平自动缩放，与 Autopilot 和 Kubernetes 相比SHOWAR 能够将 P99 延迟提高 20% 以上。 Autopilot 和 Kubernetes 在 P99th 延迟方面表现出相似的性能，但是，由于为副本分配了更多内存，Autopilot 通常在较低的尾部优于 Kubernetes。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222131527.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;下图显示了实验过程中集群中的总内存分配（即为微服务副本设置的内存限制总和）。与基线相比，SHOWAR 平均为微服务副本分配的内存更少。特别是，SHOWAR 平均分配了 205 GB，而 Autopilot 和 Kubernetes 分别分配了 264 GB 和 249 GB。主要是因为 SHOWAR 的垂直自动缩放器实现了较低的内存使用松弛度，并且其水平自动缩放器为微服务设置了较少的副本数量。因此，使用 SHOWAR 的总内存分配小于基线。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222131959.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;最后，在下图中，展示了每个实验的归一化集群成本。我们将平均内存分配标准化为集群中一台虚拟机的内存大小（即 16 GB 用于𝑚5.𝑥𝑙𝑎𝑟𝑔𝑒 实例），并将其乘以 24 小时内一台虚拟机的成本（即 $0.192/ℎ𝑜𝑢𝑟）。这是因为，通常虚拟机在公共云上的价格是内存大小的线性函数 [17]。可以看出，与 Autopilot 和 Kubernetes 相比，SHOWAR 将集群总成本效益分别提高了 22% 和 17%。这些改进来自这样一个事实，即与基线相比，SHOWAR 的垂直和水平自动缩放器用&lt;strong&gt;分配更少的计算资源就可以达到相同的性能和服务质量&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222135039.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;不足和未来工作&#34;&gt;不足和未来工作&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;SHOWAR是基于历史和现在进行反应式调度的，&lt;strong&gt;缺乏预测能力&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;我们将 SHOWAR 设计为计算量轻且适应性强，这与使用需要训练且无法应对工作负载转移的机器学习的“黑盒”方法形成对比，例如 [39,55,57]。然而，目前 SHOWAR 的一个主要限制是它对微服务的资源使用是反应性的。因此，&lt;strong&gt;一个合适的探索途径是为 SHOWAR 配备近期工作负载和资源使用预测&lt;/strong&gt;，例如 [18]。结合其当前设计，&lt;strong&gt;预测近期工作负载可以改善 SHOWAR 的资源分配并防止由于自动缩放操作不足而导致性能下降&lt;/strong&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;另一个限制是它只关注微服务自动扩展并假设一个固定大小的集群&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;解决应用程序自动缩放器请求的资源总量超过可用集群资源总量的场景非常重要&lt;/strong&gt;。虽然集群自动缩放与应用程序自动缩放是正交的，但它们需要协同工作以实现资源分配的整体效率和应用程序的性能要求。因此，需要两个自动扩缩器之间的通信和协调才能向集群添加更多资源。在未来的工作中，我们&lt;strong&gt;计划改进 SHOWAR 的自动缩放器以与现有的集群自动缩放器 [12] 一起使用&lt;/strong&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;还不适用于Serverless类型的工作负载&lt;/p&gt;
+&lt;p&gt;原因之一是垂直自动缩放不适用，因为&lt;strong&gt;无服务器功能的容器大小是预定义的&lt;/strong&gt;。 SHOWAR 的水平自动缩放器可能面临额外的复杂性，例如，跟踪“休眠”无服务器函数的数量（可以热启动）以及每个函数“过期”的时间（因此需要冷启动延迟）。我们将探索无服务器功能水平扩展的控制理论方法留给未来的工作。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;计划改进 SHOWAR 的亲和性和反亲和性规则生成器&lt;/p&gt;
+&lt;p&gt;目前使用简单的经验资源利用相关系数来确定微服务之间的成对亲和力。例如，我们可以在未来&lt;strong&gt;探索其他统计数据对亲和力的影响&lt;/strong&gt;，例如不同类型资源之间的互相关，并&lt;strong&gt;探索不同类型的调度机制&lt;/strong&gt;，这些调度机制可以直接利用这些“原始”统计信息来提高效率资源利用[19]。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>笔记 &gt; SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</title>
+        <link>https://lizonglingo.github.io/p/%E7%AC%94%E8%AE%B0-showar-right-sizing-and-efficient-scheduling-of-microservices/</link>
+        <pubDate>Mon, 20 Dec 2021 14:51:34 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E7%AC%94%E8%AE%B0-showar-right-sizing-and-efficient-scheduling-of-microservices/</guid>
+        <description>&lt;h2 id=&#34;摘要&#34;&gt;摘要&lt;/h2&gt;
+&lt;p&gt;提出微服务的面临的一个挑战是为每个微服务找到最佳的分配资源和服务实例的数量。达到保证性能的同时最大限度的提高资源利用率这样一个目标。本文的SHOWAR是一个通过确定服务实例数量（横向扩展）以及每个服务实例的资源如CPU和内存（纵向扩展）来配置资源的框架。&lt;/p&gt;
+&lt;p&gt;对于纵向扩展，SHOWAR通过历史资源中的经验方差来寻找最佳资源分配量，保证性能同时减少不必要的资源浪费；对于横向扩展，使用控制理论的基本思想以及内核级性能指标来实施。&lt;/p&gt;
+&lt;p&gt;在确定微服务的现有状态后，SHOWAR使用调度程序生成亲和性规则来弥合最佳资源分配和调度之间的差距，实现资源分配和性能提高。&lt;/p&gt;
+&lt;p&gt;实验表明，SHOWAR与现有的最先进的自动缩放和调度系统相比，资源分配提高了22%，同时降低了99%的端到端请求延迟20%。&lt;/p&gt;
+&lt;h2 id=&#34;intro&#34;&gt;Intro&lt;/h2&gt;
+&lt;p&gt;本文的SHOWAR是一个用于微服务横向和纵向自动扩展的微服务管理系统，用于Kubernetes编排的微服务系统。&lt;/p&gt;
+&lt;p&gt;对于纵向缩放，SHOWAR 依赖&lt;strong&gt;历史资源使用情况的差异&lt;/strong&gt;，找到每个微服务的最佳资源大小，保持良好的性能的同时提高资源利用率。&lt;/p&gt;
+&lt;p&gt;对于横向自动缩放，SHOWAR 使用来自 &lt;strong&gt;Linux 内核线程调度程序队列的指标&lt;/strong&gt;（特别是 eBPF 运行时延迟）作为其自动缩放信号，以做出更准确和有意义的自动缩放决策。为了实现这个目标，SHOAWR使用了控制理论的基本思想，基于来自&lt;strong&gt;微服务运行时&lt;/strong&gt;的信号控制每个微服务的副本数量。&lt;/p&gt;
+&lt;p&gt;该团队设计了一个比例积分微分proportional–integral–derivative (PID) 控制器作为有状态自动缩放器，它使用历史自动缩放操作和当前运行时测量来做出下一个水平自动缩放决策并保持微服务“稳定”。此外，SHOWAR考虑不同微服务之间的依赖关系，优先考虑被依赖的微服务，以防止不必要的自动缩放操作和低资源利用率。&lt;/p&gt;
+&lt;p&gt;除了使用自动缩放器来确定微服务的资源外，SHOWAR还旨在桥接微服务的最佳资源分配和高效调度，&lt;strong&gt;在达成最佳资源分配和高效调度之间取得最佳平衡&lt;/strong&gt;。一旦确定了微服务的最佳大小，SHOWAR就会协助集群调度程序调度微服务以获得更好的端到端性能。为了防止资源争用和管理噪声邻居对微服务性能的影响，SHOWAR使用不同微服务之间历史资源使用情况的估计相关性来为Kubernetes调度程序生成规则。例如，这些规则可能会建议调度程序共同定位（调度亲和性）与某种资源类型具有负相关性的微服务，或者以其他方式分发它们（调度反亲和性）。&lt;/p&gt;
+&lt;p&gt;文章通过在AWS公共云上的虚拟机集群部署各种交互式微服务应用程序来评估SHOWAR。将SHOWAR的性能与两种最先进的自动缩放系统进行了比较：Google Autopilot和Kubernetes 默认的自动缩放器。使用实际生产工作负载，结果表明，SHOWAR在有效资源分配和端到端请求延迟的尾部分布方面优于这些参照。SHOWAR 平均将资源分配提高了22%，这可以直接转化为集群相关成本的总节省22%，同时将99%的端到端用户请求延迟降低20%。&lt;/p&gt;
+&lt;h2 id=&#34;贡献&#34;&gt;贡献&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;提出一种自动化的纵向扩容和横向扩容框架，达到保证服务性能的前提下提高资源利用率的目标&lt;/li&gt;
+&lt;li&gt;提出调度亲和性和反亲和规则，通过生成调度亲和性和反亲和性规则来帮助调度程序更好地放置微服务并提高微服务性能，弥合了适当调整微服务规模以提高资源效率和高效微服务调度之间的差距&lt;/li&gt;
+&lt;li&gt;通过实验证明SHOWAR的良好表现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;前置知识&#34;&gt;前置知识&lt;/h2&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211220134037.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;这一个比较典型的微服务架构示意图，微服务之间的依赖关系错综复杂。&lt;strong&gt;其中一些微服务依赖于其他微服务，SHOWAR使用此依赖关系图信息来做出更好的自动缩放决策&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;除了 CPU 和内存使用数据外，SHOWAR还使用扩展的伯克利数据包过滤 ( Berkeley Packet Filtering - eBPF) [6] 指标数据进行水平自动缩放决策。&lt;strong&gt;eBPF 是最新的Linux内核技术，它支持在内核级别运行安全且低开销的程序，以从内核级别的事件（例如 CPU 调度程序决策事件、内存分配事件和内核网络堆栈中的数据包事件）中收集准确的指标&lt;/strong&gt;。它已被广泛用于微服务可观察性，用于性能改进、分析和跟踪、负载平衡、网络监控和安全等广泛目的。&lt;/p&gt;
+&lt;h2 id=&#34;showar&#34;&gt;SHOWAR&lt;/h2&gt;
+&lt;h3 id=&#34;系统架构&#34;&gt;系统架构&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211220141140.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;SHOWAR使用每个节点上的相应代理来收集资源使用日志以及 eBPF 指标，然后聚合到时间序列数据库中。&lt;/p&gt;
+&lt;p&gt;SHOWAR使用收集到的指标通过分别与Kubernetes API服务器及其调度程序通信来做出自动缩放决策以及调度亲和性和反亲和性规则。&lt;/p&gt;
+&lt;h3 id=&#34;系统实现&#34;&gt;系统实现&lt;/h3&gt;
+&lt;p&gt;SHOWAR 作为服务部署在控制器节点并与kubernetes API服务器及其调度程序交互以进行自动缩放操作以及为微服务应用生成的亲和性和反亲和性规则。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;监控代理Monitoring Agents&lt;/p&gt;
+&lt;p&gt;监控和日志数据是任何应用程序部署最重要的部分。监控数据用于可观察性、健康检查和自动缩放。本文使用最先进的监控和指标收集工具Prometheus从节点和容器收集不同的指标。Prometheus在集群中的每个节点上启动一个监控代理来收集容器指标，例如 CPU 使用率、内存使用率、网络带宽使用率等。代理被配置为每秒收集和报告指标（一秒是Prometheus 代理可以收集指标的最短时间。为了获得尽可能多的数据点，我们每秒钟收集一次数据）。Prometheus 带有一个时间序列数据库，代理存储收集的指标。此外，提供查询语言来查询其他模块使用的时间序列数据库以利用收集的指标。&lt;/p&gt;
+&lt;p&gt;除Prometheus外，文章还开发了一个eBPF程序，该程序作为监控代理部署在集群中的每个节点上，以收集横向自动缩放器使用的 𝑟𝑢𝑛𝑞 𝑙𝑎𝑡𝑒𝑛𝑐𝑦 指标。该指标是每个pod中的CPU线程在获取CPU之前所经历的延迟直方图。程序每1秒收集一张𝑟𝑢𝑛𝑞 𝑙𝑎𝑡𝑒𝑛𝑐𝑖𝑒𝑠的直方图并存储在Prometheus时间序列数据库中。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;纵向缩放器The Vertical Autoscaler&lt;/p&gt;
+&lt;p&gt;这一个简单的循环，每分钟进行一轮。在前 5 分钟的窗口内为每种资源类型 𝑟（CPU 和内存）计算 𝑠𝑟 =𝜇𝑟 +3∗𝜎𝑟，如果 𝑠 的值变化超过 15%，它会更新服务的资源需求为𝑠。&lt;/p&gt;
+&lt;p&gt;触发缩放器的另一个条件是微服务报告 OOM 错误时。在应用微服务的新资源需求之前，纵向自动缩放器通过共享通道向横向自动缩放器发送消息，不让其进行任何横向自动缩放操作，因为纵向自动缩放操作的优先级高于水平自动缩放。&lt;/p&gt;
+&lt;p&gt;如果该微服务的 CPU 数量超过一个 CPU 内核（即 𝑠𝐶𝑃𝑈 &amp;gt;1000𝑚），纵向自动缩放器也不会对微服务进行自动缩放操作，在这种情况下，它会通过另一个共享通道发送消息到横向自动缩放器触发横向自动缩放操作。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;横向缩放器The Horizontal Autoscaler&lt;/p&gt;
+&lt;p&gt;横向自动缩放器的核心是一个 PID 控制器，旨在保持每个微服务稳定。对于给定的目标 𝑟𝑢𝑛𝑞 𝑙𝑎𝑡𝑒𝑛𝑐𝑦，它对该微服务执行水平自动缩放操作，使其始终具有𝑟𝑢𝑛𝑞𝑟𝑢𝑛𝑞𝑙控制器每 1 分钟做出决定，eBPF 程序收集 60 个度量直方图实例（每秒 1 个）。对于每个直方图，选择第 95 个百分位数，控制器使用这 60 个数据点的平均值作为其当前观察（也称为测量）来执行其控制操作。每个水平扩展操作添加或删除至少 1 个或可配置百分比（默认为 10%）的微服务当前副本数，分别用于扩展和缩减。PID 控制参数的初始值取为 𝑘𝑃 =𝑘𝐼 =𝑘𝐷 =1/3（每个参数约束为 ∈ [0,10]）。这些参数的增量变化是 10%（我们通过实验发现 10% 的性能非常好）。控制器输出的波动是进行此类更改的基础，使用之前的 𝑁 = 10 个样本进行测量。此外，控制器的“速度”被测量为达到区间 [target(1 −𝛼),target(1 + 𝛼)] 所需的迭代次数，因为 𝛼 =10%。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;亲和规则生成器The Affinity Rule Generator&lt;/p&gt;
+&lt;p&gt;SHOWAR的亲和性规则生成器每 5 分钟使用一次 CPU、内存和网络利用率，这是一个由 300 个数据点组成的向量（每个数据点是微服务副本的平均值）来计算每个数据点之间不同资源类型的相关系数。消除弱相关或无相关实例，[−0.8,+0.8] 中的任何值都将被丢弃。其他强负相关和强正相关微服务用于生成亲和性和反亲和性规则。资源使用模式会随着工作负载的变化（也称为工作负载转移）而变化，因此如果在随后的 5 分钟时间窗口内强烈的负相关或正相关变化超过 20%（可配置），SHOWAR 将撤销关联（或anti-affinity）规则。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;SHOWAR的开销&lt;/p&gt;
+&lt;p&gt;SHOWAR是作为Kubernetes的控制器构建的，它对于自动缩放器和其他类型的控制器具有高度可插拔性。SHOWAR使用常用的 Kubernetes监控代理（如Prometheus）和一个自定义eBPF指标监控代理。因此，与默认的Kubernetes自动缩放器相比，SHOWAR 不会引入任何额外的开销。此外，自动缩放器被调度在控制器节点上，并且不与调度在工作节点上的应用程序 Pod 共享资源。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>笔记 &gt; Service-Level Fault Injection Testing</title>
+        <link>https://lizonglingo.github.io/p/%E7%AC%94%E8%AE%B0-service-level-fault-injection-testing/</link>
+        <pubDate>Sat, 18 Dec 2021 15:35:42 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E7%AC%94%E8%AE%B0-service-level-fault-injection-testing/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源：SoCC&#39;21&lt;/p&gt;
+&lt;p&gt;Meiklejohn C S, Estrada A, Song Y, et al. Service-Level Fault Injection Testing[C]//Proceedings of the ACM Symposium on Cloud Computing. 2021: 388-402.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;摘要&#34;&gt;摘要&lt;/h2&gt;
+&lt;p&gt;越来越多的企业使用微服务架构发布他们的大规模的移动或是Web应用。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;问题在于&lt;/strong&gt;，并非所有系统开发人员都有分布式系统的管理经验，由于这些大规模的应用多是部署与分布式系统中，所以在生产环境中的故障很有可能在开发环境中不会出现。一旦这些微服务部署在分布式系统中，就有可能出现故障。所以，一种好的解决方法就是尽早找出这些问题：在测试环境或者在代码交付生产前就将其解决。&lt;/p&gt;
+&lt;p&gt;本文提出&lt;strong&gt;服务级别故障注入测试&lt;/strong&gt;，并实现一个原型“filibuster”，用来系统的识别开发环境中微服务的弹性问题。“Filibuster”使用静态分析及并发风格的执行，还有新颖的动态缩减算法，来扩展现有功能测试的套件，减少开发人员的工作。&lt;/p&gt;
+&lt;p&gt;为了证明工具的适用性，文章展示了4个包含错误的真实工业微服务应用程序的语料库。数据来自大公司生产中运行的实验公开信息。文章展示了实验如何在开发过程中运行，并在投入生产环境之前就检测到错误。&lt;/p&gt;
+&lt;h2 id=&#34;前置知识&#34;&gt;前置知识&lt;/h2&gt;
+&lt;h3 id=&#34;1-混沌工程&#34;&gt;1. 混沌工程&lt;/h3&gt;
+&lt;p&gt;在本文中，多次讲到“chaos engineering”，在我个人理解，混沌工程是本文的“服务级故障注入测试”的基础，或者说是“上一个版本”。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;混沌工程代表项目，Netflix创建的“Chaos Monkey”可以在系统的随机位置引发故障，可以随时终止&lt;strong&gt;生产环境&lt;/strong&gt;中运行的虚拟机和容器实例。通过“Chaos Monkey”，开发者可以快速了解构建的服务的健壮性，是否可以弹性扩容以及处理意外故障。&lt;/p&gt;
+&lt;p&gt;参考：&lt;a class=&#34;link&#34; href=&#34;https://zhuanlan.zhihu.com/p/90294032&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;知乎-系统架构设计之路&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;混沌工程，是一种提高技术架构弹性能力的复杂技术手段。Chaos工程经过实验可以确保系统的可用性。混沌工程旨在将故障扼杀在襁褓之中，也就是在故障造成中断之前将它们识别出来。通过主动制造故障，测试系统在各种压力下的行为，识别并修复故障问题，避免造成严重后果。&lt;/p&gt;
+&lt;p&gt;主要针对于&lt;strong&gt;分布式系统&lt;/strong&gt;上的故障测试。&lt;/p&gt;
+&lt;h4 id=&#34;11-混沌工程与故障注入的区别&#34;&gt;1.1 混沌工程与故障注入的区别&lt;/h4&gt;
+&lt;p&gt;混沌工程是一种生成新信息的实践，而故障注入是测试一种情况的一种特定方法。&lt;/p&gt;
+&lt;h4 id=&#34;12-混沌工程实验的步骤&#34;&gt;1.2 混沌工程实验的步骤&lt;/h4&gt;
+&lt;p&gt;通常混沌工程由以下四个步骤组成。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;定义测试系统的“稳定状态”。精确定义指标，表明系统按照应有的方式运行。 Netflix使用客户点击视频流设备上播放按钮的速率作为指标，称为“每秒流量”。请注意，这更像是商业指标而非技术指标；在混沌工程中，&lt;strong&gt;业务指标通常比技术指标更有用&lt;/strong&gt;，因为它们更适合衡量用户体验或运营。&lt;/li&gt;
+&lt;li&gt;创建假设。与任何实验一样，您需要一个假设来进行测试。因为你试图破坏系统正常运行时的稳定状态，你的假设将是这样的，“当我们做X时，这个系统的稳定状态应该没有变化。”为什么用这种方式表达？如果你的期望是你的动作会破坏系统的稳定状态，那么你会做的第一件事会是修复问题。混沌工程应该包括真正的实验，涉及真正的未知数。&lt;/li&gt;
+&lt;li&gt;模拟现实世界中可能发生的事情，目前有如下混沌工程实践方法：模拟数据中心的故障、强制系统时钟不同步、在驱动程序代码中模拟I/O异常、模拟服务之间的延迟、随机引发函数抛异常。通常，您希望模拟可能导致系统不可用或导致其性能降低的场景。首先考虑可能出现什么问题，然后进行模拟。一定要优先考虑潜在的错误。 “当你拥有非常复杂的系统时，很容易引起出乎意料的下游效应，这是混沌工程寻找的结果之一，”“因此，系统越复杂，越重要，它就越有可能成为混沌工程的候选对象。”&lt;/li&gt;
+&lt;li&gt;证明或反驳你的假设。将稳态指标与干扰注入系统后收集的指标进行比较。如果您发现测量结果存在差异，那么您的混沌工程实验已经成功 - 您现在可以继续加固系统，以便现实世界中的类似事件不会导致大问题。或者，如果您发现稳定状态可以保持，那么你对该系统的稳定性大可放心。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;13-案例&#34;&gt;1.3 案例&lt;/h4&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/chaos-mesh/chaos-mesh&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://github.com/chaos-mesh/chaos-mesh&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/chaosblade-io&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://github.com/chaosblade-io&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&#34;into&#34;&gt;Into&lt;/h2&gt;
+&lt;p&gt;混沌测试（一种用于生产环境中的错误注入，来模拟在用户角度的服务bug）已经证明了的可行性。本文要做的就是把这个过程放在更早的阶段——在开发阶段就检测到这些错误。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;现在又有这样的问题&lt;/strong&gt;：缺少开源的微服务应用。仅有的开源微服务应用仅仅用来展示如何构建这些微服务应用，并没有展示这些应用在开发、部署时会出现什么错误。因此，该研究不得不和公司合作，并且需要签订严格的保密措施。&lt;/p&gt;
+&lt;h2 id=&#34;本文贡献&#34;&gt;本文贡献&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;提出一种微服务测试方法：服务级别的故障注入测试&lt;/li&gt;
+&lt;li&gt;一种新的动态归约算法：将应用程序分解成独立的微服务来减少搜索空间的组合爆炸&lt;/li&gt;
+&lt;li&gt;实现了这个服务级别的故障注入测试方法——Filibuster：基于Python开发，可以测试提供HTTP通信的微服务&lt;/li&gt;
+&lt;li&gt;一个用Python实现的微服务应用和故障的语料库：包含8个小心微服务应用程序，每个应用程序都展示了微服务应用中使用的单一模式；还有4个从公开会议演讲中的工业级应用实例——Audible、Expedia、Mailchimp、Netflix&lt;/li&gt;
+&lt;li&gt;并通过该语料库对Filibuster做出评价：表明Filibuster可以用于识别语料中的所有错误，并且展示了通过动态减少可能进行的优化，还提供了如何设计微服务应用程序以实现可测试性的见解。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;挑战应对&#34;&gt;挑战——应对&lt;/h2&gt;
+&lt;p&gt;目前困难主要在于：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;缺少开源的工业级微服务应用案例和相关的错误报告。而这两个内容是软件推动软件测试领域的主要语料库。&lt;/li&gt;
+&lt;li&gt;现有的一些的对于软件测试的研究都是基于一些开源的bug数据库和开源社区的软件，问题在于，这些软件架构多是单体架构，而故障也不是微服务架构所特有的。所以，需要有微服务应用特有的故障以供研究。&lt;/li&gt;
+&lt;li&gt;而对于大型的微服务应用提供商，往往不能直接去研究。这些产品往往是企业的核心，一般不会开源，并且内部的漏洞也不会公开。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;所以，文章系统回顾了50个关于混沌工程的演讲，从这些公开的视频中寻找案例。这些公开演讲中的公司主要关注两个问题：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;开发中的软件的可靠性&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;运行这些软件的基础设施的稳定性&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;进一步团队根据下面的条件寻找语料：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;演讲中是否提供了使用混沌工程发现的真正的详细错误信息&lt;/li&gt;
+&lt;li&gt;所展示的混沌工程是否可以在本地复现（也就是在非生产环境中进行混沌测试）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;最终，文章选取了4个案例，它们来自 Audible、Expedia、Mailchimp和Netflix。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;案例来源&lt;/th&gt;
+&lt;th&gt;服务类型&lt;/th&gt;
+&lt;th&gt;使用混沌工程发现的问题简述&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Audible&lt;/td&gt;
+&lt;td&gt;有声读物移动应用&lt;/td&gt;
+&lt;td&gt;代码中未处理的错误，该错误会通过通用错误消息传播传到移动客户端&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Expedia&lt;/td&gt;
+&lt;td&gt;旅游预订服务&lt;/td&gt;
+&lt;td&gt;基于相关性排序的酒店评价服务不可用，回退到基于时间排序的&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Mailchimp&lt;/td&gt;
+&lt;td&gt;电子邮件管理应用&lt;/td&gt;
+&lt;td&gt;两处不处理返回错误的问题&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Netflix&lt;/td&gt;
+&lt;td&gt;流媒体应用&lt;/td&gt;
+&lt;td&gt;1.加载客户主页设计的服务故障；2.配置错误超时；3.服务回退失败；4.关键服务未配置回退策略&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id=&#34;技术细节&#34;&gt;技术细节&lt;/h2&gt;
+&lt;h3 id=&#34;架构示意图&#34;&gt;架构示意图&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211219115042.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;对每个测试服务器进行检测调用，识别调用从何处发起，从何处接收，并在测试期间注入故障。考虑上图，服务A调用服务B，然后服务B调用服务C，最后将结果返回。&lt;/p&gt;
+&lt;p&gt;SFIT（Service-Level Fault Injection Testing ）建立在当今微服务程序开发的三个关键点之上：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;微服务是独立开发的：不同微服务开发团队难以知晓其他团队服务的内部细节和详细使用规范，难以验证其他服务的问题&lt;/li&gt;
+&lt;li&gt;如果对于微服务进行故障模拟测试，能很大程度上保证生产环境下服务正常运行：但是从文章选取的案例来看，许多团队并没有这样做，可能是因为这样耗费时间或者性价比太低&lt;/li&gt;
+&lt;li&gt;功能测试是黄金标准：开发者使用端到端的测试，并认为这是非常有用的， 本文也因此也在这一点切入。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;sfit实现细节&#34;&gt;SFIT实现细节&lt;/h3&gt;
+&lt;p&gt;假设服务通过HTTP提供，并且单个功能测试可以测试所有应用程序行为。&lt;/p&gt;
+&lt;h4 id=&#34;overview&#34;&gt;Overview&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;通过常规测试，排除服务的逻辑错误。&lt;/li&gt;
+&lt;li&gt;在两个微服务的通信端点，再设计一个测试，并且对微服务之间的请求进行错误注入。如果这次错误注入可以引起不同的服务错误，那么对于每种错误都再复现一次。&lt;/li&gt;
+&lt;li&gt;这些后续的执行放在堆栈上，然后递归执行，直到探索到所有的问题点。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;故障注入&#34;&gt;故障注入&lt;/h4&gt;
+&lt;p&gt;本文的方法依赖于远程调用，如HTTP或gRPC，因此需要有干预微服务之间请求的能力。Opentelemetry、Opentracing等工具已经提供了远程通信的公共调用库。利用这种工具设计故障注入：根据注入的故障，返回故障响应。&lt;/p&gt;
+&lt;h4 id=&#34;故障识别&#34;&gt;故障识别&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;发起请求调用源点的故障：例如Python中request库执行HTTP请求时，执行该请求会引发23个异常，本演示只考虑两个最常见的故障——超时和连接错误。&lt;/li&gt;
+&lt;li&gt;接收请求的远程服务的故障：如果一个服务依赖的另一个服务抛出Timeout异常，那么调用它的服务可能会捕获到，并返回500。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;此外，还有一点是，HTTP请求使用URL标识。相似的URL可能用于不同的服务，所以需要对调用的服务进行一个标识，以此明确服务调用双方的身份。&lt;/p&gt;
+&lt;h4 id=&#34;测试适配&#34;&gt;测试适配&lt;/h4&gt;
+&lt;p&gt;本文提供了一个模块帮助开发者编写故障注入测试，从而减轻开发人员编写复杂测试的负担。需要注意，本文的测试是非入侵的。&lt;/p&gt;
+&lt;h2 id=&#34;故障缩减&#34;&gt;故障缩减&lt;/h2&gt;
+&lt;p&gt;如果组成应用有几十上百的微服务，那么出现错误的空间将非常大。所以有必要在实现故障最大覆盖率的同时，减少搜索空间，提高效率。利用服务分解，对每个独立的微服务进行排障。&lt;/p&gt;
+&lt;p&gt;为此，我们可以利用以下 3 个关键观察结果：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;充分了解服务依赖项可能失败的所有方式。确保我们了解单个服务的一个或多个依赖项失败时的行为以及该服务返回的结果失败是什么。参考图Audible示例，探索 ADS 依赖项可能失败的方式组合（以及 CDS 依赖项失败的方式等）&lt;/li&gt;
+&lt;li&gt;如果我打算在两个或多个不同服务的至少一个依赖项上注入故障，我们已经知道这些故障将对将它们作为依赖项的服务产生的影响。以图Audible示例，我们已经知道当 ADS 的依赖项以任何可能的组合失败时会返回什么，因为我们已经运行了该测试。我们也已经知道当 CDS 的依赖项出于同样的原因以任何可能的组合失败时，它会返回什么。因此，我们不必在依赖项处注入故障，直接在 ADS 或 CDS 中直接注入适当的响应。&lt;/li&gt;
+&lt;li&gt;如果我们已经在该服务中注入了该故障，那么测试就是多余的，因为我们已经观察到了应用程序的这种行为。如果我们参考图Audible示例，我们不需要测试 Stats 服务失败与 Audio Assets 或 Audio Metadata 服务的失败，因为我们已经知道这些失败的结果，这些服务将它们作为依赖；我们也已经观察到这些结果。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;动态归约算法&#34;&gt;动态归约算法&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211219125759.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;filibuster&#34;&gt;Filibuster&lt;/h2&gt;
+&lt;p&gt;这是该团队实现的原型，利用Python以及一些开源库实现的。&lt;/p&gt;
+&lt;p&gt;Filibuster可以注入这些故障：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;调用端异常：由请求库抛出，指示连接错误或超时等条件。对于所有异常类型，Filibuster 可以在抛出异常之前有条件地联系其他服务。对于超时，Filibuster 可以在抛出超时异常之前有条件地等待超时时间。&lt;/li&gt;
+&lt;li&gt;错误响应：从远程服务使用标准 HTTP 错误代码指示内部服务器错误或服务不可用等情况。对于每个错误代码，Filibuster 可以有条件地返回一个关联的正文。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;由于 Filibuster 是作为服务器编写的，跨语言支持是可能的，但尚未实现。仪器和 Filibuster 服务器之间的所有通信都是通过独立于语言的协议进行的；任何特定于语言的东西都在仪器库中完成。&lt;/p&gt;
+&lt;h2 id=&#34;应用语料库&#34;&gt;应用语料库&lt;/h2&gt;
+&lt;h3 id=&#34;电影应用案例&#34;&gt;电影应用案例&lt;/h3&gt;
+&lt;p&gt;由四个微服务组成：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;放映时间：返回电影的放映时间&lt;/li&gt;
+&lt;li&gt;电影：返回给定电影的信息&lt;/li&gt;
+&lt;li&gt;预订：给定用户名，返回有关该用户预订的信息&lt;/li&gt;
+&lt;li&gt;用户：存储用户信息并通过首先请求用户的预订来编排来自最终用户的请求，并且对于每个预订执行对电影服务的后续请求以获取有关电影的信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;根据上述的基础案例，文章又改造了7个示例：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Cinema-2：直接预定电影&lt;/li&gt;
+&lt;li&gt;Cinema-3：与cinema-2 相同，但users 服务在调用bookings 服务时有一个重试循环&lt;/li&gt;
+&lt;li&gt;Cinema-4：与cinema-2 相同，但每个服务在发出任何请求之前都与外部服务对话：用户服务向IMDB 发出请求；预订服务向 Fandango 提出请求；电影服务向 Rotten Tomatoes 提出请求&lt;/li&gt;
+&lt;li&gt;Cinema-5：无论失败与否，所有请求都会发生；在失败的情况下，使用硬编码的默认响应。&lt;/li&gt;
+&lt;li&gt;Cinema-6：添加了预订的第二个副本，在主要副本出现故障时联系该副本。&lt;/li&gt;
+&lt;li&gt;Cinema-7：与cinema-6 相同，但用户服务在发出实际请求之前调用主要预订副本上的健康检查端点。&lt;/li&gt;
+&lt;li&gt;Cinema-8：示例被折叠成单体，其中 API 服务器通过重试循环向它发出请求&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;工业级案例audibleexpediamailchimp-和-netflix&#34;&gt;工业级案例Audible、Expedia、Mailchimp 和 Netflix&lt;/h3&gt;
+&lt;p&gt;示例并不是要重现这些公司的整个微服务架构：我们只关注他们执行的特定混沌实验中涉及的服务。&lt;/p&gt;
+&lt;h4 id=&#34;audible&#34;&gt;Audible&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211219121932.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;示例 Audible微服务架构&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;这个案例包含8个微服务和一个移动客户端：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;内容交付服务（CDS）：给定图书标识符和用户标识符，授权后返回实际音频内容和音频元数据&lt;/li&gt;
+&lt;li&gt;内容交付引擎 (CDE)：返回要请求的的正确 CDS 的 URL&lt;/li&gt;
+&lt;li&gt;Audible App：模拟移动应用程序，向CDE发出请求，根据图书标识符查找相应CDS实例的URL，然后向其发出请求&lt;/li&gt;
+&lt;li&gt;声音下载服务（ADS）：一旦所有权得到验证，就会协调日志记录和 DRM 授权&lt;/li&gt;
+&lt;li&gt;所有权：验证书的所有权&lt;/li&gt;
+&lt;li&gt;激活：为用户激活 DRM 许可证&lt;/li&gt;
+&lt;li&gt;统计：维护书籍和许可证激活统计&lt;/li&gt;
+&lt;li&gt;资产元数据：存储包含章节描述信息的音频资产元数据&lt;/li&gt;
+&lt;li&gt;音频资产：音频文件的存储&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;由于实际的服务是部署在AWS上的微服务，本文则简化并模拟了这些服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;首先，资产元数据和音频资产服务是 AWS S3 存储桶（云存储）。为了模拟这一点，我们创建了 HTTP 服务，如果可用则返回包含资产的 200 OK，或者如果资产不存在则返回 404 Not Found。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;其次，所有权和激活服务是 AWS RDS 实例。为了模拟这一点，我们创建了实现 REST 模式的 HTTP 服务：如果用户不拥有这本书，则返回 403 Forbidden，如果这本书不存在，则返回 404 Not Found，否则返回 200 OK。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;第三，Stats 服务是一个 AWS DynamoDB 实例。为了模拟这一点，我们创建了一个返回 200 OK 的 HTTP 服务&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;expedia&#34;&gt;Expedia&lt;/h4&gt;
+&lt;p&gt;包含三个微服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;按相关性顺序返回评论&lt;/li&gt;
+&lt;li&gt;按时间顺序返回评论&lt;/li&gt;
+&lt;li&gt;API 网关：根据可用性从 Review ML 或 Review Time 向用户返回评论&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;mailchimp&#34;&gt;Mailchimp&lt;/h4&gt;
+&lt;p&gt;包含3个微服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Requestmapper：将电子邮件活动中的高亮URL映射到实际资源URL&lt;/li&gt;
+&lt;li&gt;DB Primary：他们数据库的主要副本&lt;/li&gt;
+&lt;li&gt;DB Secondary：他们数据库的次要副本&lt;/li&gt;
+&lt;li&gt;App Server：向Requestmapper服务请求解析URL，然后对数据库执行read-then-write请求，当主副本不可用时回退到二级数据库副本&lt;/li&gt;
+&lt;li&gt;负载均衡器：负载均衡请求&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;与 Mailchimp 的实际部署相比，我们表示为服务的一些组件实际上是非 HTTP 服务。我们在这里列举了这些差异和调整。首先，DB Primary 和 Secondary 服务是 MySQL 实例。为了模拟这一点，我们创建了一个 HTTP 服务，该服务在成功读取或写入时返回 200 OK，如果数据库为只读则返回 403 Forbidden。其次，Load Balancer 服务是一个 HAProxy 实例。为了模拟这一点，我们创建了一个 HTTP 代理。&lt;/p&gt;
+&lt;p&gt;Mailchimp 示例的错误包含两个：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;MySQL 实例只读。当 MySQL 实例为只读时，数据库会返回一个错误，该错误在代码的某个区域未处理。由于 Mailchimp 使用 PHP，这个错误被直接呈现到页面的输出中，我们通过将 403 Forbidden 响应转换为直接插入页面的输出来模拟这一点。&lt;/li&gt;
+&lt;li&gt;Requestmapper 不可用。当 Requestmapper 服务不可用时，App Server 无法正确处理错误，向负载均衡器返回 500 Internal Server Error。但是，负载均衡器仅配置为通过返回格式化的错误页面来处理 503 Service Unavailable 错误。这是丢失或不正确的故障处理示例。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;netflix&#34;&gt;Netflix&lt;/h4&gt;
+&lt;p&gt;包含10个微服务，与Audible示例类似，我们使用服务模拟 Netflix 移动应用程序，这里称为客户端：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;客户端：模拟移动客户端&lt;/li&gt;
+&lt;li&gt;API 网关：组装用户主页&lt;/li&gt;
+&lt;li&gt;用户档案：返回档案信息&lt;/li&gt;
+&lt;li&gt;书签：返回上次查看的位置&lt;/li&gt;
+&lt;li&gt;我的列表：返回用户列表中的电影列表&lt;/li&gt;
+&lt;li&gt;用户推荐：返回用户推荐的电影&lt;/li&gt;
+&lt;li&gt;评分：返回用户的评分&lt;/li&gt;
+&lt;li&gt;遥测：记录遥测信息&lt;/li&gt;
+&lt;li&gt;趋势：返回热门电影&lt;/li&gt;
+&lt;li&gt;全局推荐：返回推荐的电影&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Netflix示例的bug包含三个，可以使用环境变量激活：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;错误配置的超时。用户配置文件服务以 10 秒的超时时间调用遥测服务；但是，API 网关会以 1 秒的超时时间调用用户配置文件服务&lt;/li&gt;
+&lt;li&gt;服务回退到同一服务器。如果我的列表服务不可用，系统将重试（我的理解是，一个服务有3个实例，其中一个实例不可用，本应该请求其他实例，结果再次请求了那个不可用的实例）&lt;/li&gt;
+&lt;li&gt;没有回退的关键服务。用户配置文件服务没有后备处理逻辑&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>Google Bigtable论文要点整理</title>
+        <link>https://lizonglingo.github.io/p/google-bigtable%E8%AE%BA%E6%96%87%E8%A6%81%E7%82%B9%E6%95%B4%E7%90%86/</link>
+        <pubDate>Mon, 07 Oct 2019 14:53:05 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/google-bigtable%E8%AE%BA%E6%96%87%E8%A6%81%E7%82%B9%E6%95%B4%E7%90%86/</guid>
+        <description>&lt;h1 id=&#34;google-bigtable&#34;&gt;Google Bigtable&lt;/h1&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Google Bigtable论文要点整理&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;摘要&#34;&gt;摘要&lt;/h2&gt;
+&lt;h3 id=&#34;本质及用途&#34;&gt;本质及用途&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;分布式的结构化数据存储系统&lt;/li&gt;
+&lt;li&gt;被设计用来处理海量数据（通常是分布在数千台普通服务器上的 PB 级的数据）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;应用&#34;&gt;应用&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Web索引&lt;/li&gt;
+&lt;li&gt;Google Earth&lt;/li&gt;
+&lt;li&gt;Google Finanace&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;本文所做的&#34;&gt;本文所做的&lt;/h3&gt;
+&lt;p&gt;本论文描述了 Bigtable 提供的简单的数据模型。利用这个模型，用户可以动态的控制数据的分布和格式。
+我们还将描述 Bigtable 的设计和实现。&lt;/p&gt;
+&lt;h2 id=&#34;介绍&#34;&gt;介绍&lt;/h2&gt;
+&lt;h3 id=&#34;bigtable的目标&#34;&gt;Bigtable的目标&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;适用性广泛&lt;/li&gt;
+&lt;li&gt;可扩展&lt;/li&gt;
+&lt;li&gt;高性能&lt;/li&gt;
+&lt;li&gt;高可用性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;与传统数据库的异同&#34;&gt;与传统数据库的异同&lt;/h3&gt;
+&lt;p&gt;相同点：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;使用很多数据库的实现策略&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;不同点：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Bigtable 不支持完整的关系数据模型&lt;/li&gt;
+&lt;li&gt;Bigtable 为客户提供了简单的数据模型，利用这个模型，客户可以动态控制数据的分布和格式，用户也可以自己推测底层存储数据的位置相关性&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;数据&#34;&gt;数据&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;数据的下标是行和列的名字&lt;/li&gt;
+&lt;li&gt;名字可以是任意字符串&lt;/li&gt;
+&lt;li&gt;存储的数据均视为字符串&lt;/li&gt;
+&lt;li&gt;Bigtable本身不会去解析&lt;/li&gt;
+&lt;li&gt;客户存入结构化或半结构化数据，通过选择数据模式，用户可以控制数据位置的相关性&lt;/li&gt;
+&lt;li&gt;通过参数调节存放位置：内存 | 硬盘&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;数据模型&#34;&gt;数据模型&lt;/h2&gt;
+&lt;p&gt;Bigtable 是一个稀疏的、分布式的、持久化存储的多维度排序 Map。Map 的索引是行关键字、列关键字
+以及时间戳；Map 中的每个 value 都是一个未经解析的 byte 数组。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-cpp&#34; data-lang=&#34;cpp&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; (row:string, column:string,time:int64)&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;string
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Webtable&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;行关键字：URL&lt;/li&gt;
+&lt;li&gt;列名：网页的某些属性&lt;/li&gt;
+&lt;li&gt;contents列：存储网页的某些属性&lt;/li&gt;
+&lt;li&gt;标识：网页的时间戳&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&#34;https://i.loli.net/2019/10/07/R1ZUGxPod82NriE.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;行名：反向URL&lt;/li&gt;
+&lt;li&gt;contents列族：网页的内容&lt;/li&gt;
+&lt;li&gt;anchor列族：引用该网页的锚链接文本&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;行&#34;&gt;行&lt;/h3&gt;
+&lt;p&gt;行关键字：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;任意字符串（最大支持64KB）&lt;/li&gt;
+&lt;li&gt;同一行关键字读写操作都为原子操作&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Tablet&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Bigtable通过行关键字字典顺序组织数据&lt;/li&gt;
+&lt;li&gt;表中每行可以动态分区，每个分区叫Tablet，是数据分布和负载均衡调整的最小单位&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;列族&#34;&gt;列族&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;列关键字组成的集合叫做“列族“，是访问控制的基本单位&lt;/li&gt;
+&lt;li&gt;同一列族下的所有数据通常都属于同一个类型&lt;/li&gt;
+&lt;li&gt;列族在使用之前必须先创建，然后才能在列族中任何的列关键字下存放数据&lt;/li&gt;
+&lt;li&gt;创建后，其中的任何一个列关键字下都可以存放数据&lt;/li&gt;
+&lt;li&gt;一张表中列族不能太多（最多几百个）&lt;/li&gt;
+&lt;li&gt;但是一张表中可以有无限多个列&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;列关键字命名&#34;&gt;列关键字命名&lt;/h4&gt;
+&lt;p&gt;语法：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;列族：限定词
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;列组名字：可打印字符串&lt;/p&gt;
+&lt;p&gt;限定词：任意的字符串&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;比如，Webtable 有个列族 language，language 列族用来存放撰写网页的语言。我们在 language列族中只使用一个列关键字，用来存放每个网页的语言标识 ID。Webtable 中另一个有用的列族是 anchor；这个列族的每一个列关键字代表一个锚链接，如图一所示。Anchor 列族的限定词是引用该网页的站点名；Anchor列族每列的数据项存放的是链接文本。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&#34;控制权限&#34;&gt;控制权限&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;访问控制、磁盘和内存的使用统计都是在列族层面进行&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在我们的 Webtable 的例子中，上述的控制权限能帮助我们管理不同类型的应用：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;允许一些应用可以添加新的基本数据&lt;/li&gt;
+&lt;li&gt;一些应用可以读取基本数据并创建继承的列族&lt;/li&gt;
+&lt;li&gt;一些应用则只允许浏览数据（甚至可能因为隐私的原因不能浏览所有数据）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;时间戳&#34;&gt;时间戳&lt;/h3&gt;
+&lt;p&gt;在 Bigtable 中，表的每一个数据项都可以包含同一份数据的不同版本；不同版本的数据通过&lt;strong&gt;时间戳&lt;/strong&gt;来索引。&lt;/p&gt;
+&lt;p&gt;时间戳：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;64位整型&lt;/li&gt;
+&lt;li&gt;Bigtable可以给时间戳赋值，精确到ms&lt;/li&gt;
+&lt;li&gt;用户可以给时间戳赋值&lt;/li&gt;
+&lt;li&gt;不同版本数据按照时间戳倒序排序，最新的数据在最前面&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;垃圾回收：&lt;/p&gt;
+&lt;p&gt;为了减轻多个版本数据的管理负担，我们对每一个列族配有两个设置参数，Bigtable 通过这两个参数可以对废弃版本的数据自动进行垃圾收集。用户可以指定只保存最后 n 个版本的数据，或者只保存“足够新”的版本的数据（比如，只保存最近 7 天的内容写入的数据）。 、&lt;/p&gt;
+&lt;h2 id=&#34;api&#34;&gt;API&lt;/h2&gt;
+&lt;h3 id=&#34;bigtable提供的api&#34;&gt;Bigtable提供的API&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;建立和删除表以及列族的API函数&lt;/li&gt;
+&lt;li&gt;修改集群、表和列族的元数据的API&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;例如修改访问权限：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-c++&#34; data-lang=&#34;c++&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;// Open the table 
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;Table &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;T &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; OpenOrDie(&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;“&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;bigtable&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;web&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;webtable&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;”&lt;/span&gt;); 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Write a new anchor and delete an old anchor 
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;RowMutation &lt;span style=&#34;color:#a6e22e&#34;&gt;r1&lt;/span&gt;(T, &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;“&lt;/span&gt;com.cnn.www&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;”&lt;/span&gt;); 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;r1.Set(&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;“&lt;/span&gt;anchor:www.c&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;span.org&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;”&lt;/span&gt;, &lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;“&lt;/span&gt;CNN&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;”&lt;/span&gt;); 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;r1.Delete(&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;“&lt;/span&gt;anchor:www.abc.com&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;”&lt;/span&gt;); 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Operation op; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Apply(&lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;op, &lt;span style=&#34;color:#f92672&#34;&gt;&amp;amp;&lt;/span&gt;r1);
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/*
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; *客户程序可以对 Bigtable 进行如下的操作：写入或者删除 Bigtable 中的值、从每个行中查找值、或者遍历表中 
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; *的一个数据子集。图 2 中的Ｃ++代码使用 RowMutation 抽象对象进行了一系列的更新操作。（为了保持示例代码的 
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; *简洁，我们忽略了一些细节相关代码）。调用 Apply 函数对Ｗebtable 进行了一个原子修改操作：它为
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; *www.cnn.com 增加了一个锚点，同时删除了另外一个锚点。
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; */&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-cpp&#34; data-lang=&#34;cpp&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Scanner &lt;span style=&#34;color:#a6e22e&#34;&gt;scanner&lt;/span&gt;(T); 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ScanStream &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;stream; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;stream &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; scanner.FetchColumnFamily(&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;“&lt;/span&gt;anchor&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;”&lt;/span&gt;); 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;stream&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;SetReturnAllVersions(); 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;scanner.Lookup(&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;“&lt;/span&gt;com.cnn.www&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;”&lt;/span&gt;); 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; (; &lt;span style=&#34;color:#f92672&#34;&gt;!&lt;/span&gt;stream&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;Done(); stream&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;Next()) { 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    printf(&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;“&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;%&lt;/span&gt;s &lt;span style=&#34;color:#f92672&#34;&gt;%&lt;/span&gt;s &lt;span style=&#34;color:#f92672&#34;&gt;%&lt;/span&gt;lld &lt;span style=&#34;color:#f92672&#34;&gt;%&lt;/span&gt;s&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;\&lt;/span&gt;n&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;”&lt;/span&gt;, 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    scanner.RowName(), 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    stream&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;ColumnName(), 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    stream&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;MicroTimestamp(), 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    stream&lt;span style=&#34;color:#f92672&#34;&gt;-&amp;gt;&lt;/span&gt;Value()); 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;} 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/*
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; *C++代码使用 Scanner 抽象对象遍历一个行内的所有锚点。客户程序可以遍历多个列族，有几种方法可以对扫描输出 
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; *的行、列和时间戳进行限制。例如，我们可以限制上面的扫描，让它只输出那些匹配正则表达式*.cnn.com 的锚点，
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; *或者那些时间戳在当前时间前 10 天的锚点
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;*/&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;支持的其他特性&#34;&gt;支持的其他特性&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;Bigtable 支持单行上的事务处理：利用这个功能，用户可以对存储在一个行关键字下的数据进行原子性的读-更新-写操作&lt;/li&gt;
+&lt;li&gt;Bigtable 允许把数据项用做整数计数器&lt;/li&gt;
+&lt;li&gt;Bigtable 允许用户在服务器的地址空间内执行脚本程序&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Bigtable 可以和 MapReduce 一起使用，MapReduce 是 Google 开发的大规模并行计算框架。我们已经开发了一些 Wrapper 类，通过使用这些 Wrapper 类，Bigtable 可以作为 MapReduce 框架的输入和输出。&lt;/p&gt;
+&lt;h2 id=&#34;bigtable构建&#34;&gt;BigTable构建&lt;/h2&gt;
+&lt;h3 id=&#34;gfs&#34;&gt;GFS&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;BigTable 使用 Google 的分布式文件系统(GFS)存储日志文件和数据文件&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;集群&#34;&gt;集群&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;BigTable 集群通常运行在一个共享的机器池中，池中的机器还会运行其它的各种各样的分布式应用程序，BigTable 的进程经常要和其它应用的进程共享机器&lt;/li&gt;
+&lt;li&gt;BigTable 依赖集群管理系统来调度任务、管理共享的机器上的资源、处理机器的故障、以及监视机器的状态&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;google-sstable&#34;&gt;Google SSTable&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;BigTable 内部存储数据的文件是 Google SSTable 格式的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;SSTable 是一个持久化的、排序的、不可更改的Map 结构，而 Map 是一个 key-value 映射的数据结构，key 和 value 的值都是任意的 Byte 串。可以对 SSTable进行如下的操作：查询与一个 key 值相关的 value，或者遍历某个 key 值范围内的所有的 key-value 对。从内部看，SSTable 是一系列的数据块（通常每个块的大小是 64KB，这个大小是可以配置的）。SSTable 使用块索引（通常存储在 SSTable 的最后）来定位数据块；在打开 SSTable 的时候，索引被加载到内存。每次查找都可以通过一次磁盘搜索完成：首先使用二分查找法在内存中的索引里找到数据块的位置，然后再从硬盘读取相应的数据块。也可以选择把整个 SSTable 都放在内存中，这样就不必访问硬盘了。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;chubby&#34;&gt;Chubby&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;BigTable 还依赖一个高可用的、序列化的分布式锁服务组件，叫做 Chubby&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;一个 Chubby 服务包括了 5 个活动的副本，其中的一个副本被选为 Master，并且处理请求。只有在大多数副本都是正常运行的，并且彼此之间能够互相通信的情况下，Chubby 服务才是可用的。当有副本失效的时候，Chubby 使用 Paxos 算法来保证副本的一致性。Chubby 提供了一个名字空间，里面包括了目录和小文件。每个目录或者文件可以当成一个锁，读写文件的操作都是原子的。Chubby 客户程序库提供对 Chubby 文件的一致性缓存。每个
+Chubby 客户程序都维护一个与 Chubby 服务的会话。如果客户程序不能在租约到期的时间内重新签订会话的租约，这个会话就过期失效了9。当一个会话失效时，它拥有的锁和打开的文件句柄都失效了。Chubby 客户程序可以在文件和目录上注册回调函数，当文件或目录改变、或者会话过期时，回调函数会通知客户程序。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Bigtable 使用 Chubby 完成以下的几个任务：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;确保在任何给定的时间内最多只有一个活动的 Master 副本；&lt;/li&gt;
+&lt;li&gt;存储 BigTable 数据的自引导指令的位置（参考 5.1 节）；&lt;/li&gt;
+&lt;li&gt;查找 Tablet 服务器，以及在 Tablet 服务器失效时进行善后（5.2 节）；&lt;/li&gt;
+&lt;li&gt;存储 BigTable 的模式信息（每张表的列族信息）；&lt;/li&gt;
+&lt;li&gt;以及存储访问控制列表。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;如果Chubby长时间无法访问，BigTable就会失效。&lt;/p&gt;
+&lt;h2 id=&#34;介绍-1&#34;&gt;介绍&lt;/h2&gt;
+&lt;p&gt;Bigtable包括了主要的三个组件：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;链接到客户程序中的库&lt;/li&gt;
+&lt;li&gt;一个Master服务器&lt;/li&gt;
+&lt;li&gt;多个Tablet服务器&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;根据系统工作负载的变化，BigTable动态的向集群中添加（或删除）Tablet服务器。&lt;/p&gt;
+&lt;h4 id=&#34;master服务器&#34;&gt;Master服务器&lt;/h4&gt;
+&lt;p&gt;Master服务器主要负责以下工作：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;为 Tablet 服务器分配 Tablets&lt;/li&gt;
+&lt;li&gt;检测新加入的或者过期失效的 Table 服务器&lt;/li&gt;
+&lt;li&gt;对 Tablet 服务器进行负载均衡&lt;/li&gt;
+&lt;li&gt;对保存在 GFS 上的文件进行垃圾收集&lt;/li&gt;
+&lt;li&gt;处理对模式的相关修改操作，例如建立表和列族&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;tablet服务器&#34;&gt;Tablet服务器&lt;/h4&gt;
+&lt;p&gt;每个 Tablet 服务器都管理一个 &lt;strong&gt;Tablet 的集合&lt;/strong&gt;（通常每个服务器有大约数十个至上千个 Tablet）。每个 Tablet服务器负责处理它所加载的 Tablet 的读写操作，以及在 Tablets 过大时，对其进行分割。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;和很多 Single-Master 类型的分布式存储系统【17.21】类似，客户端读取的数据都不经过 Master 服务器：客户程序直接和 Tablet 服务器通信进行读写操作。由于 BigTable 的客户程序不必通过 Master 服务器来获取
+Tablet 的位置信息，因此，大多数客户程序甚至完全不需要和 Master 服务器通信。在实际应用中，Master服务器的负载是很轻的。
+一个 BigTable 集群存储了很多表，每个表包含了一个 Tablet 的集合，而每个 Tablet 包含了某个范围内的行的所有相关数据。初始状态下，一个表只有一个 Tablet。随着表中数据的增长，它被自动分割成多个Tablet，缺省情况下，每个 Tablet 的尺寸大约是 100MB 到 200MB。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;tablet的位置&#34;&gt;Tablet的位置&lt;/h3&gt;
+&lt;p&gt;我们使用一个三层的、类似Ｂ+树[10]的结构存储 Tablet 的位置信息。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://i.loli.net/2019/10/07/3CMUyWopYFdP8D1.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ol&gt;
+&lt;li&gt;第一层是一个存储在 Chubby 中的文件，包含 Root Tablet 的位置信息。&lt;/li&gt;
+&lt;li&gt;Root Tablet 包含一个特殊的 METADATA 表里所有的 Tablet 的位置信息。&lt;/li&gt;
+&lt;li&gt;METADATA 表的每个 Tablet 包含了一个用户 Tablet 的集合。&lt;/li&gt;
+&lt;li&gt;Root Tablet 是 METADATA 表的第一个 Tablet，对它的处理比较特殊 ，Root Tablet 永远不会被分割 ，这就保证了 Tablet 的位置信息存储结构不会超过三层。&lt;/li&gt;
+&lt;li&gt;METADATA 表中每个 Tablet 的位置信息都存放在一个行关键字下面，而这个行关键字是由 Tablet所在的表的标识符和 Tablet 的最后一行编码而成的。&lt;/li&gt;
+&lt;li&gt;METADATA 的每一行都存储了大约 1KB 的内存数据。&lt;/li&gt;
+&lt;li&gt;在一个大小适中的、容量限制为 128MB 的 METADATA Tablet 中，采用这种三层结构的存储模式，可以标识
+2^34 个 Tablet 的地址（如果每个 Tablet 存储 128MB 数据，那么一共可以存储 2^61 字节数据）。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;客户程序使用的库会缓存 Tablet 的位置信息。如果客户程序没有缓存某个 Tablet 的地址信息，或者发现它缓存的地址信息不正确，客户程序就在树状的存储结构中递归的查询 Tablet 位置信息；如果客户端缓存是的，那么寻址算法需要通过三次网络来回通信寻址，这其中包括了一次 Chubby 读操作；如果客户端缓存的地址信息过期了，那么寻址算法可能需要最多６次网络来回通信才能更新数据，因为只有在缓存中没有查到数据的时候才能发现数据过期。&lt;/p&gt;
+&lt;p&gt;尽管 Tablet 的地址信息是存放在内存里的，对它的操作不必访问 GFS 文件系统，但是，通常我们会通过预取 Tablet 地址来进一步的减少访问的开销：每次需要从 METADATA 表中读取一个 Tablet 的元数据的时候，它都会多读取几个 Tablet 的元数据。&lt;/p&gt;
+&lt;p&gt;在 METADATA 表中还存储了次级信息，包括每个 Tablet 的事件日志（例如，什么时候一个服务器开始为该 Tablet 提供服务）。这些信息有助于排查错误和性能分析。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;tablet分配&#34;&gt;Tablet分配&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;在任何一个时刻，一个Tablet只能分配给一个Tablet服务器。&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Master服务器记录了：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;当前有哪些活跃的Tablet服务器&lt;/li&gt;
+&lt;li&gt;哪些 Tablet 分配给了哪些 Tablet 服务器&lt;/li&gt;
+&lt;li&gt;哪些 Tablet 还没有被分配&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;当一个 Tablet 还没有被分配、并且刚好有一个 Tablet 服务器有足够的空闲空间装载该 Tablet 时，Master 服务器会给这个 Tablet 服务器发送一个装载请求，把 Tablet 分配给这个服务器。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;BigTable 使用 Chubby 跟踪记录 Tablet 服务器的状态。&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;当一个 Tablet 服务器启动，它在 Chubby 的一个指定目录下建立一个有唯一性名字的文件，获取该文件的独占锁&lt;/li&gt;
+&lt;li&gt;Master 服务器实时监控着这个目录（服务器目录），因此 Master 服务器能够知道有新的 Tablet 服务器加入了&lt;/li&gt;
+&lt;li&gt;如果 Tablet 服务器丢失了 Chubby 上的独占锁，比如由于网络断开导致 Tablet 服务器和 Chubby 的会话丢失，它就停止对 Tablet 提供服务&lt;/li&gt;
+&lt;li&gt;只要文件还存在，Tablet 服务器就会试图重新获得对该文件的独占锁；如果文件不存在了，那么Tablet 服务器就不能再提供服务了，它会自行退出&lt;/li&gt;
+&lt;li&gt;当 Tablet 服务器终止时（比如，集群的管理系统将运行该 Tablet 服务器的主机从集群中移除），它会尝试释放它持有的文件锁，这样一来，Master 服务器就能尽快把Tablet 分配到其它的 Tablet 服务器&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Master 服务器负责检查一个 Tablet 服务器是否已经不再为它的 Tablet 提供服务了，并且要尽快重新分配
+它加载的 Tablet。&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;Master 服务器通过轮询 Tablet 服务器文件锁的状态来检测何时 Tablet 服务器不再为 Tablet提供服务。&lt;/li&gt;
+&lt;li&gt;如果一个 Tablet 服务器报告它丢失了文件锁，或者 Master 服务器最近几次尝试和它通信都没有得到响应，Master 服务器就会尝试获取该 Tablet 服务器文件的独占锁；如果 Master 服务器成功获取了独占锁，那么就说明 Chubby 是正常运行的，而 Tablet 服务器要么是宕机了、要么是不能和 Chubby 通信了，因此，Master
+服务器就删除该 Tablet 服务器在 Chubby 上的服务器文件以确保它不再给 Tablet 提供服务。一旦 Tablet 服务器在 Chubby 上的服务器文件被删除了，Master 服务器就把之前分配给它的所有的 Tablet 放入未分配的 Tablet集合中。&lt;/li&gt;
+&lt;li&gt;为了确保 Bigtable 集群在 Master 服务器和 Chubby 之间网络出现故障的时候仍然可以使用，Master服务器在它的 Chubby 会话过期后主动退出。但是不管怎样，如同我们前面所描述的，Master 服务器的故障不会改变现有 Tablet 在 Tablet 服务器上的分配状态。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;当集群管理系统启动了一个 Master 服务器之后，Master 服务器首先要了解当前 Tablet 的分配状态，之后才能够修改分配状态。Master 服务器在启动的时候执行以下步骤：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Master 服务器从 Chubby 获取一个唯一的 Master 锁，用来阻止创建其它的 Master 服务器实例；&lt;/li&gt;
+&lt;li&gt;Master 服务器扫描 Chubby 的服务器文件锁存储目录，获取当前正在运行的服务器列表；&lt;/li&gt;
+&lt;li&gt;Master 服务器和所有的正在运行的 Tablet 表服务器通信，获取每个 Tablet 服务器上 Tablet 的分配信息；&lt;/li&gt;
+&lt;li&gt;Master 服务器扫描 METADATA 表获取所有的 Tablet 的集合。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在扫描的过程中，当 Master 服务器发现了一个还没有分配的 Tablet，Master 服务器就将这个 Tablet 加入未分配的 Tablet 集合等待合适的时机分配。&lt;/p&gt;
+&lt;h3 id=&#34;tablet服务&#34;&gt;Tablet服务&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://i.loli.net/2019/10/07/QKMJ6qhC42G8E7x.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;Tablet 的持久化状态信息保存在 GFS 上&lt;/li&gt;
+&lt;li&gt;更新操作提交到 REDO 日志中&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;memtable-和-sstable&#34;&gt;MEMTABLE 和 SSTABLE&lt;/h4&gt;
+&lt;p&gt;Tablet 的持久化状态信息保存在 GFS 上。更新操作提交到 REDO 日志中。&lt;/p&gt;
+&lt;p&gt;在这些更新操作中，最近提交的那些存放在一个排序的缓存中，我们称这个缓存为 memtable；较早的更新存放在一系列SSTable 中。&lt;/p&gt;
+&lt;p&gt;为了恢复一个 Tablet，Tablet 服务器首先从 METADATA 表中读取它的元数据。&lt;/p&gt;
+&lt;p&gt;Tablet 的元数据包含了组成这个 Tablet 的SSTable 的列表，以及一系列的 Redo Point，这些 Redo Point 指向可能含有该 Tablet数据的已提交的日志记录。Tablet 服务器把 SSTable 的索引读进内存，之后通过重复 Redo Point 之后提交的更新来重建 memtable。&lt;/p&gt;
+&lt;p&gt;当对 Tablet 服务器进行写操作时，Tablet 服务器首先要检查这个操作格式是否正确、操作发起者是否有执行这个操作的权限。一个有效的读操作在一个由一系列 SSTable 和 memtable 合并的视图里执行。由于 SSTable 和 memtable 是按字典排序的数据结构，因此可以高效生成合并视图。&lt;/p&gt;
+&lt;p&gt;另外，当进行 Tablet 的合并和分割时，正在进行的读写操作能够继续进行。&lt;/p&gt;
+&lt;h3 id=&#34;空间收缩&#34;&gt;空间收缩&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;随着写操作的执行，memtable 的大小不断增加。当 memtable 的尺寸到达一个门限值的时候，这个 memtable就会被冻结，然后创建一个新的 memtable&lt;/li&gt;
+&lt;li&gt;被冻结住 memtable 会被转换成 SSTable，然后写入 GFS&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;目的&#34;&gt;目的&lt;/h4&gt;
+&lt;p&gt;shrink Tablet 服务器使用的内存，以及在服务器灾难恢复过程中，减少必须从提交日志里读取的数据量。&lt;/p&gt;
+&lt;h4 id=&#34;流程&#34;&gt;流程&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;每一次 Minor Compaction 都会创建一个新的 SSTable。&lt;/li&gt;
+&lt;li&gt;如果 Minor Compaction 过程不停滞的持续进行下去，读操作可能需要合并来自多个 SSTable 的更新；否则，我们通过定期在后台执行 Merging Compaction 过程合并文件，限制这类文件的数量。&lt;/li&gt;
+&lt;li&gt;Merging Compaction 过程读取一些 SSTable 和 memtable 的内容，合并成一个新的 SSTable。只要Merging Compaction 过程完成了，输入的这些 SSTable 和 memtable 就可以删除了。&lt;/li&gt;
+&lt;li&gt;合并所有的 SSTable 并生成一个新的 SSTable 的 Merging Compaction 过程叫作 Major Compaction。由非
+Major Compaction 产生的 SSTable 可能含有特殊的删除条目，这些删除条目能够隐藏在旧的、但是依然有效的SSTable中已经删除的数据。&lt;/li&gt;
+&lt;li&gt;Major Compaction过程生成的SSTable不包含已经删除的信息或数据。&lt;/li&gt;
+&lt;li&gt;Bigtable循环扫描它所有的 Tablet，并且定期对它们执行 Major Compaction。Major Compaction 机制允许 Bigtable 回收已经删除的数据占有的资源，并且确保 BigTable 能及时清除已经删除的数据。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;优化&#34;&gt;优化&lt;/h2&gt;
+&lt;h3 id=&#34;局部性群组&#34;&gt;局部性群组&lt;/h3&gt;
+&lt;h4 id=&#34;特性&#34;&gt;特性&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;多个列族组合成一个局部性群组&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Tablet中每个局部性群组都会生成一个单独的SSTable&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;通常将不会一起访问的列族分割成不同的局部性群组可以提高读取效率&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;例如，在 Webtable表中，网页的元数据（比如语言和 Checksum）可以在一个局部性群组中，网页的内容可以在另外一个群组：当一个应用程序要读取网页的元数据的时候，它没有必要去读取所有的页面内容。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;可以以局部性群组为单位设定一些有用的调试参数&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;比如，可以把一个局部性群组设定为全部存储在内存中。Tablet 服务器依照惰性加载的策略将设定为放入内存的局部性群组的 SSTable 装载进内存。加载完成之后，访问属于该局部性群组的列族的时候就不必读取硬盘了。这个特性对于需要频繁访问的小块数据特别有用：在 Bigtable 内部，我们利用这个特性提高 METADATA 表中具有位置相关性的列族的访问速度。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;压缩&#34;&gt;压缩&lt;/h3&gt;
+&lt;h4 id=&#34;两遍压缩&#34;&gt;两遍压缩&lt;/h4&gt;
+&lt;p&gt;第一遍采用 Bentley and McIlroy’s 方式，这种方式在一个很大的扫描窗口里对常见的长字符串进行压缩。&lt;/p&gt;
+&lt;p&gt;第二遍是采用快速压缩算法，即在一个 16KB 的小扫描窗口中寻找重复数据。&lt;/p&gt;
+&lt;h3 id=&#34;通过缓存提高读操作性能&#34;&gt;通过缓存提高读操作性能&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;二级缓存&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;目的：为例提高读操作的性能&lt;/li&gt;
+&lt;li&gt;流程：
+&lt;ol&gt;
+&lt;li&gt;扫描缓存是第一级缓存，主要缓存 Tablet服务器通过 SSTable 接口获取的 Key-Value 对（对于经常要重复读取相同数据的应用程序来说，扫描缓存非常有效）&lt;/li&gt;
+&lt;li&gt;Block 缓存是二级缓存，缓存的是从 GFS 读取的 SSTable 的 Block（对于经常要读取刚刚读过的数据附近的数据的应用程序来说，Block 缓存更有用）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;bloom过滤器&#34;&gt;Bloom过滤器&lt;/h4&gt;
+&lt;p&gt;一个读操作必须读取构成 Tablet 状态的所有 SSTable 的数据。如果这些 SSTable 不在内存中，那么就需要多次访问硬盘。我们通过允许客户程序对特定局部性群组的 SSTable 指定 Bloom 过滤器来__减少硬盘访问的次数__。&lt;/p&gt;
+&lt;h4 id=&#34;commit日志的实现&#34;&gt;Commit日志的实现&lt;/h4&gt;
+&lt;p&gt;如果我们把对每个 Tablet 的操作的 Commit 日志都存在一个单独的文件的话，那么就会产生大量的文件，并且这些文件会并行的写入 GFS。根据 GFS 服务器底层文件系统实现的方案，要把这些文件写入不同的磁盘日志文件时，会有大量的磁盘 Seek 操作。另外，由于批量提交25中操作的数目一般比较少，因此，对每个Tablet 设置单独的日志文件也会给批量提交本应具有的优化效果带来很大的负面影响。&lt;/p&gt;
+&lt;p&gt;为了避免这些问题，我们__设置每个 Tablet 服务器一个 Commit 日志文件，把修改操作的日志以追加方式写入同一个日志文件__，因此__一个实际的日志文件中混合了对多个 Tablet 修改的日志记录__。&lt;/p&gt;
+&lt;p&gt;使用单个日志显著提高了普通操作的性能，但是将恢复的工作复杂化了。&lt;/p&gt;
+&lt;p&gt;为了避免多次读取日志文件：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;把日志按照关键字（table，row name，log sequence number）排序；&lt;/li&gt;
+&lt;li&gt;排序之后，对同一个 Tablet 的修改操作的日志记录就连续存放在了一起。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;因此，我们只要一次磁盘 Seek 操作， 之后顺序读取就可以。&lt;/p&gt;
+&lt;h3 id=&#34;tablet恢复提速&#34;&gt;Tablet恢复提速&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;Master 服务器将一个 Tablet 从一个 Tablet 服务器移到另外一个 Tablet 服务器时，源 Tablet 服务器会对这个 Tablet 做一次 Minor Compaction；&lt;/li&gt;
+&lt;li&gt;这个 Compaction 操作减少了 Tablet 服务器的日志文件中没有归并的记录，从而减少了恢复的时间。&lt;/li&gt;
+&lt;li&gt;Compaction 完成之后，该服务器就停止为该 Tablet 提供服务；&lt;/li&gt;
+&lt;li&gt;在卸载 Tablet 之前，源 Tablet 服务器还会再做一次（通常会很快）Minor Compaction，以消除前面在一次压缩过程中又产生的未归并的记录；&lt;/li&gt;
+&lt;li&gt;第二次 Minor Compaction 完成以后，Tablet 就可以被装载到新的 Tablet 服务器上了，并且不需要从日志中进行恢复。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;利用不变性&#34;&gt;利用不变性&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;在使用 Bigtable 时，除了 SSTable 缓存之外的其它部分产生的 SSTable 都是不变的，我们可以利用这一点对系统进行简化：例如，当从 SSTable 读取数据的时候，我们不必对文件系统访问操作进行同步，这样一来，就可以非常高效的实现对行的并行操作；&lt;/li&gt;
+&lt;li&gt;memtable 是唯一一个能被读和写操作同时访问的可变数据结构；&lt;/li&gt;
+&lt;li&gt;对内存表采用 COW(Copy-on-write)机制，这样就允许读写操作并行执行；&lt;/li&gt;
+&lt;li&gt;可以把永久删除被标记为“删除”的数据的问题，转换成对废弃的SSTable 进行垃圾收集的问题；&lt;/li&gt;
+&lt;li&gt;每个 Tablet 的 SSTable 都在 METADATA 表中注册了Master 服务器采用“标记-删除”的垃圾回收方式删除 SSTable 集合中废弃的 SSTable；&lt;/li&gt;
+&lt;li&gt;METADATA 表保存了 Root SSTable的集合；&lt;/li&gt;
+&lt;li&gt;SSTable 的不变性使得分割 Tablet 的操作非常快捷。我们不必为每个分割出来的 Tablet 建立新的SSTable 集合，而是共享原来的 Tablet 的 SSTable 集合。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;译者&#34;&gt;译者&lt;/h2&gt;
+&lt;p&gt;作者/编著者：&lt;/p&gt;
+&lt;p&gt;阎伟&lt;/p&gt;
+&lt;p&gt;邮件: &lt;a class=&#34;link&#34; href=&#34;mailto:andy.yanwei@163.com&#34; &gt;andy.yanwei@163.com&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;博客: &lt;a class=&#34;link&#34; href=&#34;http://andyblog.sinaapp.com&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;http://andyblog.sinaapp.com&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;微博：http://weibo.com/2152410864&lt;/p&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>故障注入 on Li Duo</title>
+        <link>https://lizonglingo.github.io/categories/%E6%95%85%E9%9A%9C%E6%B3%A8%E5%85%A5/</link>
+        <description>Recent content in 故障注入 on Li Duo</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-CN</language>
+        <lastBuildDate>Mon, 14 Mar 2022 19:12:33 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/categories/%E6%95%85%E9%9A%9C%E6%B3%A8%E5%85%A5/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>3MileBeach: A Tracer with Teeth</title>
+        <link>https://lizonglingo.github.io/p/3milebeach-a-tracer-with-teeth/</link>
+        <pubDate>Mon, 14 Mar 2022 19:12:33 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/3milebeach-a-tracer-with-teeth/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源：ACM SoCC&#39;21&lt;/p&gt;
+&lt;p&gt;作者：UC Santa Cruz&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;摘要&#34;&gt;摘要&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;提出&lt;em&gt;3MileBeach&lt;/em&gt;，一个针对微服务架构的追踪和故障注入平台。&lt;/li&gt;
+&lt;li&gt;通过介入一个消息序列化库，避免了代码层面的监控（这是传统的追踪和故障注入会做的），可以提供更细粒度的追踪和故障注入。&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;3MileBeach&lt;/em&gt;提供了一个消息级别的分布式追踪，其开销只有最先进追踪框架的一半；提供故障注入比现有方案有更高的精度。&lt;/li&gt;
+&lt;li&gt;使用&lt;em&gt;3MileBeach&lt;/em&gt;进行一种新型故障注入&lt;em&gt;Temporal Fault Injection&lt;/em&gt;（TFI）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;追踪和故障注入现存的问题&#34;&gt;追踪和故障注入现存的问题&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;运行时开销和工作量过大；&lt;/li&gt;
+&lt;li&gt;对异构应用程序和基础代码，基础设置的入侵性改动；&lt;/li&gt;
+&lt;li&gt;微服务组件以不同的语言进行设计，之间使用不同的通信机制；&lt;/li&gt;
+&lt;li&gt;故障注入需要在精度、粒度和成本上进行取舍。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;3milebeach的能力&#34;&gt;3MileBeach的能力&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;其只需要应用程序级的插件就能实现功能；&lt;/li&gt;
+&lt;li&gt;提供细粒度的追踪，比最先进的技术节省25%~50%的成本；&lt;/li&gt;
+&lt;li&gt;提供丰富且严格的跟踪指标；&lt;/li&gt;
+&lt;li&gt;支持大规模并发故障注入，适用于生产环境；&lt;/li&gt;
+&lt;li&gt;实现新型故障注入模式TFI，这基于时序谓词（nlp中的技术），可以识别可能处于休眠状态中的技术。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;motivation&#34;&gt;Motivation&lt;/h2&gt;
+&lt;p&gt;目前最先进的分布式系统故障注入存在两个基础的问题：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;存在对细粒度、并发测试、不受blast radius影响的需求；&lt;/li&gt;
+&lt;li&gt;现有的故障注入技术没有足够的表现力。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;time-of-check-to-time-of-usertocttou-error&#34;&gt;Time of Check to Time of User(TOCTTOU error)&lt;/h3&gt;
+&lt;p&gt;假设一个在线购物平台存在如下问题，用户准备为购物车的物品付款时调用前端：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;前端发送一条消息给信用卡服务来验证（一个下游服务用来验证用户信用卡信息）；&lt;/li&gt;
+&lt;li&gt;如果验证成功，前端会发送信息给商品服务来计算费用；&lt;/li&gt;
+&lt;li&gt;计算完成后再次调用信用服务，扣除费用。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;试想这种情况：第一次调用信用卡服务成功，通过验证，而第二次（提出扣费申请时）发送了一个错误请求。&lt;/p&gt;
+&lt;p&gt;简单来说，同一个服务在一小段时间后从可用状态变为不可用。&lt;/p&gt;
+&lt;h3 id=&#34;temporal-discretization&#34;&gt;Temporal Discretization&lt;/h3&gt;
+&lt;p&gt;大多数故障注入工具没有考虑到时间维度上的故障。&lt;/p&gt;
+&lt;p&gt;首先，时间是一个连续的概念，往往考虑在请求的生命周期里发生故障，而忽略在发送请求时刻、流传输中发生故障；在一个确定时间引入故障或许没有什么意义。&lt;/p&gt;
+&lt;p&gt;以上述案例为例，将前端服务视为黑盒，可以观察到信用卡服务可能不可用的四个离散的逻辑时间：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;在前端的第一次请求到来之前；&lt;/li&gt;
+&lt;li&gt;在前端第一次请求到来之后，信用卡服务返回响应之前；&lt;/li&gt;
+&lt;li&gt;在信用卡服务返回第一次响应之后，和前端请求第二次到来之前；&lt;/li&gt;
+&lt;li&gt;在前端第二次请求到来之后，信用卡服务返回第二次响应之前。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;如果以粗粒度来看，前端调用信用卡服务发生的错误实际上又&lt;strong&gt;可以分为粒度更小的四种导致错误的原因&lt;/strong&gt;。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;h3 id=&#34;communication-is-the-thing&#34;&gt;Communication is The Thing&lt;/h3&gt;
+&lt;p&gt;3MileBeach为能够达成细粒度故障注入，从消息序列化、反序列化入手。例如从gRPC请求转换为HTTP请求，存在Protocol Buffer到JSON的序列化和反序列化过程。&lt;strong&gt;在该过程中添加元数据来装饰消息，以跟踪每个消息的上下文&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;因为远程服务的故障总是表现为服务边界出现的延迟、报错等错误。通过错误处理，避免引发blast radius，从而可以实现并发测试。&lt;/p&gt;
+&lt;p&gt;通过对第三方库的修改（增加请求和响应消息的上下文传播），来对事件进行持续跟踪，记录完整的服务调用历程。&lt;/p&gt;
+&lt;p&gt;通过故障注入逻辑检查这些数据，就可以得知以下信息：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;错误来自哪一个请求？which&lt;/li&gt;
+&lt;li&gt;当前是哪一个服务遇到了错误？where&lt;/li&gt;
+&lt;li&gt;注入的是什么服务？how&lt;/li&gt;
+&lt;li&gt;故障何时被注入？when&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;实现&#34;&gt;实现&lt;/h2&gt;
+&lt;h3 id=&#34;架构抽象&#34;&gt;架构抽象&lt;/h3&gt;
+&lt;p&gt;下图定义了边界组件模型，即微服务框架和服务处理程序之间的边界。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220312124636575.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220312124636575&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;大多数微服务框架都提供了服务处理handler和边界组件的交互方式。&lt;/p&gt;
+&lt;p&gt;Panorama [40] 通过将可观察性抽象为直接调用处理程序函数的方向和以（输入/输出）队列/代理作为缓存层的异步调用处理程序函数的间接性，引入了组件交互的四种设计模式。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Full direction。所有的函数被分配到一个线程，在该线程中依次调用入站操作、处理请求、出站操作。&lt;/li&gt;
+&lt;li&gt;Inbound indirection。在被工作线程选择之前，将入站消息存到队列中，当出站组件调用时，被唤醒执行。&lt;/li&gt;
+&lt;li&gt;Outbound indirection。入站组件和服务handler直接在一个工作线程中调用，处理后将消息放到出站线程队列等待被网络运输。&lt;/li&gt;
+&lt;li&gt;Full indirection。将入站和出站的消息都放入队列进行调度，中间通过服务handler和网络请求唤醒调用。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;第2，3，4种做法都实现了上下文传播机制，可以通过handler和边界组件传递身份信息。&lt;/p&gt;
+&lt;p&gt;因此3MileBeach选择上述的上下文传播的设计模式。&lt;/p&gt;
+&lt;p&gt;入站组件对从网络来的row message进行反序列化，调用service handler。出站组件将处理后的message进行序列化。&lt;/p&gt;
+&lt;p&gt;对数据流进行两种抽象：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Direct Response Circle（&lt;strong&gt;DRC&lt;/strong&gt;）；&lt;/li&gt;
+&lt;li&gt;Synchronized Request-Response Circle（&lt;strong&gt;SRC&lt;/strong&gt;）。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;数据结构&#34;&gt;数据结构&lt;/h3&gt;
+&lt;p&gt;将负载命名为&lt;em&gt;3mb-payload&lt;/em&gt;，具体实现称为&lt;strong&gt;Trace&lt;/strong&gt;。Trace是一个高层数据结构，由以下三部分组成：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;一系列的事件（Event-s）；&lt;/li&gt;
+&lt;li&gt;必要的追踪元数据（如ID），来帮助3MileBeach为追踪识别和组装事件；&lt;/li&gt;
+&lt;li&gt;一个故障注入配置列表（fault injection configuration-s，FIC-s）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;event&#34;&gt;Event&lt;/h4&gt;
+&lt;p&gt;Event记录了一个事件的必要信息，从中可以知道在什么时候那哪个服务接收或者发送了一个请求或一个响应，并且具体的服务名字。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Timestamp&lt;/li&gt;
+&lt;li&gt;Service&lt;/li&gt;
+&lt;li&gt;Action&lt;/li&gt;
+&lt;li&gt;MessageType&lt;/li&gt;
+&lt;li&gt;Name&lt;/li&gt;
+&lt;li&gt;UUID&lt;/li&gt;
+&lt;li&gt;&amp;hellip;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如下图所示，有4个事件联系到同一个UUID，指明一个SRC。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220312135514421.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220312135514421&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;其中两个由Svc1记录，一个是在Svc1发送请求时记录的，另一个是在Svc1接收响应时记录的。&lt;/p&gt;
+&lt;h4 id=&#34;fault-injection-configuration&#34;&gt;Fault Injection Configuration&lt;/h4&gt;
+&lt;p&gt;使用FIC来描述一个TFI和RLFI（Request Level Fault Injection）测试案例。&lt;/p&gt;
+&lt;p&gt;考虑一个应用由n个服务组成。RLFI在客户端级请求生命周期中将故障注入服务。我们使用FIC{Type: Crash, Name: Svc_i}来表示服务i的故障。为测试所有的崩溃模式，RLFI的实验空间有$2^n$个。但是在模拟客户端级别的请求时，不需要调用全部的微服务。例如有m个服务不会被调用，实际上只需要调用$2^{n-m}$个案例。&lt;/p&gt;
+&lt;p&gt;在TFI中，根据逻辑时序在某个测试的执行期间模拟故障。文章使用&lt;strong&gt;After&lt;/strong&gt;，这是一个&lt;strong&gt;TFIMetas&lt;/strong&gt;列表，用此存储故障的临时先决条件。TFI 可以触发的故障空间是RLFI故障空间的超集，因为当After为空时，RLFI是TFI的特例。&lt;/p&gt;
+&lt;p&gt;另外通过时间离散化，FIC可以大大减少TFI的测试空间。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;如上图 ，Svc1在处理客户端请求时，从Svc0处接收到Req1和Req2。RLFI只判断这两个请是成功还是失败。如果希望Req2失败而不影响Req1，我们模拟的错误应发生在t1-t2时，而在t3之后结束。&lt;/p&gt;
+&lt;p&gt;而TFI通过模拟崩溃时间来缩减故障的注入时间段，即在t1-t2之间注入故障，使用如下FIC来描述：FIC{Type: Crash, Name: Req2, After: [TFIMeta{Name: Req1, Times:1}]}。&lt;/p&gt;
+&lt;h3 id=&#34;算法&#34;&gt;算法&lt;/h3&gt;
+&lt;p&gt;本部分主要讲如何通过序列化&lt;em&gt;3mb-payload&lt;/em&gt;来接入边界组件，以及重写序列化函数在数据流中的作用。&lt;/p&gt;
+&lt;h4 id=&#34;interpose-via-serialization-functions&#34;&gt;Interpose via Serialization Functions&lt;/h4&gt;
+&lt;p&gt;为追踪处理客户端请求的服务，3MileBeach扩展了序列化函数，叫做&lt;strong&gt;Deserialize’ Serialize’&lt;/strong&gt;。使用存储S来存储追踪的上下文对象Ctx。Ctx来源于现存的上下文传播机制，携带了请求的元数据。&lt;/p&gt;
+&lt;p&gt;在入站组件中，3MileBeach从入站消息获取ID，并将ID分配给Ctx（算法1）。当服务handler发送请求时，3MileBeach将观测到的追踪数据（这个数据存在S中）附加在出站消息中（算法2）。下表中有相关的关键函数。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220313151022017.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220313151022017&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h4 id=&#34;serialization-functions-and-data-flows&#34;&gt;Serialization Functions and Data Flows&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;Direct Response Circle (DRC)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;框架从上游服务或client接收请求；&lt;/li&gt;
+&lt;li&gt;入站组件唤醒Deserialize’将请求反序列化，将事件作为追踪记录，并存储到S中，将追踪元数据写到Ctx中；&lt;/li&gt;
+&lt;li&gt;框架调用服务handler并等待调用结束;&lt;/li&gt;
+&lt;li&gt;框架收到响应；&lt;/li&gt;
+&lt;li&gt;出站组件唤醒Serialize’，并从S中检索追踪Ctx的元数据，追加到发送事件，序列化响应；&lt;/li&gt;
+&lt;li&gt;框架返回响应到上游服务或client。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;Synchronized Request-Response Circle (SRC)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;服务handler通过阻塞函数调用发送一个请求到下游服务；&lt;/li&gt;
+&lt;li&gt;出站组件唤醒Serialize’，从S和Ctx中检索追踪数据，这些数据是微服务从上游服务或client的SEND事件中来的，模拟了故障信息。调用序列化函数对消息进行序列化；&lt;/li&gt;
+&lt;li&gt;框架发送请求给下游服务并等待响应；&lt;/li&gt;
+&lt;li&gt;框架收到下游的响应；&lt;/li&gt;
+&lt;li&gt;入站请求唤醒Deserialize将响应反序列化，追加事件并存储；&lt;/li&gt;
+&lt;li&gt;服务handler会接受响应。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220313155122436.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220313155122436&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220313155136954.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220313155136954&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h4 id=&#34;fault-simulation&#34;&gt;Fault Simulation&lt;/h4&gt;
+&lt;p&gt;3MileBeach通过模拟下游的外部可观测错误来实现故障注入，从请求者的角度来看，这些错误可能是由于网络问题或者返回响应的handler产生。&lt;/p&gt;
+&lt;p&gt;3MileBeach不会因为故障测试而崩溃或者重启，因此可以执行并发测试，也能控制blast radius。&lt;/p&gt;
+&lt;p&gt;典型的SRC包括两个服务和两个数据流。（Requester Responder ReqFlow RespFlow）。故障触发时，requester不能知道下游的故障根源，这取决于具体的实现，它能知道这些错误的返回码，例如timeout、connection closed、package loss等，依次证实的确发现了问题。&lt;/p&gt;
+&lt;p&gt;3MileBeach在FICs定义的故障触发条件得到满足时触发故障。&lt;/p&gt;
+&lt;h2 id=&#34;实验&#34;&gt;实验&lt;/h2&gt;
+&lt;p&gt;测量3MileBeach框架的端到端的延迟来展示其效率表现，并提供两个本地案例。&lt;/p&gt;
+&lt;h3 id=&#34;实验设置&#34;&gt;实验设置&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;演示程序：Hipster Shop，一个部署在GKE上的微服务程序。&lt;/li&gt;
+&lt;li&gt;客户端生成测试用例来进行跟踪和故障注入、应用性能调整及错误定位。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;hipster-shop&#34;&gt;Hipster Shop&lt;/h4&gt;
+&lt;p&gt;包含以下微服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Frontend - &lt;strong&gt;Svc_fe&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;CART - &lt;strong&gt;Svc_cart&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;Recommendation&lt;/li&gt;
+&lt;li&gt;ProductCatalog - &lt;strong&gt;Svc_p&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;Shipping&lt;/li&gt;
+&lt;li&gt;Currency - &lt;strong&gt;Svc_c&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;Payment&lt;/li&gt;
+&lt;li&gt;Email&lt;/li&gt;
+&lt;li&gt;Checkout&lt;/li&gt;
+&lt;li&gt;Ad - &lt;strong&gt;Svc_a&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;涉及到的序列化库有：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;JSON&lt;/li&gt;
+&lt;li&gt;PROTOCOL&lt;/li&gt;
+&lt;li&gt;RESTFUL&lt;/li&gt;
+&lt;li&gt;GRPC&lt;/li&gt;
+&lt;li&gt;GORILLA等&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;开发语言：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;GO&lt;/li&gt;
+&lt;li&gt;C#&lt;/li&gt;
+&lt;li&gt;Node.js&lt;/li&gt;
+&lt;li&gt;Python&lt;/li&gt;
+&lt;li&gt;Java&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;综上，可以看出这个应用很适合作为microservice的代表来对3MileBeach进行测试。&lt;/p&gt;
+&lt;h4 id=&#34;clusters&#34;&gt;Clusters&lt;/h4&gt;
+&lt;p&gt;集群情况如下：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;h4 id=&#34;client&#34;&gt;Client&lt;/h4&gt;
+&lt;p&gt;客户端在不同级别的并发下向Svc_fe发送请求，使用N来确定并发数。同时，将应用和Client部署在一个集群上以最大程度减少网络延迟。&lt;/p&gt;
+&lt;h3 id=&#34;tracing-benchmark&#34;&gt;Tracing Benchmark&lt;/h3&gt;
+&lt;p&gt;本部分涉及到链路追踪情况，主要考察增加链路追踪给系统带来的延迟上的开销。通过并发测量端到端延迟来比较。&lt;/p&gt;
+&lt;p&gt;在进行追踪时势必会给系统增加开销，因此在这方面进行比较，与Jaeger框架进行比较。以下为延迟情况以及延迟和吞吐量之间的关系。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220314162513457.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220314162513457&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h3 id=&#34;fault-injection&#34;&gt;Fault Injection&lt;/h3&gt;
+&lt;p&gt;为测试3MileBeach对TFI测试的速度，在Svc_fe中设计了两个bug：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;DEEPRLFI。它在Svc_a和Svc_c都关闭时可以触发，不受事件影响。所以需要使用&lt;em&gt;3mb-payloads&lt;/em&gt;来同时触发Svc_a和Svc_c的崩溃。&lt;/li&gt;
+&lt;li&gt;SimpleTFI。是一个TOCTTOU bug。为了触发这个问题，需要让请求携带可以使Svc_c崩溃的&lt;em&gt;3mb-payloads&lt;/em&gt;。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;通过下面几个图详细说明：&lt;/p&gt;
+&lt;p&gt;（a）第一次调用Svc_c，Svc_fe可以容错；若Svc_c可访问，Svc_fe会认为在整个过程中Svc_c都是可以工作的；反正，Svc_fe会执行回退策略，使用默认的价钱。注意红色！的位置，Currency没有正常返回数据，但Svc_fe最终仍可以正常运行完，参考最后的绿色箭头。使用RLFI去模拟Svc_c的崩溃可以得到对应的结果。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220314163636670.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220314163636670&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;（b）当Svc_a不可用时，Svc_fe会应用回退策略，使用默认的广告推荐，并继续向Svc_c发送请求进行结算。使用RLFI去模拟Svc_a的崩溃可以得到对应的结果。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220314163715311.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220314163715311&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;（c）由上面两张图看出，在Currency和Ad二者中，只有一个出现问题时并不会引发Frontend的崩溃。下图则表示当Ad和Currency都崩溃时，Fronted才会崩。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220314163733335.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220314163733335&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220314163756339.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220314163756339&#34;
+	
+	
+&gt;&lt;/p&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

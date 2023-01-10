@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='拖拖拉拉，昨天终于写完核心算法，UI界面几乎没写，估计开学会被导师mao一顿。说一下python GUI大家最好不要去动TK，前些日子找官方文'>
+<title>Python模拟操作系统处理机调度</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/python%E6%A8%A1%E6%8B%9F%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%A4%84%E7%90%86%E6%9C%BA%E8%B0%83%E5%BA%A6/'>
+
+<link rel="stylesheet" href="/scss/style.min.8191399262444ab68b72a18c97392f5349be20a1615d77445be51e974c144cff.css"><meta property='og:title' content='Python模拟操作系统处理机调度'>
+<meta property='og:description' content='拖拖拉拉，昨天终于写完核心算法，UI界面几乎没写，估计开学会被导师mao一顿。说一下python GUI大家最好不要去动TK，前些日子找官方文'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/python%E6%A8%A1%E6%8B%9F%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%A4%84%E7%90%86%E6%9C%BA%E8%B0%83%E5%BA%A6/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='操作系统' /><meta property='article:published_time' content='2019-02-19T09:06:30&#43;08:00'/><meta property='article:modified_time' content='2019-02-19T09:06:30&#43;08:00'/>
+<meta name="twitter:title" content="Python模拟操作系统处理机调度">
+<meta name="twitter:description" content="拖拖拉拉，昨天终于写完核心算法，UI界面几乎没写，估计开学会被导师mao一顿。说一下python GUI大家最好不要去动TK，前些日子找官方文">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description">子标题</h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://twitter.com'
+                        target="_blank"
+                        title="Twitter"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#算法概览">算法概览</a></li>
+    <li><a href="#核心算法">核心算法</a>
+      <ul>
+        <li><a href="#定义进程数据结构">定义进程数据结构</a></li>
+        <li><a href="#fcfs-先来先服务">FCFS 先来先服务</a></li>
+        <li><a href="#scf-静态优先权优先调度算法">SCF 静态优先权优先调度算法</a></li>
+        <li><a href="#sjf-短作业优先">SJF 短作业优先</a></li>
+        <li><a href="#srtf-最短剩余时间优先">SRTF 最短剩余时间优先</a></li>
+        <li><a href="#hrrn-最高响应比优先">HRRN 最高响应比优先</a></li>
+        <li><a href="#rr-轮转法调度">RR 轮转法调度</a></li>
+        <li><a href="#mfq-多级反馈队列调度算法">MFQ 多级反馈队列调度算法</a></li>
+        <li><a href="#测试样例">测试样例</a></li>
+      </ul>
+    </li>
+    <li><a href="#小结">小结</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" >
+                操作系统
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/python%E6%A8%A1%E6%8B%9F%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%A4%84%E7%90%86%E6%9C%BA%E8%B0%83%E5%BA%A6/">Python模拟操作系统处理机调度</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Feb 19, 2019</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 9 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>拖拖拉拉，昨天终于写完核心算法，UI界面几乎没写，估计开学会被导师mao一顿。说一下python GUI大家最好不要去动TK，前些日子找官方文档查方法体验非常差，而且网上的教程写的乱七八糟。有兴趣的话大家可以学习PyQt，这是一个跨平台的GUI，除了python，好多语言都有自己的版本，可以移植性比较高。重要的是有前辈翻译的官方文档，也会一直更新，后期会如果有时间会放上链接及相关教程。</p>
+<p>这一篇是关于如何用python语言模拟常见的处理机调度，我这么菜是当然不会有UI界面的···</p>
+</blockquote>
+<h1 id="python模拟操作系统处理机调度">Python模拟操作系统处理机调度</h1>
+<h2 id="算法概览">算法概览</h2>
+<ul>
+<li>FCFS 现来先服务调度算法</li>
+<li>SCF 这个是我起的英文名··· 其实就是 static class first 静态优先权优先调度算法</li>
+<li>SJF 短作业优先</li>
+<li>SRTF 最短剩余时间优先</li>
+<li>HRRN 最高响应比优先</li>
+<li>RR 轮转法</li>
+<li>MFQ 多级反馈队列调度算法</li>
+</ul>
+<p>一共以上七种常见调度算法，其中既包括作业调度，也包括进程调度。</p>
+<ul>
+<li>作业调度：FCFS SJF SCF SRTF HRRN</li>
+<li>进程调度：RR MFQ</li>
+</ul>
+<p>其中又分为抢占式和非抢占式，这里就不详细说了。</p>
+<h2 id="核心算法">核心算法</h2>
+<h3 id="定义进程数据结构">定义进程数据结构</h3>
+<blockquote>
+<p>为了统一所有算法使用的数据类型，我们有必要统一进程的属性，结构</p>
+</blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Process</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, name, arrive_time, serve_time, static_class<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>, ready <span style="color:#f92672">=</span> <span style="color:#66d9ef">False</span>, over<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>name <span style="color:#f92672">=</span> name  <span style="color:#75715e"># 进程名</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>arrive_time <span style="color:#f92672">=</span> arrive_time  <span style="color:#75715e"># 到达时间</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>serve_time <span style="color:#f92672">=</span> serve_time  <span style="color:#75715e"># 需要服务的时间</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">=</span> serve_time  <span style="color:#75715e"># 剩余需要服务的时间</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>finish_time <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>  <span style="color:#75715e"># 完成时间</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>cycling_time <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>  <span style="color:#75715e"># 周转时间</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>w_cycling_time <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>  <span style="color:#75715e"># 带权周转时间</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>static_class <span style="color:#f92672">=</span> static_class <span style="color:#75715e"># 静态优先级</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>response_ratio <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span> <span style="color:#75715e"># 响应比</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>  <span style="color:#75715e"># 定义现在所在的队列</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>pre_queue_tb <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span> <span style="color:#75715e"># 目前所在的队列（多级反馈队列使用）</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>used_time <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span> <span style="color:#75715e"># 进程已经进行了多少时间</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>ready <span style="color:#f92672">=</span> ready <span style="color:#75715e"># 进程是否就绪</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>over <span style="color:#f92672">=</span> over <span style="color:#75715e"># 进程是否进行完成</span>
+</span></span></code></pre></div><h3 id="fcfs-先来先服务">FCFS 先来先服务</h3>
+<blockquote>
+<p>顾名思义，先到达的作业先处理</p>
+</blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">FCFS</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, processes_):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>processes <span style="color:#f92672">=</span> processes_
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">fcfs</span>(self): <span style="color:#75715e"># 到达时间小的优先</span>
+</span></span><span style="display:flex;"><span>        processes <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>processes
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 新建输出队列</span>
+</span></span><span style="display:flex;"><span>        over_list <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>        min_key <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> processes:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(processes)):
+</span></span><span style="display:flex;"><span>                min <span style="color:#f92672">=</span> processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>arrive_time
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> processes[i]<span style="color:#f92672">.</span>arrive_time <span style="color:#f92672">&lt;=</span> min:
+</span></span><span style="display:flex;"><span>                    min <span style="color:#f92672">=</span> processes[i]<span style="color:#f92672">.</span>arrive_time
+</span></span><span style="display:flex;"><span>                    min_key <span style="color:#f92672">=</span> i
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            over_list<span style="color:#f92672">.</span>append(processes<span style="color:#f92672">.</span>pop(min_key))
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(over_list)):
+</span></span><span style="display:flex;"><span>            print(over_list[i]<span style="color:#f92672">.</span>name)
+</span></span></code></pre></div><p>当初始队列不为空时，进行循环，比较所有作业的到达时间，每次循环把到达时间最小的作业出队列，并入输出队列over_list，最后输出队列的顺序就是处理作业的顺序。</p>
+<h3 id="scf-静态优先权优先调度算法">SCF 静态优先权优先调度算法</h3>
+<blockquote>
+<p>这里我们假设静态优先级是人为赋予的，在生成的作业说明书里就有，所以算法思想和现来先服务是一样的，在已经到达的作业队列中选取优先级最高的作业进行调度。</p>
+<p>天哪改完了，因为刚才我在写的时候突然想到我写错了，我犯的错误是在进行优先级比较时，没有分哪些是已经到达的作业哪些是还未到达的作业。</p>
+</blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">SJF</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, processes_):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>processes <span style="color:#f92672">=</span> processes_
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">sjf</span>(self): <span style="color:#75715e"># 静态优先级高的优先，人为赋予</span>
+</span></span><span style="display:flex;"><span>        processes <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>processes
+</span></span><span style="display:flex;"><span>        pre_processes <span style="color:#f92672">=</span> [] <span style="color:#75715e"># 就绪队列</span>
+</span></span><span style="display:flex;"><span>        over_processes <span style="color:#f92672">=</span> [] <span style="color:#75715e"># 输出队列</span>
+</span></span><span style="display:flex;"><span>        pre_processes<span style="color:#f92672">.</span>append(processes[<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span>        number <span style="color:#f92672">=</span> len(processes)
+</span></span><span style="display:flex;"><span>        flag <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span> <span style="color:#75715e"># 记录作业完成数量</span>
+</span></span><span style="display:flex;"><span>        max_key <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>        running_time <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> flag <span style="color:#f92672">!=</span> number: <span style="color:#75715e"># 所有作业都完成时结束循环</span>
+</span></span><span style="display:flex;"><span>            max_key <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span> <span style="color:#75715e"># 优先级最高进程的下标</span>
+</span></span><span style="display:flex;"><span>            max <span style="color:#f92672">=</span> pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>static_class <span style="color:#75715e"># 最高优先级</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> k <span style="color:#f92672">in</span> range(len(pre_processes)): <span style="color:#75715e"># 在当前就绪队列中选出优先级最高的作业</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> pre_processes[k]<span style="color:#f92672">.</span>static_class <span style="color:#f92672">&gt;</span> max:
+</span></span><span style="display:flex;"><span>                    max <span style="color:#f92672">=</span> pre_processes[k]<span style="color:#f92672">.</span>static_class
+</span></span><span style="display:flex;"><span>                    max_key <span style="color:#f92672">=</span> k
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> j <span style="color:#f92672">in</span> range(pre_processes[max_key]<span style="color:#f92672">.</span>serve_time): <span style="color:#75715e"># 在当前所要处理的作业的服务时间里</span>
+</span></span><span style="display:flex;"><span>                pre_processes[max_key]<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                running_time <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> pre_processes[max_key]<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>: <span style="color:#75715e"># 剩余服务时间为零，弹出进入完成队列</span>
+</span></span><span style="display:flex;"><span>                    flag <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                    over_processes<span style="color:#f92672">.</span>append(pre_processes<span style="color:#f92672">.</span>pop(max_key))
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(number): <span style="color:#75715e"># 每一时刻是否有到达作业将其入队</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> processes[i]<span style="color:#f92672">.</span>arrive_time <span style="color:#f92672">==</span> running_time:
+</span></span><span style="display:flex;"><span>                        pre_processes<span style="color:#f92672">.</span>append(processes[i])
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(over_processes)): <span style="color:#75715e"># 按照作业完成顺序输出</span>
+</span></span><span style="display:flex;"><span>            print(over_processes[i]<span style="color:#f92672">.</span>name)
+</span></span></code></pre></div><h3 id="sjf-短作业优先">SJF 短作业优先</h3>
+<blockquote>
+<p>短作业优先调度算法思想和静态优先权优先的思想一样，只是选取就绪进程中，所需要的服务时间最小的作业优先调度。</p>
+</blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">SJF</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, processes_):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>processes <span style="color:#f92672">=</span> processes_
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">sjf</span>(self):
+</span></span><span style="display:flex;"><span>        processes <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>processes
+</span></span><span style="display:flex;"><span>        flag <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span> <span style="color:#75715e"># 记录已完成的进程数量</span>
+</span></span><span style="display:flex;"><span>        time <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span> <span style="color:#75715e"># 模拟时钟技术</span>
+</span></span><span style="display:flex;"><span>        current_process <span style="color:#f92672">=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span> <span style="color:#75715e"># 记录当前正在执行的进程下标</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span>(flag<span style="color:#f92672">!=</span><span style="color:#ae81ff">5</span>):
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> current_process <span style="color:#f92672">!=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>:  <span style="color:#75715e"># 此时有进程在执行</span>
+</span></span><span style="display:flex;"><span>                processes[current_process]<span style="color:#f92672">.</span>used_time <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> processes[current_process]<span style="color:#f92672">.</span>used_time <span style="color:#f92672">==</span> processes[current_process]<span style="color:#f92672">.</span>handle_time:
+</span></span><span style="display:flex;"><span>                    print(<span style="color:#e6db74">&#39;进程&#39;</span> <span style="color:#f92672">+</span> processes[current_process]<span style="color:#f92672">.</span>name <span style="color:#f92672">+</span> <span style="color:#e6db74">&#39;处理完毕！&#39;</span>)
+</span></span><span style="display:flex;"><span>                    flag <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                    processes[current_process]<span style="color:#f92672">.</span>over <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e"># current_process = -1</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(processes)):
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> time <span style="color:#f92672">==</span> processes[i]<span style="color:#f92672">.</span>arrive_time:
+</span></span><span style="display:flex;"><span>                    processes[i]<span style="color:#f92672">.</span>ready <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>            min_handle <span style="color:#f92672">=</span> <span style="color:#ae81ff">100</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(processes)):
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> processes[i]<span style="color:#f92672">.</span>ready <span style="color:#f92672">==</span> <span style="color:#66d9ef">True</span> <span style="color:#f92672">and</span> processes[i]<span style="color:#f92672">.</span>over <span style="color:#f92672">==</span> <span style="color:#66d9ef">False</span>: 
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e"># 表示进程到达且未被处理完，用了ready和over两属性，而没有使用就绪队列和完成队列来标识</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> current_process <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>:
+</span></span><span style="display:flex;"><span>                        min_handle <span style="color:#f92672">=</span> processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>handle_time
+</span></span><span style="display:flex;"><span>                        current_process <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">if</span> processes[current_process]<span style="color:#f92672">.</span>over <span style="color:#f92672">==</span> <span style="color:#66d9ef">True</span>:
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(processes)):
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">if</span> processes[i]<span style="color:#f92672">.</span>ready <span style="color:#f92672">==</span> <span style="color:#66d9ef">True</span> <span style="color:#f92672">and</span> processes[i]<span style="color:#f92672">.</span>over <span style="color:#f92672">==</span> <span style="color:#66d9ef">False</span>:
+</span></span><span style="display:flex;"><span>                                    <span style="color:#66d9ef">if</span>  processes[i]<span style="color:#f92672">.</span>handle_time <span style="color:#f92672">&lt;=</span> min_handle:
+</span></span><span style="display:flex;"><span>                                        current_process <span style="color:#f92672">=</span> i
+</span></span><span style="display:flex;"><span>                                        min_handle <span style="color:#f92672">=</span> processes[i]<span style="color:#f92672">.</span>handle_time
+</span></span><span style="display:flex;"><span>            time <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span></code></pre></div><h3 id="srtf-最短剩余时间优先">SRTF 最短剩余时间优先</h3>
+<blockquote>
+<p>其实前面大家可能注意到了，每个算法都有一个模拟时钟计数，每次time+=1就是过了一秒钟，即在第几秒那一时刻发生的动作。在这个算法中，我们不仅要注意每一秒执行哪一个作业，还要注意每一秒哪一个作业到达，更要计算每一秒，到达的作业中哪一个需要的服务时间剩的最短。所以每一秒钟执行的作业都可能不一样。</p>
+</blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> copy <span style="color:#75715e"># 使用了copy，体验一下···</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">SRTF</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, processes_):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>processes <span style="color:#f92672">=</span> processes_
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">srtf</span>(self):
+</span></span><span style="display:flex;"><span>        processes <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>processes
+</span></span><span style="display:flex;"><span>        flag <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span> <span style="color:#75715e"># 记录已经处理完成的作业</span>
+</span></span><span style="display:flex;"><span>        time <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span> <span style="color:#75715e"># 模拟时间计数器</span>
+</span></span><span style="display:flex;"><span>        current_process <span style="color:#f92672">=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span> <span style="color:#75715e"># 记录当前作业的下标，如果为-1表示当前没有作业在执行</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 主循环，已经操作完成的作业数等于所有作业时结束循环</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span>(flag <span style="color:#f92672">!=</span> len(processes)):
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> current_process <span style="color:#f92672">!=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>:
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e"># 表示有作业正在执行</span>
+</span></span><span style="display:flex;"><span>                processes[current_process]<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> processes[current_process]<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>:
+</span></span><span style="display:flex;"><span>                    print(<span style="color:#e6db74">&#39;进程&#39;</span> <span style="color:#f92672">+</span> processes[current_process]<span style="color:#f92672">.</span>name <span style="color:#f92672">+</span> <span style="color:#e6db74">&#39;处理完毕！&#39;</span>)
+</span></span><span style="display:flex;"><span>                    flag <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                    processes[current_process]<span style="color:#f92672">.</span>over <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>                    current_process <span style="color:#f92672">=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>    <span style="color:#75715e"># 需要重置为-1</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># 判断此时刻是否有新的作业进入就绪队列等待处理</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(processes)):
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> time <span style="color:#f92672">==</span> processes[i]<span style="color:#f92672">.</span>arrive_time:
+</span></span><span style="display:flex;"><span>                    processes[i]<span style="color:#f92672">.</span>ready <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># 寻找剩余时间最少的作业并进行调度</span>
+</span></span><span style="display:flex;"><span>            min_time_remain <span style="color:#f92672">=</span> <span style="color:#ae81ff">100</span> <span style="color:#75715e"># 假设所有作业的剩余时间都不会超过100</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(processes)):
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> processes[i]<span style="color:#f92672">.</span>ready <span style="color:#f92672">==</span> <span style="color:#66d9ef">True</span> <span style="color:#f92672">and</span> processes[i]<span style="color:#f92672">.</span>over <span style="color:#f92672">==</span> <span style="color:#66d9ef">False</span>:
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> (processes[i]<span style="color:#f92672">.</span>left_serve_time) <span style="color:#f92672">&lt;</span> min_time_remain:
+</span></span><span style="display:flex;"><span>                        min_time_remain <span style="color:#f92672">=</span> processes[i]<span style="color:#f92672">.</span>left_serve_time
+</span></span><span style="display:flex;"><span>                        current_process <span style="color:#f92672">=</span> i   <span style="color:#75715e"># 将剩余时间最短的作业置为当前作业</span>
+</span></span><span style="display:flex;"><span>            time <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span> <span style="color:#75715e"># 每次循环完time加一</span>
+</span></span></code></pre></div><p>这样总结下来，我们发现，每秒操作就是那几个：确定当前执行作业；执行作业，判断是否完成；判断此时是否有新作业到达；时钟加一。而循环结束的条件一般都是计数 == 所有进程数。</p>
+<h3 id="hrrn-最高响应比优先">HRRN 最高响应比优先</h3>
+<blockquote>
+<p>这个就是每当一个作业处理完或者发生阻塞时，计算各个就绪作业的响应比，选取最高的作为当前处理作业。也就是说，作业一旦开始执行，就不会因为响应比的改变而停止，只有一个作业完成时才重新计算就绪作业的响应比。</p>
+</blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">HRRN</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, processes):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>sum_processes <span style="color:#f92672">=</span> processes
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">hrrn</span>(self):
+</span></span><span style="display:flex;"><span>        pre_processes <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>        over_processes <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>        running_time <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>        flag <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>        pre_processes<span style="color:#f92672">.</span>append(self<span style="color:#f92672">.</span>sum_processes[<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span>(flag<span style="color:#f92672">!=</span>len(self<span style="color:#f92672">.</span>sum_processes)):
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># 计算响应比</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> j <span style="color:#f92672">in</span> range(len(pre_processes)):
+</span></span><span style="display:flex;"><span>                pre_processes[j]<span style="color:#f92672">.</span>response_ratio <span style="color:#f92672">=</span> (running_time <span style="color:#f92672">-</span> pre_processes[j]<span style="color:#f92672">.</span>arrive_time <span style="color:#f92672">+</span> \
+</span></span><span style="display:flex;"><span>                                        pre_processes[j]<span style="color:#f92672">.</span>serve_time) <span style="color:#f92672">/</span> pre_processes[j]<span style="color:#f92672">.</span>serve_time
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># 找到响应比最大的进程</span>
+</span></span><span style="display:flex;"><span>            max_rr <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(pre_processes)):
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> pre_processes[i]<span style="color:#f92672">.</span>response_ratio <span style="color:#f92672">&gt;=</span> pre_processes[max_rr]<span style="color:#f92672">.</span>response_ratio:
+</span></span><span style="display:flex;"><span>                    max_rr <span style="color:#f92672">=</span> i
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(pre_processes[max_rr]<span style="color:#f92672">.</span>serve_time):
+</span></span><span style="display:flex;"><span>                running_time <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span> <span style="color:#75715e"># 时钟加一</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">for</span> k <span style="color:#f92672">in</span> range(len(self<span style="color:#f92672">.</span>sum_processes)):  <span style="color:#75715e"># 就绪队列入队</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>sum_processes[k]<span style="color:#f92672">.</span>arrive_time <span style="color:#f92672">==</span> running_time:
+</span></span><span style="display:flex;"><span>                        pre_processes<span style="color:#f92672">.</span>append(self<span style="color:#f92672">.</span>sum_processes[k])
+</span></span><span style="display:flex;"><span>            over_processes<span style="color:#f92672">.</span>append(pre_processes<span style="color:#f92672">.</span>pop(max_rr))
+</span></span><span style="display:flex;"><span>            flag <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(over_processes)):
+</span></span><span style="display:flex;"><span>            print(over_processes[i]<span style="color:#f92672">.</span>name)
+</span></span></code></pre></div><h3 id="rr-轮转法调度">RR 轮转法调度</h3>
+<blockquote>
+<p>在轮转法和接下来的多级反馈队列调度中，都会有时间片。也就是说，时间以时间片为大单位执行，每个时间片内，如果当前进程执行完毕输出即可，反之则放到队列最后，等待下一次执行。注意时间小单位依然是1，因为在每一秒内，我们还要知道有哪些进行到达就绪。</p>
+</blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RR</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, processes, time_block, running_time <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>processes <span style="color:#f92672">=</span> processes
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>time_block <span style="color:#f92672">=</span> time_block
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>running_time <span style="color:#f92672">=</span> running_time
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">rr</span>(self):
+</span></span><span style="display:flex;"><span>        pre_processes <span style="color:#f92672">=</span> []    <span style="color:#75715e"># running_time等于进程到达时间时会将其入队</span>
+</span></span><span style="display:flex;"><span>        over_processes <span style="color:#f92672">=</span> []  <span style="color:#75715e"># 完成队列</span>
+</span></span><span style="display:flex;"><span>        flag <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span> <span style="color:#75715e"># 记录完成的进程数</span>
+</span></span><span style="display:flex;"><span>        running_time <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>running_time
+</span></span><span style="display:flex;"><span>        time_block <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>time_block
+</span></span><span style="display:flex;"><span>        pre_processes<span style="color:#f92672">.</span>append(self<span style="color:#f92672">.</span>processes[<span style="color:#ae81ff">0</span>]) <span style="color:#75715e"># 先将第一个进程入队</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span>(flag <span style="color:#f92672">!=</span> len(self<span style="color:#f92672">.</span>processes)):
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e"># 是否进程入队的优先级高于进程从队首切换到队尾的优先级？</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e"># 执行当前队首进程，如果一个时间片内不能执行完，则放入队列尾部</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e"># 判断时间片是否大于剩余服务时间</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> time_block <span style="color:#f92672">&gt;=</span> pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>left_serve_time:
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>left_serve_time):
+</span></span><span style="display:flex;"><span>                        pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                        running_time <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(self<span style="color:#f92672">.</span>processes)):
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">if</span> running_time <span style="color:#f92672">==</span> self<span style="color:#f92672">.</span>processes[i]<span style="color:#f92672">.</span>arrive_time:
+</span></span><span style="display:flex;"><span>                                pre_processes<span style="color:#f92672">.</span>append(self<span style="color:#f92672">.</span>processes[i])  <span style="color:#75715e"># 就绪队列进入队尾</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">if</span> pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>:
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e"># 计算完成时间</span>
+</span></span><span style="display:flex;"><span>                            pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>finish_time <span style="color:#f92672">=</span> running_time
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e"># 计算周转时间</span>
+</span></span><span style="display:flex;"><span>                            pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>cycling_time <span style="color:#f92672">=</span> pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>finish_time \
+</span></span><span style="display:flex;"><span>                                                                    <span style="color:#f92672">-</span> pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>arrive_time
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e"># 计算带权周转时间</span>
+</span></span><span style="display:flex;"><span>                            pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>w_cycling_time <span style="color:#f92672">=</span> float(pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>cycling_time) 													<span style="color:#f92672">/</span>  pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>serve_time
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e"># 打印</span>
+</span></span><span style="display:flex;"><span>                            print(<span style="color:#e6db74">&#39;</span><span style="color:#e6db74">%s</span><span style="color:#e6db74"> 进程已完成的进程，详细信息如下：&#39;</span> <span style="color:#f92672">%</span> pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>name)
+</span></span><span style="display:flex;"><span>                            print(<span style="color:#e6db74">&#39;进程名称：</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">  ，完成时间： </span><span style="color:#e6db74">%d</span><span style="color:#e6db74">    ，周转时间：</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">  ，带权周转时间： 									</span><span style="color:#e6db74">%.2f</span><span style="color:#e6db74">&#39;</span> <span style="color:#f92672">%</span> ( pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>name, pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>finish_time,
+</span></span><span style="display:flex;"><span>                                    pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>cycling_time,pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>w_cycling_time))
+</span></span><span style="display:flex;"><span>                    flag <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                    over_processes<span style="color:#f92672">.</span>append(pre_processes<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>))  <span style="color:#75715e"># 进程结束从就绪队列出队进完成队列</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">continue</span>   <span style="color:#75715e"># 直接结束此次循环，下面内容不执行</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">else</span>: <span style="color:#75715e"># 剩余服务时间大于一个时间片</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(time_block):
+</span></span><span style="display:flex;"><span>                        pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                        running_time <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(self<span style="color:#f92672">.</span>processes)):  <span style="color:#75715e"># 判断此时有没有就绪队列加入队尾</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">if</span> running_time <span style="color:#f92672">==</span> self<span style="color:#f92672">.</span>processes[i]<span style="color:#f92672">.</span>arrive_time:
+</span></span><span style="display:flex;"><span>                                 pre_processes<span style="color:#f92672">.</span>append(self<span style="color:#f92672">.</span>processes[i])
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e"># 一个时间片结束进程从队头切换至队尾</span>
+</span></span><span style="display:flex;"><span>                    pre_processes<span style="color:#f92672">.</span>append(pre_processes<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>))
+</span></span></code></pre></div><h3 id="mfq-多级反馈队列调度算法">MFQ 多级反馈队列调度算法</h3>
+<blockquote>
+<p>这里我们假设的是有三级队列，时间片分别为1，2，4 。当然，可以不是这样，只需要在代码里做出一些修改，这样只是为了测试方便。</p>
+<p>在多级反馈队列中，对最后一个队列要使用轮转法进行调度，因此我们重写轮转法使之更符合MFQ的需求。注意的是，有bug：如果此时只有第三级队列有进程，某时刻突然有新进程加入队列，那么将不会处理。简单说就是开始处理最后一个队列的时候，不再受理新进入的进程，也就是在处理完一级二级队列的过程中，必须将保证所有进程都已就绪。后序如果有时间会进行改进。</p>
+</blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MFQ</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, processes, class_time_block):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>processes <span style="color:#f92672">=</span> processes <span style="color:#75715e"># 这是就绪以及未就绪的所有队列</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>class_time_block <span style="color:#f92672">=</span> class_time_block  <span style="color:#75715e"># 时间递增量级</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">mfq</span>(self):
+</span></span><span style="display:flex;"><span>        sum_processes <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>processes
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 我们这里使用三队列，将到达的队列放入</span>
+</span></span><span style="display:flex;"><span>        f_processes <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>        s_processes <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>        t_processes <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 规定每个队列的时间片，这里我们直接计算</span>
+</span></span><span style="display:flex;"><span>        f_time_block <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>        s_time_block <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>        t_time_block <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>
+</span></span><span style="display:flex;"><span>        flag <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span> <span style="color:#75715e"># 完成进程计数</span>
+</span></span><span style="display:flex;"><span>        running_time <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span> <span style="color:#75715e"># 时钟模拟</span>
+</span></span><span style="display:flex;"><span>        processes_number <span style="color:#f92672">=</span> len(sum_processes)
+</span></span><span style="display:flex;"><span>        current_process <span style="color:#f92672">=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span> <span style="color:#75715e"># 当前进行进程，如果没有置为-1</span>
+</span></span><span style="display:flex;"><span>        f_processes<span style="color:#f92672">.</span>append(sum_processes[<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span>(flag <span style="color:#f92672">!=</span> processes_number):
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e"># 判断在哪一个队列进行操作,选择当前要处理的进程</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> f_processes:
+</span></span><span style="display:flex;"><span>                    current_process <span style="color:#f92672">=</span> f_processes[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>                    current_process<span style="color:#f92672">.</span>pre_queue_tb <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                    current_process<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">elif</span> s_processes:
+</span></span><span style="display:flex;"><span>                    current_process <span style="color:#f92672">=</span> s_processes[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>                    current_process<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>                    current_process<span style="color:#f92672">.</span>pre_queue_tb <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">elif</span> t_processes:
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e"># 轮转法，重写</span>
+</span></span><span style="display:flex;"><span>                    pre_processes <span style="color:#f92672">=</span> t_processes
+</span></span><span style="display:flex;"><span>                    sum <span style="color:#f92672">=</span> len(t_processes)
+</span></span><span style="display:flex;"><span>                    over_processes <span style="color:#f92672">=</span> []  <span style="color:#75715e"># 完成队列</span>
+</span></span><span style="display:flex;"><span>                    t_flag <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>  <span style="color:#75715e"># 记录完成的进程数</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e"># running_time = running_time</span>
+</span></span><span style="display:flex;"><span>                    time_block <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">while</span> (t_flag <span style="color:#f92672">!=</span> sum):
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e"># 判断时间片是否大于剩余服务时间</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">if</span> time_block <span style="color:#f92672">&gt;=</span> pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>left_serve_time:
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>left_serve_time):
+</span></span><span style="display:flex;"><span>                                pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                                running_time <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">if</span> pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>:
+</span></span><span style="display:flex;"><span>                                    <span style="color:#75715e"># 计算完成时间</span>
+</span></span><span style="display:flex;"><span>                                    pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>finish_time <span style="color:#f92672">=</span> running_time
+</span></span><span style="display:flex;"><span>                                    <span style="color:#75715e"># 计算周转时间</span>
+</span></span><span style="display:flex;"><span>                                    pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>cycling_time <span style="color:#f92672">=</span> pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>finish_time \
+</span></span><span style="display:flex;"><span>                                                                    <span style="color:#f92672">-</span> pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>arrive_time
+</span></span><span style="display:flex;"><span>                                    <span style="color:#75715e"># 计算带权周转时间</span>
+</span></span><span style="display:flex;"><span>                                    pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>w_cycling_time <span style="color:#f92672">=</span> 	
+</span></span><span style="display:flex;"><span>                                    float(pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>cycling_time) <span style="color:#f92672">/</span>     
+</span></span><span style="display:flex;"><span>                                    pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>serve_time
+</span></span><span style="display:flex;"><span>                                    <span style="color:#75715e"># 打印</span>
+</span></span><span style="display:flex;"><span>                                    print(<span style="color:#e6db74">&#39;</span><span style="color:#e6db74">%s</span><span style="color:#e6db74"> 进程已完成的进程，详细信息如下：&#39;</span> <span style="color:#f92672">%</span> 			 
+</span></span><span style="display:flex;"><span>                                          pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>name)
+</span></span><span style="display:flex;"><span>                                    print(<span style="color:#e6db74">&#39;进程名称：</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">  ，完成时间： </span><span style="color:#e6db74">%d</span><span style="color:#e6db74">    ，周转时间：</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">  ，带权周转								时间： </span><span style="color:#e6db74">%.2f</span><span style="color:#e6db74">&#39;</span> ( pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>name, pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>finish_time,
+</span></span><span style="display:flex;"><span>                                   pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>cycling_time, pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>w_cycling_time))
+</span></span><span style="display:flex;"><span>                            t_flag <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                            over_processes<span style="color:#f92672">.</span>append(pre_processes<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>))  
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e"># 进程结束从就绪队列出队进完成队列</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">continue</span>  <span style="color:#75715e"># 直接结束此次循环，下面内容不执行</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">else</span>:  <span style="color:#75715e"># 剩余服务时间大于一个时间片</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(time_block):
+</span></span><span style="display:flex;"><span>                                pre_processes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                                running_time <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e"># 一个时间片结束进程从队头切换至队尾</span>
+</span></span><span style="display:flex;"><span>                            pre_processes<span style="color:#f92672">.</span>append(pre_processes<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>))
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e"># 在一个时间片内操作</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(current_process<span style="color:#f92672">.</span>pre_queue_tb):
+</span></span><span style="display:flex;"><span>                    current_process<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                    running_time <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                    out_ <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e"># 判断此时是否完成</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> current_process<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>:
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e"># 如果完成，弹出</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e"># 计算完成时间</span>
+</span></span><span style="display:flex;"><span>                        current_process<span style="color:#f92672">.</span>finish_time <span style="color:#f92672">=</span> running_time
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e"># 计算周转时间</span>
+</span></span><span style="display:flex;"><span>                        current_process<span style="color:#f92672">.</span>cycling_time <span style="color:#f92672">=</span> current_process<span style="color:#f92672">.</span>finish_time \
+</span></span><span style="display:flex;"><span>                                                        <span style="color:#f92672">-</span> current_process<span style="color:#f92672">.</span>arrive_time
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e"># 计算带权周转时间</span>
+</span></span><span style="display:flex;"><span>                        current_process<span style="color:#f92672">.</span>w_cycling_time <span style="color:#f92672">=</span> float(current_process<span style="color:#f92672">.</span>cycling_time) <span style="color:#f92672">/</span> \
+</span></span><span style="display:flex;"><span>                                                          current_process<span style="color:#f92672">.</span>serve_time
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e"># 打印</span>
+</span></span><span style="display:flex;"><span>                        print(<span style="color:#e6db74">&#39;</span><span style="color:#e6db74">%s</span><span style="color:#e6db74"> 进程已完成的进程，详细信息如下：&#39;</span> <span style="color:#f92672">%</span> current_process<span style="color:#f92672">.</span>name)
+</span></span><span style="display:flex;"><span>                        print(<span style="color:#e6db74">&#39;进程名称：</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">  ，完成时间： </span><span style="color:#e6db74">%d</span><span style="color:#e6db74">    ，周转时间：</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">  ，带权周转时间： </span><span style="color:#e6db74">%.2f</span><span style="color:#e6db74">&#39;</span> 							<span style="color:#f92672">%</span> (current_process<span style="color:#f92672">.</span>name, current_process<span style="color:#f92672">.</span>finish_time,
+</span></span><span style="display:flex;"><span>                            current_process<span style="color:#f92672">.</span>cycling_time, current_process<span style="color:#f92672">.</span>w_cycling_time))
+</span></span><span style="display:flex;"><span>                        flag <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">if</span> current_process<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>:
+</span></span><span style="display:flex;"><span>                            f_processes<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">elif</span> current_process<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">==</span> <span style="color:#ae81ff">2</span>:
+</span></span><span style="display:flex;"><span>                            s_processes<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                            t_processes<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>                        current_process <span style="color:#f92672">=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                        out_ <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">elif</span> i <span style="color:#f92672">==</span> current_process<span style="color:#f92672">.</span>pre_queue_tb<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span> 
+</span></span><span style="display:flex;"><span>                    		<span style="color:#f92672">and</span> current_process<span style="color:#f92672">.</span>left_serve_time <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0</span>:
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e"># 一个时间片内未完成，进入下一队列</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">if</span> current_process<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>:
+</span></span><span style="display:flex;"><span>                            current_process<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>                            current_process<span style="color:#f92672">.</span>pre_queue_tb <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>                            s_processes<span style="color:#f92672">.</span>append(f_processes<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>))
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">elif</span> current_process<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">==</span> <span style="color:#ae81ff">2</span>:
+</span></span><span style="display:flex;"><span>                            current_process<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>                            current_process<span style="color:#f92672">.</span>pre_queue_tb <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>
+</span></span><span style="display:flex;"><span>                            t_processes<span style="color:#f92672">.</span>append(s_processes<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>))
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e"># 判断此时有没有新进程入队，如果有，入队退出循环</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">for</span> j <span style="color:#f92672">in</span> range(len(sum_processes)):
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">if</span> running_time <span style="color:#f92672">==</span> sum_processes[j]<span style="color:#f92672">.</span>arrive_time:
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e"># 如果有新就绪队列</span>
+</span></span><span style="display:flex;"><span>                            out <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e"># 判断当前是否有正在进行的进程</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">if</span> current_process <span style="color:#f92672">!=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>:
+</span></span><span style="display:flex;"><span>                                <span style="color:#75715e"># 如果1队不空，加入一队</span>
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">if</span> f_processes:
+</span></span><span style="display:flex;"><span>                                    sum_processes[j]<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                                    sum_processes[j]<span style="color:#f92672">.</span>pre_queue_tb <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                                    f_processes<span style="color:#f92672">.</span>append(sum_processes[j])
+</span></span><span style="display:flex;"><span>                                    <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">else</span>: <span style="color:#75715e"># 如果一队空</span>
+</span></span><span style="display:flex;"><span>                                    <span style="color:#66d9ef">if</span> current_process<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">==</span> <span style="color:#ae81ff">2</span>:
+</span></span><span style="display:flex;"><span>                                        s_processes<span style="color:#f92672">.</span>append(s_processes<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>))
+</span></span><span style="display:flex;"><span>                                    <span style="color:#66d9ef">elif</span> current_process<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">==</span> <span style="color:#ae81ff">3</span>:
+</span></span><span style="display:flex;"><span>                                        t_processes<span style="color:#f92672">.</span>append(t_processes<span style="color:#f92672">.</span>pop(<span style="color:#ae81ff">0</span>))
+</span></span><span style="display:flex;"><span>                                    current_process <span style="color:#f92672">=</span> sum_processes[j]
+</span></span><span style="display:flex;"><span>                                    current_process<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                                    current_process<span style="color:#f92672">.</span>pre_queue_tb <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                                    f_processes<span style="color:#f92672">.</span>append(current_process)
+</span></span><span style="display:flex;"><span>                                    <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>                                    <span style="color:#75715e"># 将此时进入进程置为当前处理的进程</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                                <span style="color:#75715e"># 如果没有，直接将新入队进程置为当前进程</span>
+</span></span><span style="display:flex;"><span>                                sum_processes[j]<span style="color:#f92672">.</span>pre_queue <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                                sum_processes[j]<span style="color:#f92672">.</span>pre_queue_tb <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                                current_process <span style="color:#f92672">=</span> sum_processes[j]
+</span></span><span style="display:flex;"><span>                                f_processes<span style="color:#f92672">.</span>append(current_process)
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                            out <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> out <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">or</span> out_ <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>:
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">break</span>
+</span></span></code></pre></div><h3 id="测试样例">测试样例</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;__main__&#39;</span>:
+</span></span><span style="display:flex;"><span>    p1 <span style="color:#f92672">=</span> Process(<span style="color:#e6db74">&#39;A&#39;</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">3</span>) <span style="color:#75715e"># or p1 = Process(&#39;A&#39;, 0, 3, 2) 2为静态优先级</span>
+</span></span><span style="display:flex;"><span>    p2 <span style="color:#f92672">=</span> Process(<span style="color:#e6db74">&#39;B&#39;</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">6</span>)
+</span></span><span style="display:flex;"><span>    p3 <span style="color:#f92672">=</span> Process(<span style="color:#e6db74">&#39;C&#39;</span>, <span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">4</span>)
+</span></span><span style="display:flex;"><span>    p4 <span style="color:#f92672">=</span> Process(<span style="color:#e6db74">&#39;D&#39;</span>, <span style="color:#ae81ff">6</span>, <span style="color:#ae81ff">5</span>)
+</span></span><span style="display:flex;"><span>    p5 <span style="color:#f92672">=</span> Process(<span style="color:#e6db74">&#39;E&#39;</span>, <span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    processes <span style="color:#f92672">=</span> [p1, p2, p3, p4, p5]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    working <span style="color:#f92672">=</span> xxxx(processes, <span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>    working<span style="color:#f92672">.</span>xxx()
+</span></span></code></pre></div><h2 id="小结">小结</h2>
+<p>寒假快结束了，也没有学多少东西，导师的任务也只做了半吊子，GUI还是没做出来。写的算法里肯定还有错误，所有算法在测试样例中跑都是正确的。作业/进程结构中定义的一些譬如周转时间，带权周转时间如果需要使用，在一个作业/进程结束后计算就好，很多算法里没有加。</p>
+<p>当初写的时候，有上网查过想找参考，然而大部分是由C/C++写的。讲实话写了一段时间的python后一点都不想碰C/C++；能搜到的寥寥几篇python写的算法运行起来错误百出，我就想自己写吧还是，憋一点是一点。代码里的循环循环使得质量不佳，说白了写的跟shi一样。虽然我写的代码是s山，但是好歹是自己写的。在写RR和MFQ的时候，接近崩溃，调试一下午才勉勉强强弄完，学习之路还很长，我也希望有天我写的代码可以成为别人的祖传shi山。</p>
+<p>如果导师放过我，下面计划就是学习网络数据采集和数据分析，或许也会做一些前端的内容；反之就学习PyQt做界面，都很好。然后就是使劲学Java，学到暑假可以拿实习的程度。</p>
+<p>这篇文章如果可以给你提供帮助，我将很感谢你，如果有问题可以联系我，过段时间会添加评论系统（如果有好的插件的话）。今天是元宵节，祝大家节日快乐~</p>
+<blockquote>
+<p><a class="link" href="https://github.com/lizonglin313/-python-"  target="_blank" rel="noopener"
+    >Github源码戳这里</a></p>
+</blockquote>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/%E5%A4%84%E7%90%86%E6%9C%BA%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%AD%BB%E9%94%81%E4%BA%8C/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">处理机调度与死锁（二）</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E5%A4%84%E7%90%86%E6%9C%BA%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%AD%BB%E9%94%81%E4%B8%80/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">处理机调度与死锁(一)</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

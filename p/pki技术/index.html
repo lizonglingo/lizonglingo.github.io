@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='Public Key Infrastructure PKI技术以非对称密钥技术为基础，以数字证书为媒介，将各参与实体的标识信息与公钥绑定在一起。通过特定接口为用户提供安全服务，包括加密、'>
+<title>PKI技术</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/pki%E6%8A%80%E6%9C%AF/'>
+
+<link rel="stylesheet" href="/scss/style.min.8191399262444ab68b72a18c97392f5349be20a1615d77445be51e974c144cff.css"><meta property='og:title' content='PKI技术'>
+<meta property='og:description' content='Public Key Infrastructure PKI技术以非对称密钥技术为基础，以数字证书为媒介，将各参与实体的标识信息与公钥绑定在一起。通过特定接口为用户提供安全服务，包括加密、'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/pki%E6%8A%80%E6%9C%AF/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='安全' /><meta property='article:tag' content='区块链' /><meta property='article:published_time' content='2021-03-09T09:28:11&#43;08:00'/><meta property='article:modified_time' content='2021-03-09T09:28:11&#43;08:00'/>
+<meta name="twitter:title" content="PKI技术">
+<meta name="twitter:description" content="Public Key Infrastructure PKI技术以非对称密钥技术为基础，以数字证书为媒介，将各参与实体的标识信息与公钥绑定在一起。通过特定接口为用户提供安全服务，包括加密、">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description">子标题</h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://twitter.com'
+                        target="_blank"
+                        title="Twitter"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#public-key-infrastructure">Public Key Infrastructure</a></li>
+    <li><a href="#pki系统内容">PKI系统内容</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#pki体系结构">PKI体系结构</a>
+      <ul>
+        <li><a href="#paa">PAA</a></li>
+        <li><a href="#pca">PCA</a></li>
+        <li><a href="#ca">CA</a></li>
+        <li><a href="#ora">ORA</a></li>
+        <li><a href="#ee">EE</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E5%AE%89%E5%85%A8/" >
+                安全
+            </a>
+        
+            <a href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE/" >
+                区块链
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/pki%E6%8A%80%E6%9C%AF/">PKI技术</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Mar 09, 2021</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 4 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="public-key-infrastructure">Public Key Infrastructure</h2>
+<p>PKI技术以非对称密钥技术为基础，以数字证书为媒介，将各参与实体的标识信息与公钥绑定在一起。通过特定接口为用户提供安全服务，包括加密、解密、数字签名、身份认证等；具有透明性、易用性、可扩展性、互操作性、多用性、支持多平台等基础设施共有的特点。</p>
+<h2 id="pki系统内容">PKI系统内容</h2>
+<h4 id="pki系统主要包括以下内容">PKI系统主要包括以下内容：</h4>
+<ol>
+<li>认证中心CA：证书的签发机构；负责签发证书、验证身份、登记、发布证书撤销列表CRL</li>
+<li>证书库：颁发证书和撤销证书集中存放地</li>
+<li>密钥备份及恢复系统</li>
+<li>证书撤销处理系统：Certificate Revocation List</li>
+<li>PKI应用接口系统</li>
+</ol>
+<h4 id="pki应用系统包括">PKI应用系统包括：</h4>
+<ol>
+<li>认证中心CA</li>
+<li>X.500目录服务器：用于发布用户的证书以及证书注销列表</li>
+<li>安全WWW服务器以及安全通信平台：通过SSL、IPsec等安全协议保证传输数据的机密性、完整性、真实性</li>
+<li>安全应用系统</li>
+</ol>
+<h4 id="pki提供的服务">PKI提供的服务</h4>
+<ol>
+<li>安全登录</li>
+<li>对终端用户透明：接口</li>
+<li>全面的安全性：用统一的方式提供安全服务，保证信息的机密性、完整性、认证性、不可否认性</li>
+</ol>
+<h2 id="pki体系结构">PKI体系结构</h2>
+<h3 id="paa">PAA</h3>
+<p>Policy Approval Authority政策批准机构，创建PKI系统方阵、政策、批准PAA下属PCA政策，为PCA签发公钥证书，建立整个PKI体系的安全策略。</p>
+<h3 id="pca">PCA</h3>
+<p>Policy Certification Authority政策认证机构，制定本PCA的具体政策，如密钥的产生、长度、证书有效期、CRL处理；并为下属CA签发公钥证书。</p>
+<h3 id="ca">CA</h3>
+<p>Certificate Authority认证中心，担任具体的用户密钥对生成和签发，CRL的生成以及发布。核心功能是<strong>发放和管理数字证书</strong>。</p>
+<p>在Fabric中，CA为组织内部节点发放证书，包含用户公钥、标识等信息，用户证书被CA签名发放。通过CA，第三方用户可以验证用户持有的证书是否由信任的CA分发，以验证用户的合法身份。</p>
+<blockquote>
+<p>PEM格式：Privacy-Enhanced Mail 隐私增强邮件。</p>
+<p>此外，证书是公开的，因此不包含私钥信息。对于CA自己的证书，一般通过自签名为自己发放。</p>
+</blockquote>
+<p>以<code>ca.example.com-cert.pem</code>为例，这是一个证书文件，为了便于在网络上传送，通常证书会编码为<code>PEM</code>，如果我们直接查看它的内容：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>-----BEGIN CERTIFICATE-----
+</span></span><span style="display:flex;"><span>MIICPjCCAeOgAwIBAgIQUkJOmiAwvlYsCrOusBHa8jAKBggqhkjOPQQDAjBpMQsw
+</span></span><span style="display:flex;"><span>CQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNU2FuIEZy
+</span></span><span style="display:flex;"><span>YW5jaXNjbzEUMBIGA1UEChMLZXhhbXBsZS5jb20xFzAVBgNVBAMTDmNhLmV4YW1w
+</span></span><span style="display:flex;"><span>bGUuY29tMB4XDTIxMDIwNDExMjgwMFoXDTMxMDIwMjExMjgwMFowaTELMAkGA1UE
+</span></span><span style="display:flex;"><span>BhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNhbiBGcmFuY2lz
+</span></span><span style="display:flex;"><span>Y28xFDASBgNVBAoTC2V4YW1wbGUuY29tMRcwFQYDVQQDEw5jYS5leGFtcGxlLmNv
+</span></span><span style="display:flex;"><span>bTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABLobAhmABZmDnBUN7kYay3p9hX8K
+</span></span><span style="display:flex;"><span>3jC6gfo4cH+fMe15b1hwKCr5pcbyNrBLpzejsEu8HKLf6qjQgeqU99t8uOCjbTBr
+</span></span><span style="display:flex;"><span>MA4GA1UdDwEB/wQEAwIBpjAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEw
+</span></span><span style="display:flex;"><span>DwYDVR0TAQH/BAUwAwEB/zApBgNVHQ4EIgQgjWGUej/DLisEDcDHYMST4otUkW0k
+</span></span><span style="display:flex;"><span>qigiB7mobi0r20MwCgYIKoZIzj0EAwIDSQAwRgIhALlqhswN20B9C5z5ZcPjtUsb
+</span></span><span style="display:flex;"><span>BE90U8L7RoO/VMQSi/NbAiEApyA0DvYXtm4El8G8w+9D8aE/y4aQGq4d+QKHZYIn
+</span></span><span style="display:flex;"><span>BXY<span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>-----END CERTIFICATE-----
+</span></span></code></pre></div><p>由于Fabric中采用X.509证书，我们使用<code>openssl</code>查看<code>ca.example.com-cert.pem</code>的可读格式的内容，下面是一个X.509证书的主要内容：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>C:<span style="color:#ae81ff">\U</span>sers<span style="color:#ae81ff">\H</span>P<span style="color:#ae81ff">\D</span>esktop<span style="color:#ae81ff">\t</span>est-network<span style="color:#ae81ff">\o</span>rganizations<span style="color:#ae81ff">\o</span>rdererOrganizations<span style="color:#ae81ff">\e</span>xample.com<span style="color:#ae81ff">\c</span>a&gt;openssl x509 -in ca.example.com-cert.pem -text -noout
+</span></span><span style="display:flex;"><span>Certificate:
+</span></span><span style="display:flex;"><span>    Data:
+</span></span><span style="display:flex;"><span>        Version: <span style="color:#ae81ff">3</span> <span style="color:#f92672">(</span>0x2<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>        Serial Number:
+</span></span><span style="display:flex;"><span>            52:42:4e:9a:20:30:be:56:2c:0a:b3:ae:b0:11:da:f2	<span style="color:#75715e"># 序列号</span>
+</span></span><span style="display:flex;"><span>        Signature Algorithm: ecdsa-with-SHA256	<span style="color:#75715e"># 签名算法</span>
+</span></span><span style="display:flex;"><span>        Issuer: C <span style="color:#f92672">=</span> US, ST <span style="color:#f92672">=</span> California, L <span style="color:#f92672">=</span> San Francisco, O <span style="color:#f92672">=</span> example.com, CN <span style="color:#f92672">=</span> ca.example.com <span style="color:#75715e">#发放机构</span>
+</span></span><span style="display:flex;"><span>        Validity	<span style="color:#75715e"># 有效期</span>
+</span></span><span style="display:flex;"><span>            Not Before: Feb  <span style="color:#ae81ff">4</span> 11:28:00 <span style="color:#ae81ff">2021</span> GMT
+</span></span><span style="display:flex;"><span>            Not After : Feb  <span style="color:#ae81ff">2</span> 11:28:00 <span style="color:#ae81ff">2031</span> GMT
+</span></span><span style="display:flex;"><span>        Subject: C <span style="color:#f92672">=</span> US, ST <span style="color:#f92672">=</span> California, L <span style="color:#f92672">=</span> San Francisco, O <span style="color:#f92672">=</span> example.com, CN <span style="color:#f92672">=</span> ca.example.com	<span style="color:#75715e"># 证书持有人</span>
+</span></span><span style="display:flex;"><span>        Subject Public Key Info:
+</span></span><span style="display:flex;"><span>            Public Key Algorithm: id-ecPublicKey
+</span></span><span style="display:flex;"><span>                Public-Key: <span style="color:#f92672">(</span><span style="color:#ae81ff">256</span> bit<span style="color:#f92672">)</span>	<span style="color:#75715e"># 公钥</span>
+</span></span><span style="display:flex;"><span>                pub:
+</span></span><span style="display:flex;"><span>                    04:ba:1b:02:19:80:05:99:83:9c:15:0d:ee:46:1a:
+</span></span><span style="display:flex;"><span>                    cb:7a:7d:85:7f:0a:de:30:ba:81:fa:38:70:7f:9f:
+</span></span><span style="display:flex;"><span>                    31:ed:79:6f:58:70:28:2a:f9:a5:c6:f2:36:b0:4b:
+</span></span><span style="display:flex;"><span>                    a7:37:a3:b0:4b:bc:1c:a2:df:ea:a8:d0:81:ea:94:
+</span></span><span style="display:flex;"><span>                    f7:db:7c:b8:e0
+</span></span><span style="display:flex;"><span>                ASN1 OID: prime256v1
+</span></span><span style="display:flex;"><span>                NIST CURVE: P-256
+</span></span><span style="display:flex;"><span>        X509v3 extensions:
+</span></span><span style="display:flex;"><span>            X509v3 Key Usage: critical
+</span></span><span style="display:flex;"><span>                Digital Signature, Key Encipherment, Certificate Sign, CRL Sign
+</span></span><span style="display:flex;"><span>            X509v3 Extended Key Usage:
+</span></span><span style="display:flex;"><span>                TLS Web Client Authentication, TLS Web Server Authentication
+</span></span><span style="display:flex;"><span>            X509v3 Basic Constraints: critical
+</span></span><span style="display:flex;"><span>                CA:TRUE
+</span></span><span style="display:flex;"><span>            X509v3 Subject Key Identifier:
+</span></span><span style="display:flex;"><span>                8D:61:94:7A:3F:C3:2E:2B:04:0D:C0:C7:60:C4:93:E2:8B:54:91:6D:24:AA:28:22:07:B9:A8:6E:2D:2B:DB:43
+</span></span><span style="display:flex;"><span>    Signature Algorithm: ecdsa-with-SHA256	<span style="color:#75715e"># CA对该证书的签名</span>
+</span></span><span style="display:flex;"><span>         30:46:02:21:00:b9:6a:86:cc:0d:db:40:7d:0b:9c:f9:65:c3:
+</span></span><span style="display:flex;"><span>         e3:b5:4b:1b:04:4f:74:53:c2:fb:46:83:bf:54:c4:12:8b:f3:
+</span></span><span style="display:flex;"><span>         5b:02:21:00:a7:20:34:0e:f6:17:b6:6e:04:97:c1:bc:c3:ef:
+</span></span><span style="display:flex;"><span>         43:f1:a1:3f:cb:86:90:1a:ae:1d:f9:02:87:65:82:27:05:76
+</span></span></code></pre></div><h4 id="ca证书的发放">CA证书的发放</h4>
+<ul>
+<li>离线发放：申请批准后，RA初始化申请者信息，在LDAP（Lightweight Directory Access Protocol）服务器添加信息；信息传给CA，生成参照号Ref.number以及认证码Auth.code；使用电子邮件或者打印，线下传递；申请人收到后在审查机构面对面领取证书，证书可存入光盘，软盘等</li>
+<li>在线发放：申请批准后，RA初始化申请者信息，在LDAP（Lightweight Directory Access Protocol）服务器添加信息；信息传给CA，生成参照号Ref.number以及认证码Auth.code；申请人在本机登录网站通过浏览器安装Root CA证书，输入参照号和授权码获得证书。</li>
+</ul>
+<h4 id="crl">CRL</h4>
+<p>证书废除原因主要有以下几点：</p>
+<ul>
+<li>密钥泄露：私钥泄露或者被破坏</li>
+<li>从属变更：关于密钥的信息变更</li>
+<li>终止使用：该密钥不再用于原来的用途或者证书已经到期</li>
+<li>CA本身原因：CA系统私钥泄露</li>
+<li>CA有理由怀疑证书细节不真实、不可信</li>
+<li>证书持有者没有履行协议</li>
+<li>证书持有者死亡、违反电子交易规则或者被判定为犯罪</li>
+</ul>
+<h3 id="ora">ORA</h3>
+<p>Online Register Authority在线证书审查机构进行申请者身份认证，向CA提交证书申请，验证接受CA签发的证书，发放给申请者。</p>
+<h3 id="ee">EE</h3>
+<p>End Entity最终实体是PKI的最终使用者</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E5%AE%89%E5%85%A8/">安全</a>
+        
+            <a href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE/">区块链</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/fabric2.x%E7%9A%84%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E4%BB%A5test-network%E4%B8%BA%E4%BE%8B/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Fabric2.X的配置文件（以test-network为例）</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/network.sh-up-enter%E5%90%8E%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">$ ./network.sh up =&gt;ENTER后发生了什么？</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/fabric2.x_fabric-samples_test-network%E8%A7%A3%E8%AF%BB/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Fabric2.X_fabric-samples_test-network解读</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/bitcoin%E7%99%BD%E7%9A%AE%E4%B9%A6/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">bitcoin白皮书</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E4%BD%BF%E7%94%A8golang%E6%9E%84%E5%BB%BA%E5%8C%BA%E5%9D%97%E9%93%BEpart7%E7%BD%91%E7%BB%9C/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">使用Golang构建区块链Part7：网络</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

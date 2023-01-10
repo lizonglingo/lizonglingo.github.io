@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='本篇整理自IEEE CLOUD&#39;21会议中的文章，主题为云背景下的资源管理。 RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud :star:摘要 问题背景 微服务内部通信的复杂性'>
+<title>IEEE CLOUD 21 云上资源管理相关合辑</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/ieee-cloud-21-%E4%BA%91%E4%B8%8A%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E7%9B%B8%E5%85%B3%E5%90%88%E8%BE%91/'>
+
+<link rel="stylesheet" href="/scss/style.min.8191399262444ab68b72a18c97392f5349be20a1615d77445be51e974c144cff.css"><meta property='og:title' content='IEEE CLOUD 21 云上资源管理相关合辑'>
+<meta property='og:description' content='本篇整理自IEEE CLOUD&#39;21会议中的文章，主题为云背景下的资源管理。 RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud :star:摘要 问题背景 微服务内部通信的复杂性'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/ieee-cloud-21-%E4%BA%91%E4%B8%8A%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E7%9B%B8%E5%85%B3%E5%90%88%E8%BE%91/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='资源调度' /><meta property='article:tag' content='追踪和测量' /><meta property='article:tag' content='链路追踪' /><meta property='article:tag' content='云原生' /><meta property='article:tag' content='阅读笔记' /><meta property='article:published_time' content='2022-04-21T14:33:47&#43;08:00'/><meta property='article:modified_time' content='2022-04-21T14:33:47&#43;08:00'/>
+<meta name="twitter:title" content="IEEE CLOUD 21 云上资源管理相关合辑">
+<meta name="twitter:description" content="本篇整理自IEEE CLOUD&#39;21会议中的文章，主题为云背景下的资源管理。 RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud :star:摘要 问题背景 微服务内部通信的复杂性">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description">子标题</h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://twitter.com'
+                        target="_blank"
+                        title="Twitter"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#runwild-resource-management-system-withgeneralized-modeling-for-microservices-on-cloud">RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud</a>
+      <ul>
+        <li><a href="#star摘要">:star:摘要</a></li>
+        <li><a href="#star现有技术存在的问题">:star:现有技术存在的问题</a></li>
+      </ul>
+    </li>
+    <li><a href="#fast-and-efficient-performance-tuning-of-microservices">Fast and Efficient Performance Tuning of Microservices</a>
+      <ul>
+        <li><a href="#star摘要-1">:star:摘要</a></li>
+        <li><a href="#star系统架构">:star:系统架构</a></li>
+        <li><a href="#star测量优化的依赖指标">:star:测量、优化的依赖指标</a></li>
+        <li><a href="#star调优模型抽象">:star:调优模型抽象</a></li>
+        <li><a href="#star应用案例及实验">:star:应用案例及实验</a></li>
+        <li><a href="#star我的问题">:star:我的问题</a></li>
+      </ul>
+    </li>
+    <li><a href="#skynet-performance-driven-resource-management-for-dynamic-workloads">Skynet: Performance-driven Resource Management for Dynamic Workloads</a>
+      <ul>
+        <li><a href="#star摘要-2">:star:摘要</a></li>
+        <li><a href="#star系统架构-1">:star:系统架构</a></li>
+        <li><a href="#star我的问题-1">:star:我的问题</a></li>
+      </ul>
+    </li>
+    <li><a href="#konveyor-move2kube-automatedreplatforming-of-applications-to-kubernetes">Konveyor Move2Kube: AutomatedReplatforming of Applications to Kubernetes</a>
+      <ul>
+        <li><a href="#star摘要-3">:star:摘要</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E8%B5%84%E6%BA%90%E8%B0%83%E5%BA%A6/" >
+                资源调度
+            </a>
+        
+            <a href="/categories/%E8%BF%BD%E8%B8%AA%E5%92%8C%E6%B5%8B%E9%87%8F/" >
+                追踪和测量
+            </a>
+        
+            <a href="/categories/%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/" >
+                链路追踪
+            </a>
+        
+            <a href="/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/" >
+                云原生
+            </a>
+        
+            <a href="/categories/%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/" >
+                阅读笔记
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/ieee-cloud-21-%E4%BA%91%E4%B8%8A%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E7%9B%B8%E5%85%B3%E5%90%88%E8%BE%91/">IEEE CLOUD 21 云上资源管理相关合辑</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Apr 21, 2022</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 9 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>本篇整理自IEEE CLOUD'21会议中的文章，主题为云背景下的资源管理。</p>
+</blockquote>
+<h2 id="runwild-resource-management-system-withgeneralized-modeling-for-microservices-on-cloud">RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud</h2>
+<h3 id="star摘要">:star:摘要</h3>
+<h4 id="问题背景">问题背景</h4>
+<p><strong>微服务内部通信的复杂性，必须考虑资源利用、调度策略和请求均衡之间的平衡，以防止跨微服务级联的服务质量下降。</strong></p>
+<h4 id="文章做了什么">文章做了什么</h4>
+<p>提出资源管理系统<strong>RunWild</strong>，可以控制所有节点涉及到的微服务管理：</p>
+<ul>
+<li><strong>扩缩容</strong></li>
+<li><strong>调度</strong></li>
+<li><strong>自动</strong>的根据<strong>指定性能表现</strong>的<strong>负载和性能平衡优化</strong></li>
+<li>统一的<strong>持续部署方案</strong></li>
+</ul>
+<p>着重强调了<strong>协同metrics感知</strong>在<strong>预测资源使用和制定部署计划</strong>中的重要性。</p>
+<p>在IBM云进行实验，<strong>以K8s的自动调度为基线</strong>，减少P90响应时间11%，增加10%的吞吐率，降低30%的资源使用。</p>
+<h4 id="贡献">贡献</h4>
+<ol>
+<li>扩展的部署框架：<strong>适用于K8s的调度框架</strong>，用来在资源分配、部署、和运行时来控制部署机制；</li>
+<li>通用的建模方法：综合考虑微服务特性、节点的相对独立性、工作负载和全局协同节点状态感知，通过结合聚类和回归技术预测资源使用；</li>
+<li>微服务间交互指标：一个称为内聚的指标反映了在同一个<strong>节点上放置高度相互通信的微服务的优势</strong>；</li>
+<li>通过<strong>Service Mesh</strong>对运行时工作负载进行分区：利用服务网格操作流量路由，用其控制能力来划分工作负载以匹配资源的分配。</li>
+</ol>
+<h3 id="star现有技术存在的问题">:star:现有技术存在的问题</h3>
+<h4 id="水平伸缩">水平伸缩</h4>
+<ul>
+<li>超过某个阈值时，实例的增多与性能表现的增长不匹配，正如收益递减定律所解释的那样；</li>
+<li>资源过度分配并不会显著增加性能表现；</li>
+<li>而资源不足会导致性能下降或者致命错误。</li>
+</ul>
+<h4 id="垂直伸缩">垂直伸缩</h4>
+<ul>
+<li>K8s虽然可以支持HPA和VPA，但是不能一起工作，同时进行HPA和VPA难免会造成干扰。</li>
+</ul>
+<p>此外，复杂的资源依赖，全局的资源调度策略使得伸缩方案受多方面影响。</p>
+<p>文章的动机是<strong>识别、描述和管理所有因素和维度</strong>，以实现<strong>统一的部署解决方案</strong>，而不是运行相互干扰的机制。</p>
+<h4 id="部署的三个角度">部署的三个角度</h4>
+<ul>
+<li>所部署的服务的实例副本数；</li>
+<li>节点上每个实例所得到的资源；</li>
+<li>每个实例的网络容量。</li>
+</ul>
+<p>然后引出下面4个重要的问题：</p>
+<ol>
+<li>调度所涉及到的策略、资源和具体情景很复杂，要考虑的东西太多；</li>
+<li>同一节点上部署的服务可能<strong>对资源的争用很敏感</strong>；</li>
+<li><strong>微服务之间的通信，亲和性</strong>等因素会影响到<strong>全局的服务性能表现、响应事件及吞吐量</strong>，最好的方式是使部署的微服务<strong>减少跨节点的通信</strong>；</li>
+<li>如何将<strong>请求负载均衡到不同实例以带来更好的网络表现</strong>，虽然Service Mesh能够实现负载的分发，但是难以解决上述问题。</li>
+</ol>
+<p>文章列举了一些其他文章做的工作，并对比这些工作解决了上述4个问题中的哪些：</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220423213910376.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220423213910376"
+	
+	
+></p>
+<blockquote>
+<p>该文会精读，请关注最新的文章。</p>
+</blockquote>
+<h2 id="fast-and-efficient-performance-tuning-of-microservices">Fast and Efficient Performance Tuning of Microservices</h2>
+<h3 id="star摘要-1">:star:摘要</h3>
+<p>针对使用<strong>容器部署的微服务架构应用</strong>，<strong>以Kubernetes、Docker Swarm容器管理平台为依托</strong>。在应用正式部署上线之前，也就是在<strong>pre-deployment</strong>阶段，<strong>迭代的根据资源使用相关指标</strong>，结合<strong>类多目标优化算法(文章称为heuristic optimization algorithm)<strong>对</strong>资源分配进行调优</strong>。</p>
+<h3 id="star系统架构">:star:系统架构</h3>
+<!-- raw HTML omitted -->
+<ol>
+<li>将应用部署到云平台；</li>
+<li>进行负载注入；</li>
+<li>基于Jaeger的监控系统开始进行性能测试和追踪(对每个微服务)，收集数据，如响应时间和资源的使用量；</li>
+<li>通过Jaeger解析服务调用序列；</li>
+<li>由Tuning Agent参照服务序列信息、不同类别请求的响应时间和平均资源使用进行调优；</li>
+<li>Tuning Agent预估每个微服务的新的CPU配额信息；</li>
+<li>将这些信息存储到Tuning数据库中；</li>
+<li>编排器根据这些信息对服务进行迭代部署。</li>
+</ol>
+<h3 id="star测量优化的依赖指标">:star:测量、优化的依赖指标</h3>
+<p>需要对服务进行<strong>请求的注入</strong>来进行测量，主要指标是<strong>服务响应时间</strong>。涉及到<strong>链路追踪、性能监控</strong>。</p>
+<h3 id="star调优模型抽象">:star:调优模型抽象</h3>
+<h4 id="小背景前提和假设">小背景、前提和假设</h4>
+<ul>
+<li><strong>应用需要一些特定的工作负载$W$</strong>，这些工作负载发生在特定的情境，例如在线商城的Black Friday。因此，调优过程可以对其他感兴趣的工作负载重放，从而产生一系列特定于工作负载的配置，可以在部署应用程序时适当地使用。</li>
+<li><strong>本文重点关注CPU资源的限制</strong>，但是该模型可以拓展到其他资源。</li>
+<li>应用包含**$K$个微服务**，每个微服务运行在自己的container中。</li>
+<li>每个应用支持**$C$种不同的请求类别**。</li>
+<li>每个请求类别**$c$关联到不同的响应时间$T_c$**。</li>
+<li>每类请求**$c$涉及到一个微服务调用序列$S_c$**。</li>
+<li>因此这个序列中每个<strong>微服务$k$都涉及到一个CPU需求</strong>。</li>
+<li>主机上对应的<strong>服务$k$所需的CPU配额表示为$\alpha_k$</strong>。</li>
+</ul>
+<h4 id="资源分配问题抽象">资源分配问题抽象</h4>
+<p>问题可以抽象为：在<strong>满足响应时间的需求下，求解对每个微服务CPU配额的最小值</strong>。</p>
+<!-- raw HTML omitted -->
+<ol>
+<li>目标为最小化CPU配额；</li>
+<li>需要满足前提条件，即：资源配额能够使某类请求的响应时间$R_c$小于等于目标值$T_c$；</li>
+<li>其中响应时间$R_c$是工作负载$W$和对$K$个服务CPU配额的函数；</li>
+<li>最后限制CPU需求总额是有限的。</li>
+</ol>
+<h3 id="star应用案例及实验">:star:应用案例及实验</h3>
+<p>使用的微服务案例<strong>Bookstore</strong>。</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220419153253242.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220419153253242"
+	
+	
+></p>
+<h3 id="star我的问题">:star:我的问题</h3>
+<p><strong>工作负载的模拟具体如何实现？</strong></p>
+<p><strong>有哪些开源微服务应用真正可用又具有一定的代表性？</strong></p>
+<h2 id="skynet-performance-driven-resource-management-for-dynamic-workloads">Skynet: Performance-driven Resource Management for Dynamic Workloads</h2>
+<h3 id="star摘要-2">:star:摘要</h3>
+<h4 id="问题背景和主要矛盾">问题背景和主要矛盾</h4>
+<p>云环境下，资源利用率和应用的性能表现之间的矛盾。</p>
+<h4 id="难点">难点</h4>
+<ol>
+<li>用户常会<strong>分配过多的资源</strong></li>
+<li>应用的<strong>多样性和动态性</strong>，<strong>工作负载的动态性及难以预测性</strong></li>
+<li>性能表现取决于<strong>多种不同资源</strong></li>
+</ol>
+<h4 id="文章做了什么怎么做的">文章做了什么，怎么做的</h4>
+<p>提出Skynet，针对上述三个难点，可以自动对云资源进行管理。</p>
+<ul>
+<li>
+<p>评估资源需求<strong>依赖的指标</strong>：Skynet使用performance level objectives(PLOs)准确捕捉用户对所需性能的意图，将用户从资源分配循环中解放。Skynet<strong>通过目标PLO去预估资源需求</strong>，使用Poportional Integral Derivative(PID)控制器对每个应用调整对应的参数。</p>
+</li>
+<li>
+<p>资源需求<strong>计算、分配、调度方法</strong>：为捕获每个应用对不同资源依赖，<strong>Skynet扩展了传统的一维PID控制器</strong>(传统的单输入单输出)，实现对CPU、内存、I/O和网络吞吐的预估。Skynet建立一个动态模型，对于每个应用，将目标PLOs映射到资源，同时考虑多种资源和变化的输入负载。事实上，Skynet处于一个<strong>动态循环控制</strong>来预估资源。</p>
+</li>
+<li>
+<p><strong>实现和评估</strong>：在<strong>kubernetes中将skynetas实现为端到端的定制调度程序</strong>，并在5个节点的私有集群和60个裸金属服务器AWS上使用真实的工作负载对其进行评估。以K8s为基线，PLO违规降低7.4倍，资源利用提高两倍。</p>
+</li>
+</ul>
+<h3 id="star系统架构-1">:star:系统架构</h3>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220421114835655.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220421114835655"
+	
+	
+></p>
+<p>用户可以指定PLOs，明确对吞吐量、延迟、处理时间等指标的需求。Skynet根据这些PLOs，使用PID[41]预估每个应用的资源需求量。动态的将PLO映射到资源需求，这样一来可以让Skynet适应变化的工作负载和每个应用不同的生命阶段。</p>
+<h4 id="示例">示例</h4>
+<p>一个web应用PLO为1000请求/秒。Skynet给每个新应用分配一个预定义容器。在执行阶段，Skynet主要使用两个组件：Resource Estimator(RE)和Resource Assigner(RA)，来周期性的调整资源配额以满足PLO：</p>
+<ol>
+<li>Skynet周期性监控应用性能指标，如果触发PLO违规，会触发RE。</li>
+<li>RE基于PLO调整PIDs的参数。</li>
+<li>基于目标PLO，RE预估应用新的资源需求。</li>
+<li>当可分配资源满足条件时，RA调整应用容器。</li>
+</ol>
+<h4 id="放置应用以及根据控制器更新应用放置">放置应用以及根据控制器更新应用放置</h4>
+<ol>
+<li>
+<p>确定应用资源需求量后，Skynet决定容器的资源限额和放置。具体来说，包括容器打包，节点绑定以及资源配额。其中，容器大小和放置由于需要考虑多种资源的约束，远比打包应用复杂。放置应用的目标是：避免应用间干扰，提高应用性能表现。</p>
+</li>
+<li>
+<p>当新应用到来时，Skynet进行扫描，查看是否有某个服务节点可以单独满足应用的资源需求，如果不存在这样的服务节点，就迭代执行下列步骤：</p>
+<ol>
+<li>增加一个容器的数量；</li>
+<li>在容器之间平均分配资源；</li>
+<li>找到能够满足容器需求，并且负载最高的服务节点；</li>
+<li>如果没有，循环执行上述步骤。</li>
+</ol>
+</li>
+<li>
+<p>调整应用资源配额。每次请求改变资源需求时，有三种可能：(理解的有些别扭？)</p>
+<ol>
+<li>资源不够。该情况下，Skynet决定有没有现存的容器可以移除。然后基于节点负载对节点进行排序，移除额外的容器。</li>
+<li>节点上的可用资源早已被分配给应用。Skynet在容器之间平均增加应用程序的资源，以匹配新的请求。</li>
+<li>可用资源分布在不同的服务节点上。Skynet以放置新应用的思路放置新的容器。</li>
+</ol>
+</li>
+</ol>
+<p>总的说，就是处理，<strong>容器应该放置在哪个节点上的问题</strong>。算法思路如下：</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220421143003087.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220421143003087"
+	
+	
+></p>
+<h4 id="在kubernetes上的实现">在Kubernetes上的实现</h4>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220421132506202.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220421132506202"
+	
+	
+></p>
+<p>使用Golang实现自定义调度器。使用Prometheus进行监控。代码开源[11]。</p>
+<h3 id="star我的问题-1">:star:我的问题</h3>
+<h4 id="关于pid控制理论的补充">关于PID控制理论的补充</h4>
+<p>已经不止一次在论文中看到使用PID来调整资源分配了。</p>
+<blockquote>
+<p><a class="link" href="https://zhuanlan.zhihu.com/p/39573490"  target="_blank" rel="noopener"
+    >https://zhuanlan.zhihu.com/p/39573490</a></p>
+</blockquote>
+<h4 id="如果要使用pid算法再细读">如果要使用PID算法，再细读</h4>
+<p>获得监控数据后具体怎处理？</p>
+<p>分配资源的具体方法？</p>
+<h2 id="konveyor-move2kube-automatedreplatforming-of-applications-to-kubernetes">Konveyor Move2Kube: AutomatedReplatforming of Applications to Kubernetes</h2>
+<h3 id="star摘要-3">:star:摘要</h3>
+<p>文章提出Move2Kube，一个再部署框架，能够自动调整部署细节，并通过部署pipeline<strong>将非Kubernetes平台部署的应用转移到Kubernetes平台上</strong>，同时最小限度修改应用架构和实现。</p>
+<p>此外，文章提出</p>
+<ul>
+<li>一个最小化的中间表示，不同的应用部署构建都可以转化到这个中间表示上来。</li>
+<li>一个扩展框架，用于添加对新的部署源平台和目标中间件的支持，同时允许定制化。</li>
+</ul>
+<blockquote>
+<p>Move2Kube已经开源：https://move2kube.konveyor.io/</p>
+</blockquote>
+<h4 id="要解决什么问题">要解决什么问题</h4>
+<p>在不是K8s平台部署的应用迁移到K8s平台上，同时应该最小限度的修改原系统的实现和软件架构。</p>
+<h4 id="挑战难点在哪里">挑战、难点在哪里</h4>
+<ol>
+<li>应用规模：企业级应用往往有上千个组件，人工迁移费时费力；</li>
+<li>应用异构：多样的部署平台，多样的应用架构和种类；</li>
+<li>不同的代码源、组件仓库：代码源或者使用的组件分布在不同的仓库中，很难将其组织到一起，如何分布的数千个目录中找到正确的文件很有挑战；</li>
+<li>容器化挑战：将应用容器化时，对于优化配置和分层安全很有必要，需要对容器内部、镜像技术和应用配置有深入的理解；</li>
+<li>目标平台映射：找到正确的不同平台的配置映射关系是困难的，例如如何选择从简单的K8s service转换到Istio的配置中；</li>
+<li>应用的最佳实践：K8s有最佳实践[6]，如何确保迁移使用K8s的最佳实践；</li>
+<li>定制化的需求和有效的Day 2 Operation：针对不同应用和需求定制化的配置以适应平台特性需要一定的经验和时间，同时需要考虑Day 2 Operation。</li>
+</ol>
+<blockquote>
+<p>关于什么是Day 2 Operation：https://jimmysong.io/blog/what-is-day-2-operation/</p>
+</blockquote>
+<h4 id="move2kube">Move2Kube</h4>
+<p>这个开源框架旨在解决应用迁移到Kubernetes平台过程中出现的上述问题。它提供了标准化的Pipeline，包括<strong>容器化、参数化、配置优化、定制化</strong>等解决方案，满足面向<strong>特定平台的多源、多服务</strong>的应用部署迁移。</p>
+<blockquote>
+<p>该文不太属于资源管理方面。</p>
+</blockquote>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E8%B5%84%E6%BA%90%E8%B0%83%E5%BA%A6/">资源调度</a>
+        
+            <a href="/tags/%E8%BF%BD%E8%B8%AA%E5%92%8C%E6%B5%8B%E9%87%8F/">追踪和测量</a>
+        
+            <a href="/tags/%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/">链路追踪</a>
+        
+            <a href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">云原生</a>
+        
+            <a href="/tags/%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/">阅读笔记</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/mlaas-in-the-wild-workload-analysis-and-scheduling-in-large-scale-heterogeneous-gpu-clusters/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">MLaaS in the Wild: Workload Analysis and Scheduling in Large-Scale Heterogeneous GPU Clusters</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/characterizing-microservice-dependency-and-performance-alibaba-trace-analysis/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Characterizing microservice dependency and performance: Alibaba trace analysis</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/3milebeach-a-tracer-with-teeth/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">3MileBeach: A Tracer with Teeth</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/service-level-fault-injection-testing/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Service-Level Fault Injection Testing</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/showar-right-sizing-and-efficient-scheduling-of-microservices/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

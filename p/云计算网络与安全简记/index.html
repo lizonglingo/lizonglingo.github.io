@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='今天在图书馆借了两本云计算安全方面的教材类书籍，系统的了解一下云计算安全技术涉及到的相关内容和一些基本概念。通过本文，你可以了解云计算网络安'>
+<title>《云计算网络与安全》简记</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/%E4%BA%91%E8%AE%A1%E7%AE%97%E7%BD%91%E7%BB%9C%E4%B8%8E%E5%AE%89%E5%85%A8%E7%AE%80%E8%AE%B0/'>
+
+<link rel="stylesheet" href="/scss/style.min.8191399262444ab68b72a18c97392f5349be20a1615d77445be51e974c144cff.css"><meta property='og:title' content='《云计算网络与安全》简记'>
+<meta property='og:description' content='今天在图书馆借了两本云计算安全方面的教材类书籍，系统的了解一下云计算安全技术涉及到的相关内容和一些基本概念。通过本文，你可以了解云计算网络安'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/%E4%BA%91%E8%AE%A1%E7%AE%97%E7%BD%91%E7%BB%9C%E4%B8%8E%E5%AE%89%E5%85%A8%E7%AE%80%E8%AE%B0/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='云计算' /><meta property='article:tag' content='安全' /><meta property='article:published_time' content='2021-11-01T17:37:21&#43;08:00'/><meta property='article:modified_time' content='2021-11-01T17:37:21&#43;08:00'/>
+<meta name="twitter:title" content="《云计算网络与安全》简记">
+<meta name="twitter:description" content="今天在图书馆借了两本云计算安全方面的教材类书籍，系统的了解一下云计算安全技术涉及到的相关内容和一些基本概念。通过本文，你可以了解云计算网络安">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description">子标题</h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/CaiJimmy/hugo-theme-stack'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://twitter.com'
+                        target="_blank"
+                        title="Twitter"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#1-云计算网络概述">1. 云计算网络概述</a>
+      <ul>
+        <li><a href="#11-基本概念">1.1 基本概念</a></li>
+        <li><a href="#12-云计算网络安全技术">1.2 云计算网络安全技术</a></li>
+      </ul>
+    </li>
+    <li><a href="#2-数据中心网络技术">2. 数据中心网络技术</a>
+      <ul>
+        <li><a href="#21-数据中心网络流量">2.1 数据中心网络流量</a></li>
+        <li><a href="#22-数据中心网络拓扑">2.2 数据中心网络拓扑</a></li>
+        <li><a href="#23-数据中心的大二层网络">2.3 数据中心的大二层网络</a></li>
+        <li><a href="#24-数据中心桥接">2.4 数据中心桥接</a></li>
+      </ul>
+    </li>
+    <li><a href="#3-服务器虚拟化与网络技术">3. 服务器虚拟化与网络技术</a>
+      <ul>
+        <li><a href="#31-虚拟化基本概念">3.1 虚拟化基本概念</a></li>
+        <li><a href="#32-硬件辅助虚拟化">3.2 硬件辅助虚拟化</a></li>
+        <li><a href="#33-虚拟网络接入">3.3 虚拟网络接入</a></li>
+        <li><a href="#34-容器网络技术">3.4 容器网络技术</a></li>
+      </ul>
+    </li>
+    <li><a href="#4-网络虚拟化技术">4. 网络虚拟化技术</a>
+      <ul>
+        <li><a href="#41-概述">4.1 概述</a></li>
+        <li><a href="#42-传统网络隧道技术">4.2 传统网络隧道技术</a></li>
+        <li><a href="#43-vxlan">4.3 VXLAN</a></li>
+        <li><a href="#44-vpc技术">4.4 VPC技术</a></li>
+      </ul>
+    </li>
+    <li><a href="#5-软件定义网络技术sdn">5. 软件定义网络技术SDN</a>
+      <ul>
+        <li><a href="#51-体系结构">5.1 体系结构</a></li>
+        <li><a href="#52-数据平面和控制平面分离">5.2 数据平面和控制平面分离</a></li>
+      </ul>
+    </li>
+    <li><a href="#6-网络功能虚拟化技术nfv">6. 网络功能虚拟化技术NFV</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E4%BA%91%E8%AE%A1%E7%AE%97/" >
+                云计算
+            </a>
+        
+            <a href="/categories/%E5%AE%89%E5%85%A8/" >
+                安全
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/%E4%BA%91%E8%AE%A1%E7%AE%97%E7%BD%91%E7%BB%9C%E4%B8%8E%E5%AE%89%E5%85%A8%E7%AE%80%E8%AE%B0/">《云计算网络与安全》简记</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Nov 01, 2021</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 13 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>今天在图书馆借了两本云计算安全方面的教材类书籍，系统的了解一下云计算安全技术涉及到的相关内容和一些基本概念。通过本文，你可以了解云计算网络安全涉及的基本知识面。</p>
+</blockquote>
+<h2 id="1-云计算网络概述">1. 云计算网络概述</h2>
+<h3 id="11-基本概念">1.1 基本概念</h3>
+<blockquote>
+<p>云计算是一种提供对共享的、可配置的计算资源池（如网络、服务器、存储、应用及服务等）进行泛在的、便捷的和按需的网络接入访问的模型。在这种模型下，计算资源能够被快速地分配和释放，同时最小化管理工作的投入和服务提供商的参与。</p>
+</blockquote>
+<ul>
+<li>目的
+<ul>
+<li>提供弹性、透明的资源服务</li>
+<li>提高资源利用率，降低成本</li>
+</ul>
+</li>
+</ul>
+<p><strong>网络是云计算的基础</strong>。通过网络实现资源虚拟化、池化以及对资源的有效管理。</p>
+<ul>
+<li>
+<p>云计算基本特征</p>
+<ul>
+<li>按需自助服务</li>
+<li>广泛的网络接入</li>
+<li>资源池化</li>
+<li>快速弹性</li>
+<li>可测量的服务</li>
+</ul>
+</li>
+<li>
+<p>云计算服务模型</p>
+<ul>
+<li>IaaS：硬件资源层面上的抽象，如虚拟机、Amazon EC2、Microsoft Azure、Google Compute Engine</li>
+<li>PaaS：提供常用软件构建环境、工具、部署等服务，用户不能自己管理网络、存储等底层云的内容，只能控制自己所部署的应用程序等；关键技术在并称编程模型、资源监控调度、海量数据库、分布式文件、存储系统等</li>
+<li>SaaS：可以理解成现在用的一些服务商提供的软件，如Google Gmail等</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211101_131553_edit_70651210979843.jpg"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+</li>
+<li>
+<p>云计算部署模型（根据云平台的所有权和管理权划分）</p>
+<ul>
+<li>公有云：成本低，拓展性好；需要实现对多租户性能、资源和数据等方面的安全隔离；如阿里云、Google Cloud等</li>
+<li>私有云：一般是部署在企业组织内部的，由单一组织专用；一般是通过内网、VPN为员工提供IaaS或者SaaS服务；安全性较高</li>
+<li>社区云：可以理解成区块链中联盟链的模式</li>
+<li>混合云：实现不同模式的数据和应用的可移植性，例如将敏感数据部署到私有云，安全性要求较低的数据部署到公有云</li>
+</ul>
+</li>
+</ul>
+<h3 id="12-云计算网络安全技术">1.2 云计算网络安全技术</h3>
+<blockquote>
+<p>云计算数据中心（用于托管软硬件资源）网络通过大量二、三层交换机和路由器将服务存储有效的连接起来，通过进一步的虚拟化技术提供了云计算服务。</p>
+</blockquote>
+<ul>
+<li>云计算网络存在的安全挑战
+<ul>
+<li>网络规模庞大</li>
+<li>流量模式不同（可以重点关注）：服务器到用户的南北向流量、服务器之间的东西向流量、Mice Flow数量众多对延迟敏感、Elephant Flow传输时间长且需要高带宽，更容易导致拥塞</li>
+<li>高带宽低延迟的需求</li>
+<li>拓扑结构复杂</li>
+<li>资源虚拟化</li>
+</ul>
+</li>
+</ul>
+<h2 id="2-数据中心网络技术">2. 数据中心网络技术</h2>
+<blockquote>
+<p>数据中心是云计算等应用的重要基础设施，一般包括大量的服务器、存储和网络等硬件设备，以及运行在这些设备上的操作系统和管理软件，此外还有各种安全设备。数据中心网络则要提供高带宽、低延时和零丢包的网络通信环境。</p>
+</blockquote>
+<h3 id="21-数据中心网络流量">2.1 数据中心网络流量</h3>
+<h4 id="根据通信双方实体类型分">根据通信双方实体类型分</h4>
+<ul>
+<li>服务器与客户端之间的流量：南北向流量，主要采用基于IP的三层路由转发</li>
+<li>服务器与服务器之间的流量：东西向流量，对云计算应用的性能至关重要，一般是基于IP的三层转发和基于MAC的二层转发两种形式；三层流量主要是数据中心不同服务之间调用所使用（如Web服务调用数据库服务），二层主要是同一类服务器之间的数据同步计算（如Web集群负载均衡）</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211101_135811_edit_71747035632280.jpg"
+	
+	
+	
+	loading="lazy"
+	
+		alt="不同类型流量的分布占比"
+	
+	
+></p>
+<h4 id="根据流量大小分">根据流量大小分</h4>
+<ul>
+<li>大数据流：数量众多且对延迟敏感</li>
+<li>小数据流：容易对网络负载均衡给出挑战</li>
+</ul>
+<p>由于虚拟化技术使得通信的实体逐渐转向运行在物理机上的虚拟机和容器，它们弹性、动态地部署都对网络中数据流量的调度提出新的挑战。</p>
+<blockquote>
+<p>由于以太网的高性价比和数据传输率，使其成为数据中心使用的最广泛的数据传输技术。此外，数据中心网络也开始使用iSCSI和FCoE等技术实现网络融合。</p>
+</blockquote>
+<h3 id="22-数据中心网络拓扑">2.2 数据中心网络拓扑</h3>
+<ul>
+<li>以交换机为核心的网络架构
+<ul>
+<li>传统三层网络拓扑架构</li>
+<li>Clos网络架构</li>
+<li>Spine-Leaf网络架构</li>
+<li>Fat-Tree网络架构</li>
+</ul>
+</li>
+<li>以服务器为核心的网络结构
+<ul>
+<li>DCell</li>
+<li>FiConn</li>
+<li>BCube</li>
+</ul>
+</li>
+</ul>
+<h3 id="23-数据中心的大二层网络">2.3 数据中心的大二层网络</h3>
+<blockquote>
+<p>为使资源可以弹性分配和日益增长的东西向流量需求，有了“大二层”的网络环境的需求，也就是整个数据中心网络属于一个二层广播域。包含物理网络规模和业务支撑两方面的要求。在大二层中虚拟机的创建和迁移不需要对IP或者默认网关的修改，一般将L2、L3的网络边界放在核心交换机。</p>
+</blockquote>
+<ul>
+<li>
+<p>大二层网络面临的问题</p>
+<ul>
+<li>MAC地址学习问题：大二层网络规模庞大，在具有大量节点的网络中泛洪，影响网络性能</li>
+<li>生成树协议的问题：冗余网络带来环路问题，以太网使用的生成树协议会阻断冗余链路，造成链路资源浪费，降低网络性能、增大交换机负载</li>
+<li>VLAN技术的局限：租户数量超出VLAN的最大支持数量</li>
+<li>网络安全问题</li>
+</ul>
+</li>
+<li>
+<p>为解决上述问题，最直接的方法是摆脱STP协议</p>
+<ul>
+<li>方案一：采用网络虚拟化技术</li>
+<li>方案二：实现二层多路径传输技术L2 Fabric，代表方案有TRILL、VXLAN等</li>
+</ul>
+</li>
+</ul>
+<h3 id="24-数据中心桥接">2.4 数据中心桥接</h3>
+<blockquote>
+<p>以太网是不可靠的，数据网络和存储网络很可能使用不同的协议，因此需要一个承载协议能够适应不同的应用服务的需求，基于以太网的数据桥接技术成为最佳选择。</p>
+</blockquote>
+<ul>
+<li>数据中心桥接（Data Center Bridging）对以太网特性进行扩充优化，避免链路中的丢包，保证数据传输质量：
+<ul>
+<li>基于优先级的流量控制PFC</li>
+<li>多级调度的增强传输选择ETS</li>
+<li>给予反馈的量化拥塞通知QCN</li>
+<li>提供了DCB自动化配置</li>
+<li>保持兼容性</li>
+</ul>
+</li>
+<li>相应的DCB的主要机制：
+<ul>
+<li>基于优先级的流量控制PFC：提供了不丢包的流量控制，保证关键业务流量和非关键业务流量的隔离，是DCB的基础</li>
+<li>增强传输选择ETS：实现链路带宽的分配问题</li>
+<li>量化拥塞通知QCN：一种可以直接溯源、可量化调整的拥塞控制机制</li>
+<li>数据中心桥接交换DCBX：是完成这些工作的一个自动协商协议，允许链路两端的设备自动确认对端是否支持PFC和ETS，并且能够协商PFC和ETS的参数。</li>
+</ul>
+</li>
+</ul>
+<h2 id="3-服务器虚拟化与网络技术">3. 服务器虚拟化与网络技术</h2>
+<blockquote>
+<p>服务器虚拟化对扩展数据中心用户承载能力和提高硬件资源利用率有着十分重要的作用。通过虚拟化技术降低实际使用的物理机的数量并提高利用率，同时减轻管理成本。</p>
+</blockquote>
+<h3 id="31-虚拟化基本概念">3.1 虚拟化基本概念</h3>
+<p>虚拟化是一种将物理资源（计算、网络、存储等）进行抽象、转换和隔离，并最终向用户呈现一个可动态配置的虚拟运行环境，使得用户使用资源时不再受资源的物理配置与地理位置的限制。</p>
+<p>虚拟化中，宿主机通常就是物理服务器，运行着宿主操作系统。Hypervisor是虚拟机监视器VMM用来创建与运行虚拟机的软件、固件或者硬件。Hypervisor上面运行的虚拟机叫客户机Guest Machine。</p>
+<ul>
+<li>虚拟化分类
+<ul>
+<li>全虚拟化</li>
+<li>半虚拟化</li>
+<li>硬件辅助虚拟化：CPU针对性的从指令层面简化虚拟化技术</li>
+<li>操作系统层面的虚拟化：namespace、cgroups、chroot，也称容器技术如Docker</li>
+</ul>
+</li>
+</ul>
+<p>容器技术基于操作系统的资源隔离技术，为应用程序构建出一个轻量级、标准化，并与其他应用程序互相隔离的运行环境。容器中包含应用程序本身以及必需的运行环境（一般叫做镜像），使得该容器能够在任何具有容器引擎（如Docker Engine）中运行。</p>
+<p><img src="https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211101_151331.jpg"
+	
+	
+	
+	loading="lazy"
+	
+		alt="虚拟机和容器技术的架构"
+	
+	
+></p>
+<p>在硬件资源的利用率上容器技术强于虚拟机。节省开发、测试和部署的时间。</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:center">项目</th>
+<th style="text-align:center">容器</th>
+<th style="text-align:center">虚拟机</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">启动时间</td>
+<td style="text-align:center">秒级</td>
+<td style="text-align:center">分钟级</td>
+</tr>
+<tr>
+<td style="text-align:center">存储占用</td>
+<td style="text-align:center">MB级</td>
+<td style="text-align:center">GB级</td>
+</tr>
+<tr>
+<td style="text-align:center">性能</td>
+<td style="text-align:center">接近裸机</td>
+<td style="text-align:center">明显的性能损失</td>
+</tr>
+<tr>
+<td style="text-align:center">单机部署数量</td>
+<td style="text-align:center">最多上千个</td>
+<td style="text-align:center">最多几十台</td>
+</tr>
+</tbody>
+</table></div>
+<p>Docker技术基于Linux的资源隔离技术（namespace、cgroups和chroot），目前比较主流。而容器也作为下一代虚拟化技术。</p>
+<p>常见的Hypervisor有：VMWare vSphere、 Microsoft Hyper-V和Open Stack，其中Open Stack是开源的。</p>
+<h3 id="32-硬件辅助虚拟化">3.2 硬件辅助虚拟化</h3>
+<p>Guest OS自认为处于内核态，如果Host OS处理其发出的一些特权指令会带来很大的性能开销。所以会有硬件辅助提高虚拟化体验的需要。</p>
+<h3 id="33-虚拟网络接入">3.3 虚拟网络接入</h3>
+<h4 id="虚拟交换机">虚拟交换机</h4>
+<p>由于一个物理机上可能有成百上千个虚拟机和容器，显然1：1的配置物理网卡等网络设备是不现实的，因此使用虚拟网络来对真实网络进行模拟。使用软件的形式模拟一台交换机，方便的按需部署。</p>
+<h4 id="边界虚拟网桥技术">边界虚拟网桥技术</h4>
+<p>目的是让虚拟机以适当的方式共享宿主机上的物理网卡，尽量达到与虚拟机独占物理机网卡接近的性能。</p>
+<h3 id="34-容器网络技术">3.4 容器网络技术</h3>
+<h4 id="接入方式">接入方式</h4>
+<ol>
+<li>Bridge：利用Linux Bridge等虚拟网桥连接到物理网卡。Docker会默认使用这种方法，进程启动时，会在主机上创建虚拟网桥，其他容器会连到虚拟网桥上。此外，Docker还支持OVS(Open vSwitch)，有更强大的功能，在生产环境中多用。</li>
+<li>Host：容器直接使用宿主机的网络协议栈，共享主机IP。容器有独立的进程和文件空间但没有独立的Network Namespace。</li>
+<li>Container：可以与其他容器共享网络协议栈。</li>
+<li>macvlan：把Docker宿主机上的物理网卡在逻辑上虚拟出多个虚拟网卡，并给每一个子接口分配虚拟的MAC地址。如果容器发送数据目的地址在本机，则直接转发到相应的容器中，否则交给物理网卡处理。</li>
+<li>User-defined：支持用户高级自定义。</li>
+<li>None：容器拥有自己的Network Namespace但是不提供任何网络配置，需要用户为容器添加网卡、配置IP等。</li>
+</ol>
+<h4 id="跨主机网络通信">跨主机网络通信</h4>
+<p>多主机的Docker集群上，有了对Docker跨主机通信技术的需求。</p>
+<ol>
+<li>Flat：要求所有容器在同一个可路由的网络环境中</li>
+<li>Hierarchy：要求容器必须L3可路由，并且具有相同的IP层次。</li>
+<li>Overlay：为不同主机上的Docker容器创建分布式网络，使得不同主机的容器可以相互通信。这种方式需要实现Linux Network Namespace来隔离不同容器间的网络资源、VXLAN把二层数据包封装到UDP数据包后运输来实现大二层网络、以及一个分布式的k-v数据库来运行发现协议和保存docker集群中的个主机信息。同时也需要分布式的虚拟交换机来转发不同主机之间的数据流。</li>
+</ol>
+<h4 id="通用数据模型">通用数据模型</h4>
+<ol>
+<li>
+<p>CNM：Docker的容器网络模型，为IP地址管理插件（负责地址池的创建、删除以及地址分配）和网络插件（负责创建和删除容器虚拟网络，以及分配和回收IP地址）提供接口。基本概念包括：</p>
+<ul>
+<li>Sandbox：利用Linux Network Namespace虚拟出的沙盒网络环境，包含容器的整个网络协议栈</li>
+<li>Endpoint：网络端点，用来连接Sandbox到Network。</li>
+<li>Network：一系列可以相互通信的Endpoint所组成的虚拟网络。</li>
+</ul>
+</li>
+<li>
+<p>CNI：容器网络接口，更加通用，为了使得不同容器平台通过统一的接口互联互通。</p>
+<p>两个组件：</p>
+<ul>
+<li>容器管理系统</li>
+<li>网络插件</li>
+</ul>
+<p>两个接口：</p>
+<ul>
+<li>添加ADD</li>
+<li>删除DELETE</li>
+</ul>
+<p>运行流程：</p>
+<ul>
+<li>容器运行环境给每个容器分配Network Namespace和容器ID，然后把这些消息连同CNI的配置参数传递给网络驱动。</li>
+<li>网络驱动会以JSON文件的形式返回分配给该容器的IP地址并把该容器连接到网络。</li>
+</ul>
+</li>
+</ol>
+<h4 id="kubernetes网络技术">kubernetes网络技术</h4>
+<ol>
+<li>
+<p>组网模型</p>
+<p>k8s是主从架构的Docker集群编排器，架构如下。</p>
+<p><img src="https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211101_172351_edit_80545155299688.jpg"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<ul>
+<li>Master：控制整个k8s集群所有节点的计算机，用于控制集群中的所有Node和Pod。</li>
+<li>Node：k8s集群中的一个节点，是实际上负责提供服务的主机。</li>
+<li>Pod：提供一项服务所需的一系列密切相关的容器的集合（如应用容器和存储容器）。是k8s中可部署的最小单位，每个Pod的IP地址唯一。</li>
+<li>Service：k8s集群中一组提供相同服务的Pod以及访问这些Pod的方式，还提供了外部访问这些Pod的接口。</li>
+<li>Label和Label Selector：Label是存储在etcd的一个k-v键值对，根据需要给Pod、Node以及Service等对象添加一个或多个Label，并通过Label Selector选择完成业务所需要的对象。</li>
+</ul>
+</li>
+<li>
+<p>容器网络的管理</p>
+<p>k8s集群需要把Service Cluster分为前后端两组，面向用户仅提供前端服务器的虚拟IP和虚拟端口号，前端服务器处理后最终指派物理后端服务器。</p>
+</li>
+</ol>
+<h2 id="4-网络虚拟化技术">4. 网络虚拟化技术</h2>
+<h3 id="41-概述">4.1 概述</h3>
+<p>数据中心网络的大二层的不同用户的数据帧的传输会带来巨大的风险。这些问题可以用网络虚拟化和隧道技术解决。</p>
+<ul>
+<li>网络虚拟化：把物理网络虚拟化成多个逻辑网络，通常使用VLAN Tag等方式区分数据流，使用隧道技术进行透明传输。这样可以对某个网络进行单独管理，高效利用资源。</li>
+</ul>
+<h3 id="42-传统网络隧道技术">4.2 传统网络隧道技术</h3>
+<ul>
+<li>VLAN：VLAN技术通过给每个租户分配一个VLAN ID创建虚拟的二层网络，缺点是数量有线，只支持4096个，无法满足实际需求。因此业界推出VXLAN虚拟可扩展局域网。</li>
+<li>Q-in-Q：也叫Stacked VLAN或者Double VLAN，主要思想是VLAN Tag堆叠，实现透明转发。</li>
+<li>MPLS：多协议标签交换。解决的问题是大流量下基于最长前缀匹配规则的路由转发开销大，性能不可接受。这是一种基于标签的转发技术，通过在报文中添加MPLS标签，实现高效的数据转发和数据分层的精细控制。</li>
+<li>GRE： 目标是对某些网络层协议进行封装，然后创建隧道使得这些报文可以在另一个网络层协议中传输，解决不同网络层协议报文的传输问题。</li>
+</ul>
+<h3 id="43-vxlan">4.3 VXLAN</h3>
+<p>这是一种大二层网络的虚拟化技术，采用UDP进行封装。优点如下：</p>
+<ul>
+<li>低成本的实现跨三层的大二层网络，通过隧道技术实现了三层网络上的逻辑大二层网络</li>
+<li>有充足的ID数量（1600万）</li>
+<li>租户隔离，实现IP地址，MAC地址复用</li>
+<li>可感知虚拟机</li>
+<li>支持细粒度的负载均衡</li>
+</ul>
+<h3 id="44-vpc技术">4.4 VPC技术</h3>
+<p>虚拟私有云VPC为租户提供隔离的环境，租户在使用网络时，可以自定义选择IP地址的范围、创建子网和配置路由表和网关，并且无需担心和其他用户产生冲突。</p>
+<h2 id="5-软件定义网络技术sdn">5. 软件定义网络技术SDN</h2>
+<p>传统的网络架构适应性和更新能力不足。软件定义网络SDN技术的可编程性使得网络变化更加灵活。通过将数据平面和控制平面进行划分，实现网络灵活调配。数据平面上可以使用通用的网络设备提供编程能力，控制平面上对网络进行统一管理。</p>
+<p>简单说，思想就是<strong>解耦控制平面与数据平面，将处理网络硬件的处理细节交给人</strong>。</p>
+<h3 id="51-体系结构">5.1 体系结构</h3>
+<p>自顶向下：</p>
+<ol>
+<li>应用平面：如流量均衡模块和防火墙等网络应用模块。允许用户通过编程实现网络行为。</li>
+<li>北向接口：SDN控制器提供给上层应用的接口，使得上层应用可以调用控制器的功能。</li>
+<li>控制平面：包含各类控制器，是SDN的数据中心，负责网络内部路径交换和边界路由的生成。控制器实例可以部署在不同位置，通过南向接口对数据平面中的网络设备进行集中式管理，如下发转发决策、监测网络状态。同时通过北向接口向应用平面提供服务。</li>
+<li>南向接口：SND用于管理交换机的接口，如OpenFlow协议，是数据平面和控制平面的交互接口。</li>
+<li>数据平面：支持各类SDN的网络设备，如路由器、交换机、虚拟交换机和无线访问接入点等，主要负责用户数据转发，也可以上报网络资源和状态信息。</li>
+</ol>
+<h3 id="52-数据平面和控制平面分离">5.2 数据平面和控制平面分离</h3>
+<p>SDN实现核心思想就是解耦数据平面和控制平面，以转发表为界。数据平面中网络设备只保存转发信息，并且有高速转发能力，所有网络决策都由控制器来完成。控制平面可以获取全局网络信息和状态，并且通过南向接口将编程指令下发到数据平面。</p>
+<p>这样也带来一些问题：</p>
+<ul>
+<li>单控制节点的单点故障；多控制节点的资源调度，负载均衡</li>
+<li>一致性问题</li>
+<li>高可用性</li>
+</ul>
+<h2 id="6-网络功能虚拟化技术nfv">6. 网络功能虚拟化技术NFV</h2>
+<p>常见的网络功能有防火墙、入侵检测系统、负载均衡器、网络地址转换等。传统的网络部署中，网络的功能实现主要依赖于硬件设备。虚拟化技术使得网络功能的部署不再依赖硬件，而通过软件的形式灵活部署在通用服务器的虚拟化资源中，可以在一个物理平台上同时运行多个不同的网络功能程序。</p>
+<p>优势：</p>
+<ul>
+<li>共享硬件资源，降低网络成本</li>
+<li>部署灵活可伸缩，弹性和高可重用</li>
+<li>自动化更新升级</li>
+<li>多租户和安全隔离</li>
+<li>负载均衡和能耗控制</li>
+<li>接口标准化</li>
+</ul>
+<p>云计算网络安全基础</p>
+<p>云计算网络安全技术</p>
+<p>云计算网络安全机制</p>
+<p>云计算网络安全实践</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">云计算</a>
+        
+            <a href="/tags/%E5%AE%89%E5%85%A8/">安全</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/web%E6%BC%8F%E6%B4%9E/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Web漏洞</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/xiaodi%E5%AE%89%E5%85%A8%E7%AC%94%E8%AE%B0/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">xiaodi安全笔记</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E5%85%A5%E4%BE%B5%E6%A3%80%E6%B5%8B%E6%8A%80%E6%9C%AF/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">入侵检测技术</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E9%98%B2%E7%81%AB%E5%A2%99/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">防火墙</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/pki%E6%8A%80%E6%9C%AF/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">PKI技术</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

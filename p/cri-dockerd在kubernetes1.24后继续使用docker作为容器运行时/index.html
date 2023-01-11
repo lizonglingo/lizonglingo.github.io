@@ -10,7 +10,7 @@
 <meta property='og:description' content='为体验Kubernetes以及Cilium组合在一起产生的新特性，我计划将Kubernetes升级到1.24&#43;，并使用最新的稳定版ciliu'>
 <meta property='og:url' content='https://lizonglingo.github.io/p/cri-dockerd%E5%9C%A8kubernetes1.24%E5%90%8E%E7%BB%A7%E7%BB%AD%E4%BD%BF%E7%94%A8docker%E4%BD%9C%E4%B8%BA%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6/'>
 <meta property='og:site_name' content='Li Duo'>
-<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='云原生' /><meta property='article:tag' content='k8s' /><meta property='article:tag' content='docker' /><meta property='article:tag' content='学习笔记' /><meta property='article:tag' content='排错笔记' /><meta property='article:published_time' content='2022-08-01T18:10:59&#43;08:00'/><meta property='article:modified_time' content='2022-08-01T18:10:59&#43;08:00'/>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='云原生' /><meta property='article:tag' content='Kubernetes' /><meta property='article:tag' content='docker' /><meta property='article:tag' content='笔记' /><meta property='article:published_time' content='2022-08-01T18:10:59&#43;08:00'/><meta property='article:modified_time' content='2022-08-01T18:10:59&#43;08:00'/>
 <meta name="twitter:title" content="cri-dockerd，在kubernetes1.24后继续使用Docker作为容器运行时">
 <meta name="twitter:description" content="为体验Kubernetes以及Cilium组合在一起产生的新特性，我计划将Kubernetes升级到1.24&#43;，并使用最新的稳定版ciliu">
     <link rel="shortcut icon" href="/favicon.ico" />
@@ -323,20 +323,16 @@
                 云原生
             </a>
         
-            <a href="/categories/k8s/" >
-                k8s
+            <a href="/categories/kubernetes/" >
+                Kubernetes
             </a>
         
             <a href="/categories/docker/" >
                 docker
             </a>
         
-            <a href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" >
-                学习笔记
-            </a>
-        
-            <a href="/categories/%E6%8E%92%E9%94%99%E7%AC%94%E8%AE%B0/" >
-                排错笔记
+            <a href="/categories/%E7%AC%94%E8%AE%B0/" >
+                笔记
             </a>
         
     </header>
@@ -945,13 +941,11 @@ systemctl status cri-docker
         
             <a href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">云原生</a>
         
-            <a href="/tags/k8s/">k8s</a>
+            <a href="/tags/kubernetes/">Kubernetes</a>
         
             <a href="/tags/docker/">docker</a>
         
-            <a href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
-        
-            <a href="/tags/%E6%8E%92%E9%94%99%E7%AC%94%E8%AE%B0/">排错笔记</a>
+            <a href="/tags/%E7%AC%94%E8%AE%B0/">笔记</a>
         
     </section>
 
@@ -1008,19 +1002,6 @@ systemctl status cri-docker
             
                 
 <article class="">
-    <a href="/p/%E8%AE%B0%E4%B8%80%E6%AC%A1kubernetes%E4%BD%BF%E7%94%A8ciliumcoredns%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E5%A4%B1%E8%B4%A5%E7%9A%84%E6%8E%92%E9%94%99/">
-        
-        
-
-        <div class="article-details">
-            <h2 class="article-title">记一次Kubernetes使用Cilium，coredns健康检查失败的排错</h2>
-        </div>
-    </a>
-</article>
-
-            
-                
-<article class="">
     <a href="/p/sinan-ml-based-and-qos-aware-resource-management-for-cloud-microservices/">
         
         
@@ -1034,12 +1015,12 @@ systemctl status cri-docker
             
                 
 <article class="">
-    <a href="/p/kubernetes-service%E7%9A%84%E4%BD%BF%E7%94%A8k8s%E5%AE%9E%E8%B7%B5-4/">
+    <a href="/p/ieee-cloud-21-%E4%BA%91%E4%B8%8A%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E7%9B%B8%E5%85%B3%E5%90%88%E8%BE%91/">
         
         
 
         <div class="article-details">
-            <h2 class="article-title">Kubernetes Service的使用(k8s实践-4)</h2>
+            <h2 class="article-title">IEEE CLOUD 21 云上资源管理相关合辑</h2>
         </div>
     </a>
 </article>
@@ -1047,12 +1028,12 @@ systemctl status cri-docker
             
                 
 <article class="">
-    <a href="/p/pod%E5%92%8Cdeployment%E7%9A%84%E4%BD%BF%E7%94%A8k8s%E5%AE%9E%E8%B7%B5-3/">
+    <a href="/p/showar-right-sizing-and-efficient-scheduling-of-microservices/">
         
         
 
         <div class="article-details">
-            <h2 class="article-title">Pod和Deployment的使用(k8s实践-3)</h2>
+            <h2 class="article-title">SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</h2>
         </div>
     </a>
 </article>
@@ -1060,12 +1041,25 @@ systemctl status cri-docker
             
                 
 <article class="">
-    <a href="/p/%E6%90%AD%E5%BB%BA1%E4%B8%AAmaster%E8%8A%82%E7%82%B9%E5%92%8C2%E4%B8%AAwork%E8%8A%82%E7%82%B9%E7%9A%84%E9%9B%86%E7%BE%A4k8s%E5%AE%9E%E8%B7%B5-2/">
+    <a href="/p/%E7%AC%94%E8%AE%B0-showar-right-sizing-and-efficient-scheduling-of-microservices/">
         
         
 
         <div class="article-details">
-            <h2 class="article-title">搭建1个Master节点和2个Work节点的集群(k8s实践-2)</h2>
+            <h2 class="article-title">笔记 &gt; SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/cocktail-a-multidimensional-optimization-for-model-serving-in-cloud/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Cocktail: A Multidimensional Optimization for Model Serving in Cloud</h2>
         </div>
     </a>
 </article>

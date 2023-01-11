@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
-        <title>docker on Li Duo</title>
+        <title>docker on fmt.Println(&#34;Li Duo&#34;)</title>
         <link>https://lizonglingo.github.io/tags/docker/</link>
-        <description>Recent content in docker on Li Duo</description>
+        <description>Recent content in docker on fmt.Println(&#34;Li Duo&#34;)</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-CN</language>
         <lastBuildDate>Mon, 01 Aug 2022 18:10:59 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/docker/index.xml" rel="self" type="application/rss+xml" /><item>
@@ -12,7 +12,7 @@
         <pubDate>Mon, 01 Aug 2022 18:10:59 +0800</pubDate>
         
         <guid>https://lizonglingo.github.io/p/cri-dockerd%E5%9C%A8kubernetes1.24%E5%90%8E%E7%BB%A7%E7%BB%AD%E4%BD%BF%E7%94%A8docker%E4%BD%9C%E4%B8%BA%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6/</guid>
-        <description>&lt;blockquote&gt;
+        <description>&lt;img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230111161434207.png" alt="Featured image of post cri-dockerd，在kubernetes1.24后继续使用Docker作为容器运行时" /&gt;&lt;blockquote&gt;
 &lt;p&gt;为体验Kubernetes以及Cilium组合在一起产生的新特性，我计划将Kubernetes升级到1.24+，并使用最新的稳定版cilium1.12来作集群网络。&lt;/p&gt;
 &lt;p&gt;我所看重的最大改变：&lt;/p&gt;
 &lt;ul&gt;

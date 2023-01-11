@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
-        <title>Golang on Li Duo</title>
+        <title>Golang on fmt.Println(&#34;Li Duo&#34;)</title>
         <link>https://lizonglingo.github.io/tags/golang/</link>
-        <description>Recent content in Golang on Li Duo</description>
+        <description>Recent content in Golang on fmt.Println(&#34;Li Duo&#34;)</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-CN</language>
         <lastBuildDate>Wed, 20 Jul 2022 20:22:12 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/golang/index.xml" rel="self" type="application/rss+xml" /><item>

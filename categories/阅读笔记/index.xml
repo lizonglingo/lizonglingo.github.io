@@ -1577,7 +1577,7 @@
 &lt;li&gt;开发者进行功能测试并通过。&lt;/li&gt;
 &lt;li&gt;注入故障&lt;/li&gt;
 &lt;li&gt;原有的功能测试因为故障的注入出现问题&lt;/li&gt;
-&lt;li&gt;开发者通过提供的帮助工具，可以对新出现的故障进行断言，从而捕获因故障注入出现的故障。例如：Audible会报出&lt;code&gt;if a fault was injected on the stats ser- vice, the service should still play the audiobook.&lt;/code&gt;。基于此，开发者可以使用反例来重现先前的测试，以证明这些断言。&lt;/li&gt;
+&lt;li&gt;开发者通过提供的帮助工具，可以对新出现的故障进行断言，从而捕获因故障注入出现的故障。例如：Audible会报出&lt;code&gt;if a fault was injected on the stats ser- vice, the service should still play the audiobook.&lt;/code&gt;。基于此，开发者可以使用反例来重现先前的测试，以证明这些断言。&lt;/li&gt;
 &lt;/ol&gt;
 &lt;h2 id=&#34;故障搜索路径动态缩减&#34;&gt;故障搜索路径动态缩减&lt;/h2&gt;
 &lt;p&gt;为了识别尽可能多的错误，必须理想地探索服务失败的组合。为了实现故障空间的最大覆盖所需的测试执行次数是非常多的。&lt;/p&gt;

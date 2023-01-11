@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='这篇是继承与派生 C&#43;&#43;基础复习—— 继承 1.继承与派生 C&#43;&#43;继承的几个特点： (1) 一个派生类可以有一个或多个基类，只有一个基类时，称为单继承；有多'>
+<title>C&#43;&#43;基础复习—— 继承</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/c-%E5%9F%BA%E7%A1%80%E5%A4%8D%E4%B9%A0-%E7%BB%A7%E6%89%BF/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='C&#43;&#43;基础复习—— 继承'>
+<meta property='og:description' content='这篇是继承与派生 C&#43;&#43;基础复习—— 继承 1.继承与派生 C&#43;&#43;继承的几个特点： (1) 一个派生类可以有一个或多个基类，只有一个基类时，称为单继承；有多'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/c-%E5%9F%BA%E7%A1%80%E5%A4%8D%E4%B9%A0-%E7%BB%A7%E6%89%BF/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='学校课程' /><meta property='article:published_time' content='2018-11-26T16:54:02&#43;08:00'/><meta property='article:modified_time' content='2018-11-26T16:54:02&#43;08:00'/>
+<meta name="twitter:title" content="C&#43;&#43;基础复习—— 继承">
+<meta name="twitter:description" content="这篇是继承与派生 C&#43;&#43;基础复习—— 继承 1.继承与派生 C&#43;&#43;继承的几个特点： (1) 一个派生类可以有一个或多个基类，只有一个基类时，称为单继承；有多">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1继承与派生">1.继承与派生</a></li>
+        <li><a href="#2派生类的访问控制">2.派生类的访问控制</a></li>
+        <li><a href="#3派生类的构造函数和析构函数">3.派生类的构造函数和析构函数</a></li>
+        <li><a href="#4多继承">4.多继承</a></li>
+        <li><a href="#5虚基类">5.虚基类</a></li>
+      </ul>
+    </li>
+    <li><a href="#goodnight----20181122--2310">goodnight    2018.11.22  23：10</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E5%AD%A6%E6%A0%A1%E8%AF%BE%E7%A8%8B/" >
+                学校课程
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/c-%E5%9F%BA%E7%A1%80%E5%A4%8D%E4%B9%A0-%E7%BB%A7%E6%89%BF/">C&#43;&#43;基础复习—— 继承</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Nov 26, 2018</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 8 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>这篇是继承与派生</p>
+</blockquote>
+<h1 id="c基础复习-继承">C++基础复习—— 继承</h1>
+<h3 id="1继承与派生">1.继承与派生</h3>
+<p>C++继承的几个特点：
+(1)  一个派生类可以有一个或多个基类，只有一个基类时，称为单继承；有多个基类时称为多继承。
+(2)  继承关系可以是多级的。
+(3)  不允许循环继承。
+(4)  基类中能够被继承的部分只能是公有成员和保护成员，私有成员不能被继承。</p>
+<p>单继承
+说明：
+（1）在派生类定义中，继承方式只限定紧跟其后的那个基类。如果不显示给出继承方式系统默认私
+有继承。
+（2）派生方式有三个关键字，public  private  protected除此之外，缺省的方式默认私有继承。</p>
+<p>派生类实现方式：吸收 改造（主要通过同名覆盖实现） 添加</p>
+<p>多继承定义格式：class 派生类名:继承方式1 基类名1,继承方式2 基类名2，···
+(继承方式缺省默认私有继承)</p>
+<p>基类与派生类的关系：
+1)派生类是基类的具体化
+2)派生类是基类定义的延续
+3)派生类是基类的组合</p>
+<h3 id="2派生类的访问控制">2.派生类的访问控制</h3>
+<p>公有继承：</p>
+<pre><code>      基类        派生类       派生类内    派生类外
+     public  -&gt;   public       可使用     不可使用
+     private -&gt;   不可访问     不可使用    不可使用
+     protected -&gt;protected     可使用     可通过成员函数访问
+</code></pre>
+<p>私有继承：
+基类        派生类      派生类内    派生类外
+public  -&gt;  private    可使用        不可直接使用
+protected-&gt;  private   可以使用      不可直接使用
+private  -&gt;  不可访问   不能直接使用  不能直接使用（只能通过调用基类函数成员</p>
+<h3 id="3派生类的构造函数和析构函数">3.派生类的构造函数和析构函数</h3>
+<p>派生类的构造函数：在派生类对象的成员中，从基类继承来的成员被封装为基类的子对象，他们的初始化由派生类的构造函数隐含调用基类构造函数进行初始化；派生类新增数据成员则在派生类自己定义的构造函数中进行初始化。对象在使用之前必须初始化，对派生类对象初始化之时，需要对该类数据成员赋初值。由于派生类数据成员是由所有基类成员与派生类新成员共同组成的，所以这里要注意参数是否与所有要初始化的参数相匹配。</p>
+<ul>
+<li>派生类构造函数的调用规则</li>
+</ul>
+<p>1)单继承的构造函数调用顺序
+调用基类构造函数-&gt;调用内嵌成员对象的构造函数-&gt;调用顺序取决于他们在类中定义的顺序-&gt;派生类自己的构造函数。</p>
+<p>例题（包括子对象条件下）</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Base1</span>  <span style="color:#75715e">//基类
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Base1(<span style="color:#66d9ef">int</span> i) {
+</span></span><span style="display:flex;"><span>		a <span style="color:#f92672">=</span> i;
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;constructing Base1 a=&#34;</span> <span style="color:#f92672">&lt;&lt;</span> a <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> a;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Base2</span>   <span style="color:#75715e">//子对象f所属类
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Base2(<span style="color:#66d9ef">int</span> i) {
+</span></span><span style="display:flex;"><span>		b <span style="color:#f92672">=</span> i;
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;constructing Base2 b=&#34;</span> <span style="color:#f92672">&lt;&lt;</span> b <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> b;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Base3</span>   <span style="color:#75715e">//子对象g所属类
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Base3(<span style="color:#66d9ef">int</span> i) {
+</span></span><span style="display:flex;"><span>		c <span style="color:#f92672">=</span> i;
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;constructing Base3 c=&#34;</span> <span style="color:#f92672">&lt;&lt;</span> c <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> c;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Derivedclass</span> <span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> Base1  <span style="color:#75715e">//派生类
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Derivedclass(<span style="color:#66d9ef">int</span> i, <span style="color:#66d9ef">int</span> j, <span style="color:#66d9ef">int</span> k, <span style="color:#66d9ef">int</span> m);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> d;
+</span></span><span style="display:flex;"><span>	Base2 f;   <span style="color:#75715e">//子对象f
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	Base3 g;  <span style="color:#75715e">//子对象g
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>};
+</span></span><span style="display:flex;"><span>Derivedclass<span style="color:#f92672">::</span>Derivedclass(<span style="color:#66d9ef">int</span> i, <span style="color:#66d9ef">int</span> j, <span style="color:#66d9ef">int</span> k, <span style="color:#66d9ef">int</span> m) <span style="color:#f92672">:</span>Base1(i), g(j), f(k)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	d <span style="color:#f92672">=</span> m;
+</span></span><span style="display:flex;"><span>	cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;constructing Derivedclass d=&#34;</span> <span style="color:#f92672">&lt;&lt;</span> d <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>()
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	Derivedclass x(<span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">6</span>, <span style="color:#ae81ff">7</span>, <span style="color:#ae81ff">8</span>);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>下面是调试结果：
+constructing Base1 a=5
+constructing Base2 b=7
+constructing Base3 c=6
+constructing Derivedclass d=8
+*注意：子对象f和g的调用顺序取决于他们在派生类中被说明的顺序，与他们在成员初始化列表中的
+顺序无关。
+好了看完这个例子我们来总结一下派生类构造函数格式：
+派生类名(参数总表):基类名1(参数表1),···,基类名m(参数表m),成员对象名1(成员对象参数表1),···成员对象n(成员对象参数表n)
+{</p>
+<p>·······</p>
+<p>}；</p>
+<p>2)多继承的构造函数调用顺序
+多继承下派生类的构造函数必须同时负责该派生类所有基类构造函数的调用。构造函数的调用顺序是：
+先调用所有基类的构造函数，再调用派生类的构造函数。处于同一层次的各基类构造函数的调用次序
+取决于定义派生类所指定的基类顺序，与派生类构造函数中所定义的初始化列表顺序无关。
+*对于同一个基类不允许直接继承两次
+我们来感受一下</p>
+<p>例题：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Base1</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Base1(<span style="color:#66d9ef">int</span> i)
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		a <span style="color:#f92672">=</span> i;
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;constructing Base1 a=&#34;</span> <span style="color:#f92672">&lt;&lt;</span> a <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> a;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Base2</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Base2(<span style="color:#66d9ef">int</span> i)
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		b <span style="color:#f92672">=</span> i;
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;constructing Base2 b=&#34;</span> <span style="color:#f92672">&lt;&lt;</span> b <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> b;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Derivedclass</span> <span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> Base1, <span style="color:#66d9ef">public</span> Base2
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Derivedclass(<span style="color:#66d9ef">int</span> i, <span style="color:#66d9ef">int</span> j, <span style="color:#66d9ef">int</span> k);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> d;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>Derivedclass<span style="color:#f92672">::</span>Derivedclass(<span style="color:#66d9ef">int</span> i, <span style="color:#66d9ef">int</span> j, <span style="color:#66d9ef">int</span> k) <span style="color:#f92672">:</span>Base2(i), Base1(j)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	d <span style="color:#f92672">=</span> k;
+</span></span><span style="display:flex;"><span>	cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;constructing Derivedclass d=&#34;</span> <span style="color:#f92672">&lt;&lt;</span> d <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>()
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	Derivedclass x(<span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">6</span>, <span style="color:#ae81ff">7</span>);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>调试结果如下：
+constructing Base1 a=6
+constructing Base2 b=5
+constructing Derivedclass d=7
+由于在声明派生类时，Base1在Base2之前，所以不关派生类构造函数参数列表的顺序如何，都要先
+构造Base1，就是这个道理。</p>
+<p>3)派生类的析构函数</p>
+<ul>
+<li>析构函数调用规则如下：</li>
+</ul>
+<p>首先调用派生类的析构函数（清理派生类新增成员）-&gt;如果派生类有子对象,再调用子对象类的析构
+函数-&gt;再调用普通基类的析构函数（清理从基类继承来的基类子对象）-&gt;最后调用虚基类的析构函数
+例题：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Base1</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Base1(<span style="color:#66d9ef">int</span> i)
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		a <span style="color:#f92672">=</span> i;
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;constructing Base1 a=&#34;</span> <span style="color:#f92672">&lt;&lt;</span> a <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">~</span>Base1()
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;destructing Base1&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> a;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Base2</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Base2(<span style="color:#66d9ef">int</span> i)
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		b <span style="color:#f92672">=</span> i;
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;constructing Base2 b=&#34;</span> <span style="color:#f92672">&lt;&lt;</span> b <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">~</span>Base2()
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;destructing Base2&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> b;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Base3</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Base3(<span style="color:#66d9ef">int</span> i)
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		c <span style="color:#f92672">=</span> i;
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;constructing Base3 c=&#34;</span> <span style="color:#f92672">&lt;&lt;</span> c <span style="color:#f92672">&lt;&lt;</span>endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">~</span>Base3()
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;destructing Base3&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> c;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Derivedclass</span> <span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> Base1
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Derivedclass(<span style="color:#66d9ef">int</span> i, <span style="color:#66d9ef">int</span> j, <span style="color:#66d9ef">int</span> k, <span style="color:#66d9ef">int</span> m);
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">~</span>Derivedclass();
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> d;
+</span></span><span style="display:flex;"><span>	Base2 f;
+</span></span><span style="display:flex;"><span>	Base3 g;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>Derivedclass<span style="color:#f92672">::</span>Derivedclass(<span style="color:#66d9ef">int</span> i, <span style="color:#66d9ef">int</span> j, <span style="color:#66d9ef">int</span> k, <span style="color:#66d9ef">int</span> m) <span style="color:#f92672">:</span>Base1(i), g(j), f(k)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	d <span style="color:#f92672">=</span> m;
+</span></span><span style="display:flex;"><span>	cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;constructing Derivedclass d=&#34;</span> <span style="color:#f92672">&lt;&lt;</span> d <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>Derivedclass<span style="color:#f92672">::~</span>Derivedclass()
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;destructing Derivedclass&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>()
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	Derivedclass x(<span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">6</span>, <span style="color:#ae81ff">7</span>, <span style="color:#ae81ff">8</span>);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>调试结果如下：
+constructing Base1 a=5
+constructing Base2 b=7
+constructing Base3 c=6
+constructing Derivedclass d=8
+destructing Derivedclass
+destructing Base3
+destructing Base2
+destructing Base1</p>
+<h3 id="4多继承">4.多继承</h3>
+<p>多继承语法：
+class 派生类名: 访问区分符 基类1的类名,···, 访问区分符 基类n的类名</p>
+<p>*多继承中的二义性及其解决
+引例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">A</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">void</span> fun() { cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;调用A类成员函数&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl; }
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">B</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">void</span> fun() { cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;调用B类成员函数&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl; }
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">C</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">void</span> funC() {
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;调用C类成员函数&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">D</span> <span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> B, <span style="color:#66d9ef">public</span> A, <span style="color:#66d9ef">public</span> C
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">void</span> fun() {
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;调用D类成员函数&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>()
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	D d;
+</span></span><span style="display:flex;"><span>	d.fun();
+</span></span><span style="display:flex;"><span>	d.funC();
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>调试结果如下：
+调用D类成员函数
+调用C类成员函数
+我们发现，派生类的成员函数覆盖了基类中所有与之重名的成员函数，这一规则对于数据成员同样
+适用。
+由此来看二义性的产生：如果只是基类与基类有同名函数成员，存在二义性，系统不能自行判断他们
+派生类C的对象访问是的成员中的哪一个。</p>
+<p>二义性的解决办法：
+1）成员名限定：通过类作用域分辨符明确限定出现歧义的成员是继承自哪一个基类成员
+2）成员重定义：在派生类中新增一个与基类成员相同的成员，由于同名覆盖，程序自动选择派生类
+新增的成员。</p>
+<p>多继承中构造函数和析构函数调用顺序
+多继承情况下，基类及派生类的构造函数是按照以下顺序被调用的：
+(1)按基类被列出的顺序逐一调用基类构造函数
+(2)如果该派生类存在对象成员，则调用成员对象的构造函数
+(3)如果存在多个对象成员，按他们被列出的顺序逐一调用
+(4)最后调用派生类构造函数
+而析构函数调用顺序与构造函数的调用顺序正好相反
+例题：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">HairColor</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> color;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	HairColor(<span style="color:#66d9ef">int</span> color)
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;Constructor of class HairColor called&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">this</span><span style="color:#f92672">-&gt;</span>color <span style="color:#f92672">=</span> color;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">~</span>HairColor()
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;Destructor of class HairColor called&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Horse</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Horse()
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;Constructor of class Horse called&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">~</span>Horse()
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;Destructor of class Horse called&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Donkey</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Donkey()
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;Constructor of class Donkey called&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">~</span>Donkey()
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;Destructor of class Donkey called&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Mule</span> <span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> Horse, <span style="color:#66d9ef">public</span> Donkey
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	HairColor hcInstance;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	Mule(<span style="color:#66d9ef">int</span> color) <span style="color:#f92672">:</span>hcInstance(color)
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;Constructor of class Mule called&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">~</span>Mule()
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;Destructor of class Mule called&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>()
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	Mule muleInstance(<span style="color:#ae81ff">100</span>);
+</span></span><span style="display:flex;"><span>	cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;Program over&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>调试结果如下：
+Constructor of class Horse called
+Constructor of class Donkey called
+Constructor of class HairColor called
+Constructor of class Mule called
+Program over
+Destructor of class Mule called
+Destructor of class HairColor called
+Destructor of class Donkey called
+Destructor of class Horse called</p>
+<h3 id="5虚基类">5.虚基类</h3>
+<p>（1）多重派生的基类拷贝
+引例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">A</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">int</span> x;
+</span></span><span style="display:flex;"><span>  A(<span style="color:#66d9ef">int</span> a){x<span style="color:#f92672">=</span>a;}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">B</span><span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> A
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">int</span> y;
+</span></span><span style="display:flex;"><span>  B(<span style="color:#66d9ef">int</span> a,<span style="color:#66d9ef">int</span> b)<span style="color:#f92672">:</span>A(b){y<span style="color:#f92672">=</span>a;}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">C</span><span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> A
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">int</span> z;
+</span></span><span style="display:flex;"><span>  C(<span style="color:#66d9ef">int</span> a,<span style="color:#66d9ef">int</span> b)<span style="color:#f92672">:</span>A(b)
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    z<span style="color:#f92672">=</span>a;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">D</span><span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> B,<span style="color:#66d9ef">public</span> C
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">int</span> m;
+</span></span><span style="display:flex;"><span>  D(<span style="color:#66d9ef">int</span> a,<span style="color:#66d9ef">int</span> b,<span style="color:#66d9ef">int</span> d,<span style="color:#66d9ef">int</span> e,<span style="color:#66d9ef">int</span> f)<span style="color:#f92672">:</span>B(a,b),C(d,e)
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    m<span style="color:#f92672">=</span>f;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">Print</span>()
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;x=&#34;</span><span style="color:#f92672">&lt;&lt;</span>B<span style="color:#f92672">::</span>x<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#39;\t&#39;</span><span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;y=&#34;</span><span style="color:#f92672">&lt;&lt;</span>y<span style="color:#f92672">&lt;&lt;</span>endl;
+</span></span><span style="display:flex;"><span>    cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;x=&#34;</span><span style="color:#f92672">&lt;&lt;</span>C<span style="color:#f92672">::</span>x<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#39;\t&#39;</span><span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;z=&#34;</span><span style="color:#f92672">&lt;&lt;</span>z<span style="color:#f92672">&lt;&lt;</span>endl;
+</span></span><span style="display:flex;"><span>    cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;m=&#34;</span><span style="color:#f92672">&lt;&lt;</span>m<span style="color:#f92672">&lt;&lt;</span>endl;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>()
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  D d1(<span style="color:#ae81ff">100</span>,<span style="color:#ae81ff">200</span>,<span style="color:#ae81ff">300</span>,<span style="color:#ae81ff">400</span>,<span style="color:#ae81ff">500</span>);
+</span></span><span style="display:flex;"><span>  d1.Print();
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>调试结果如下：
+x=200   y=100
+x=400   z=300
+m=500</p>
+<p>虚基类的定义
+定义格式：
+class &lt;派生类名&gt;:virtual <!-- raw HTML omitted --> &lt;虚基类名&gt;
+or
+class &lt;派生类名&gt;:<!-- raw HTML omitted --> virtual &lt;虚基类名&gt;</p>
+<p>例题：定义虚基类，使派生类中只有基类的一个拷贝</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">A</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">int</span> x;
+</span></span><span style="display:flex;"><span>  A(<span style="color:#66d9ef">int</span> a<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    x<span style="color:#f92672">=</span>a;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">B</span><span style="color:#f92672">:</span><span style="color:#66d9ef">virtual</span> <span style="color:#66d9ef">public</span> A
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">int</span> y;
+</span></span><span style="display:flex;"><span>  B(<span style="color:#66d9ef">int</span> a,<span style="color:#66d9ef">int</span> b)<span style="color:#f92672">:</span>A(b)
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    y<span style="color:#f92672">=</span>a;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">C</span><span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">virtual</span> A
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">int</span> z;
+</span></span><span style="display:flex;"><span>  C(<span style="color:#66d9ef">int</span> a,<span style="color:#66d9ef">int</span> b)<span style="color:#f92672">:</span>A(b)
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    z<span style="color:#f92672">=</span>a;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">D</span><span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> B,<span style="color:#66d9ef">public</span> C
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">int</span> m;
+</span></span><span style="display:flex;"><span>  D(<span style="color:#66d9ef">int</span> a,<span style="color:#66d9ef">int</span> b,<span style="color:#66d9ef">int</span> d,<span style="color:#66d9ef">int</span> e,<span style="color:#66d9ef">int</span> f)<span style="color:#f92672">:</span>B(a,b),C(d,e){m<span style="color:#f92672">=</span>f;}
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">Print</span>()
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;x=&#34;</span><span style="color:#f92672">&lt;&lt;</span>x<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#39;\t&#39;</span><span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;y=&#34;</span><span style="color:#f92672">&lt;&lt;</span>y<span style="color:#f92672">&lt;&lt;</span>endl;
+</span></span><span style="display:flex;"><span>    cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;x=&#34;</span><span style="color:#f92672">&lt;&lt;</span>x<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\t</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;z=&#34;</span><span style="color:#f92672">&lt;&lt;</span>z<span style="color:#f92672">&lt;&lt;</span>endl;
+</span></span><span style="display:flex;"><span>    cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;m=&#34;</span><span style="color:#f92672">&lt;&lt;</span>m<span style="color:#f92672">&lt;&lt;</span>endl;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>()
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  D d1(<span style="color:#ae81ff">100</span>,<span style="color:#ae81ff">200</span>,<span style="color:#ae81ff">300</span>,<span style="color:#ae81ff">400</span>,<span style="color:#ae81ff">500</span>);
+</span></span><span style="display:flex;"><span>  d1.Print();
+</span></span><span style="display:flex;"><span>  d1.x<span style="color:#f92672">=</span><span style="color:#ae81ff">400</span>;
+</span></span><span style="display:flex;"><span>  d1.Print();
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>调试结果如下：
+x=0     y=100
+x=0     z=300
+m=500
+x=400   y=100
+x=400   z=300
+m=500
+有虚基类时，多继承方式下构造函数的调用顺序
+例题</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">base1</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  base1(){cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;constructing base1&#34;</span><span style="color:#f92672">&lt;&lt;</span>endl;}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">base2</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  base2(){cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;constructing base2&#34;</span><span style="color:#f92672">&lt;&lt;</span>endl;}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">derived1</span><span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> base2,<span style="color:#66d9ef">virtual</span> <span style="color:#66d9ef">public</span> base1
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  derived1(){cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;constructing derived1&#34;</span><span style="color:#f92672">&lt;&lt;</span>endl;}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">derived2</span><span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> base2,<span style="color:#66d9ef">virtual</span> base1
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  derived2(){cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;constructing derived2&#34;</span><span style="color:#f92672">&lt;&lt;</span>endl;}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Derived3</span><span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> derived1,<span style="color:#66d9ef">virtual</span> <span style="color:#66d9ef">public</span> derived2
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  Derived3(){cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;constructing derived3&#34;</span><span style="color:#f92672">&lt;&lt;</span>endl;}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>()
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  Derived3 obj;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>调试结果如下
+constructing base1
+constructing base2
+constructing derived2
+constructing base2
+constructing derived1
+constructing derived3
+*注意，虚基类的构造函数只调用一次</p>
+<p>*虚基类的构造与析构
+C++建立对象时所使用的派生类为最远派生类。对于虚基类而言，由于最远派生类对象中只有一个
+公共虚基类子对象，为了初始化该公共子对象，最远派生类的构造函数要调用该公共基类的构造函数
+，而且只能被调用一次。
+分为三种情况：
+1）虚基类没有构造函数。程序自动调用系统缺省构造函数来初始化派生类对象中的虚基类子对象
+2）虚基类中定义了缺省构造函数。程序自动调用自定义的缺省构造函数和析构函数
+3）虚基类定义了带参的构造函数···比较复杂 textbook P196
+*C++同时规定，在初始化列表中同时出现对虚基类和非虚基类构造函数的调用时，虚基类的构造函数
+先于非虚基类的构造函数执行，虚基类的析构顺序与构造顺序完全相反。最先析构的是最远派生类自
+身，最后析构的是虚基类</p>
+<p>赋值兼容规则：
+1)派生类的对象可以赋值给基类对象
+2)派生类的对象可以初始化基类引用
+3)派生类对象的地址可以赋给指向基类的指针（指向基类的指针也可以指向派生类
+4)通过基类对象名，指针只能使用从基类继承的成员
+示例</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">B0</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">void</span> display()
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;B0::display()&#34;</span><span style="color:#f92672">&lt;&lt;</span>endl;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">B1</span><span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> B0
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">void</span> display()
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;B1::display&#34;</span><span style="color:#f92672">&lt;&lt;</span>endl;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">D1</span><span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> B1
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">display</span>()
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    cout<span style="color:#f92672">&lt;&lt;</span><span style="color:#e6db74">&#34;D1::display&#34;</span><span style="color:#f92672">&lt;&lt;</span>endl;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">fun</span>(B0 <span style="color:#f92672">*</span>ptr)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  ptr<span style="color:#f92672">-&gt;</span>display();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>()
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  B0 b0;
+</span></span><span style="display:flex;"><span>  B1 b1;
+</span></span><span style="display:flex;"><span>  D1 d1;
+</span></span><span style="display:flex;"><span>  B0 <span style="color:#f92672">*</span>p;
+</span></span><span style="display:flex;"><span>  p<span style="color:#f92672">=&amp;</span>b0;
+</span></span><span style="display:flex;"><span>  fun(p);
+</span></span><span style="display:flex;"><span>  p<span style="color:#f92672">=&amp;</span>b1;
+</span></span><span style="display:flex;"><span>  fun(p);
+</span></span><span style="display:flex;"><span>  p<span style="color:#f92672">=&amp;</span>d1;
+</span></span><span style="display:flex;"><span>  fun(p);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>调试结果如下
+B0::display()
+B0::display()
+B0::display()</p>
+<hr>
+<h2 id="goodnight----20181122--2310">goodnight    2018.11.22  23：10</h2>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E5%AD%A6%E6%A0%A1%E8%AF%BE%E7%A8%8B/">学校课程</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/c-%E5%9F%BA%E7%A1%80%E5%A4%8D%E4%B9%A0-%E7%B1%BB%E4%B8%8E%E5%AF%B9%E8%B1%A1/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">C&#43;&#43;基础复习—— 类与对象</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='使用Pod Pod.yaml apiVersion: v1 kind: Pod metadata: name: hello-pod labels: zone: prod version: v1 spec: containers: - name: hello-ctr image: nigelpoulton/k8sbook:latest ports: - containerPort: 8080 创建Pod root@lzl:/home/lzl# kubectl apply -f ./WorkSpace/k8s/pod/Pod.yml pod/hello-pod created root@lzl:/home/lzl# kubectl get Pods NAME READY STATUS RESTARTS AGE hello-pod 0/1 ContainerCreating 0 12s # 要等一会，因为有拉取镜像的时'>
+<title>Pod和Deployment的使用(k8s实践-3)</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/pod%E5%92%8Cdeployment%E7%9A%84%E4%BD%BF%E7%94%A8k8s%E5%AE%9E%E8%B7%B5-3/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='Pod和Deployment的使用(k8s实践-3)'>
+<meta property='og:description' content='使用Pod Pod.yaml apiVersion: v1 kind: Pod metadata: name: hello-pod labels: zone: prod version: v1 spec: containers: - name: hello-ctr image: nigelpoulton/k8sbook:latest ports: - containerPort: 8080 创建Pod root@lzl:/home/lzl# kubectl apply -f ./WorkSpace/k8s/pod/Pod.yml pod/hello-pod created root@lzl:/home/lzl# kubectl get Pods NAME READY STATUS RESTARTS AGE hello-pod 0/1 ContainerCreating 0 12s # 要等一会，因为有拉取镜像的时'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/pod%E5%92%8Cdeployment%E7%9A%84%E4%BD%BF%E7%94%A8k8s%E5%AE%9E%E8%B7%B5-3/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='Kubernetes' /><meta property='article:tag' content='云原生' /><meta property='article:published_time' content='2022-01-21T18:28:33&#43;08:00'/><meta property='article:modified_time' content='2022-01-21T18:28:33&#43;08:00'/>
+<meta name="twitter:title" content="Pod和Deployment的使用(k8s实践-3)">
+<meta name="twitter:description" content="使用Pod Pod.yaml apiVersion: v1 kind: Pod metadata: name: hello-pod labels: zone: prod version: v1 spec: containers: - name: hello-ctr image: nigelpoulton/k8sbook:latest ports: - containerPort: 8080 创建Pod root@lzl:/home/lzl# kubectl apply -f ./WorkSpace/k8s/pod/Pod.yml pod/hello-pod created root@lzl:/home/lzl# kubectl get Pods NAME READY STATUS RESTARTS AGE hello-pod 0/1 ContainerCreating 0 12s # 要等一会，因为有拉取镜像的时">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#使用pod">使用Pod</a>
+      <ul>
+        <li><a href="#获取pod信息">获取Pod信息</a></li>
+        <li><a href="#进入pod中的容器内部">进入Pod中的容器内部</a></li>
+        <li><a href="#删除pod">删除Pod</a></li>
+      </ul>
+    </li>
+    <li><a href="#使用deployment部署pod">使用Deployment部署Pod</a>
+      <ul>
+        <li><a href="#部署deployment">部署Deployment</a></li>
+        <li><a href="#查看deployment">查看Deployment</a></li>
+        <li><a href="#访问部署的应用">访问部署的应用</a></li>
+      </ul>
+    </li>
+    <li><a href="#解决由于iptables版本差异导致的k8s网络问题">解决由于iptables版本差异导致的K8s网络问题</a></li>
+    <li><a href="#解决由于虚拟机挂起恢复虚拟机后集群网络异常的问题">解决由于虚拟机挂起，恢复虚拟机后集群网络异常的问题</a></li>
+    <li><a href="#滚动升级与回滚">滚动升级与回滚</a>
+      <ul>
+        <li><a href="#滚动升级">滚动升级</a></li>
+        <li><a href="#回滚">回滚</a></li>
+      </ul>
+    </li>
+    <li><a href="#删除deployment和service">删除Deployment和Service</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/kubernetes/" >
+                Kubernetes
+            </a>
+        
+            <a href="/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/" >
+                云原生
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/pod%E5%92%8Cdeployment%E7%9A%84%E4%BD%BF%E7%94%A8k8s%E5%AE%9E%E8%B7%B5-3/">Pod和Deployment的使用(k8s实践-3)</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jan 21, 2022</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 10 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="使用pod">使用Pod</h2>
+<p>Pod.yaml</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Pod</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">hello-pod</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">zone</span>: <span style="color:#ae81ff">prod</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">version</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">hello-ctr</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">image</span>: <span style="color:#ae81ff">nigelpoulton/k8sbook:latest</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">ports</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">containerPort</span>: <span style="color:#ae81ff">8080</span>
+</span></span></code></pre></div><p>创建Pod</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl apply -f ./WorkSpace/k8s/pod/Pod.yml 
+</span></span><span style="display:flex;"><span>pod/hello-pod created
+</span></span><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl get Pods
+</span></span><span style="display:flex;"><span>NAME        READY   STATUS              RESTARTS   AGE
+</span></span><span style="display:flex;"><span>hello-pod   0/1     ContainerCreating   <span style="color:#ae81ff">0</span>          12s
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 要等一会，因为有拉取镜像的时间</span>
+</span></span><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl get Pods
+</span></span><span style="display:flex;"><span>NAME        READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>hello-pod   1/1     Running   <span style="color:#ae81ff">0</span>          110s
+</span></span></code></pre></div><h3 id="获取pod信息">获取Pod信息</h3>
+<p>获取Pod详细信息：</p>
+<ul>
+<li><code>kubectl get Pods hello-pod -o yaml</code></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl get Pods hello-pod -o yaml
+</span></span><span style="display:flex;"><span>apiVersion: v1
+</span></span><span style="display:flex;"><span>kind: Pod
+</span></span><span style="display:flex;"><span>metadata:
+</span></span><span style="display:flex;"><span>  annotations:
+</span></span><span style="display:flex;"><span>    kubectl.kubernetes.io/last-applied-configuration: |
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">{</span><span style="color:#e6db74">&#34;apiVersion&#34;</span>:<span style="color:#e6db74">&#34;v1&#34;</span>,<span style="color:#e6db74">&#34;kind&#34;</span>:<span style="color:#e6db74">&#34;Pod&#34;</span>,<span style="color:#e6db74">&#34;metadata&#34;</span>:<span style="color:#f92672">{</span><span style="color:#e6db74">&#34;annotations&#34;</span>:<span style="color:#f92672">{}</span>,<span style="color:#e6db74">&#34;labels&#34;</span>:<span style="color:#f92672">{</span><span style="color:#e6db74">&#34;version&#34;</span>:<span style="color:#e6db74">&#34;v1&#34;</span>,<span style="color:#e6db74">&#34;zone&#34;</span>:<span style="color:#e6db74">&#34;prod&#34;</span><span style="color:#f92672">}</span>,<span style="color:#e6db74">&#34;name&#34;</span>:<span style="color:#e6db74">&#34;hello-pod&#34;</span>,<span style="color:#e6db74">&#34;namespace&#34;</span>:<span style="color:#e6db74">&#34;default&#34;</span><span style="color:#f92672">}</span>,<span style="color:#e6db74">&#34;spec&#34;</span>:<span style="color:#f92672">{</span><span style="color:#e6db74">&#34;containers&#34;</span>:<span style="color:#f92672">[{</span><span style="color:#e6db74">&#34;image&#34;</span>:<span style="color:#e6db74">&#34;nigelpoulton/k8sbook:latest&#34;</span>,<span style="color:#e6db74">&#34;name&#34;</span>:<span style="color:#e6db74">&#34;hello-ctr&#34;</span>,<span style="color:#e6db74">&#34;ports&#34;</span>:<span style="color:#f92672">[{</span><span style="color:#e6db74">&#34;containerPort&#34;</span>:8080<span style="color:#f92672">}]}]}}</span>
+</span></span><span style="display:flex;"><span>  creationTimestamp: <span style="color:#e6db74">&#34;2022-01-19T10:26:35Z&#34;</span>
+</span></span><span style="display:flex;"><span>  labels:
+</span></span><span style="display:flex;"><span>    version: v1
+</span></span><span style="display:flex;"><span>    zone: prod
+</span></span><span style="display:flex;"><span>  name: hello-pod
+</span></span><span style="display:flex;"><span>  namespace: default
+</span></span><span style="display:flex;"><span>  resourceVersion: <span style="color:#e6db74">&#34;29553&#34;</span>
+</span></span><span style="display:flex;"><span>  uid: 1f41e62a-a951-4593-83f7-f3e7398b9d24
+</span></span><span style="display:flex;"><span>spec:	<span style="color:#75715e"># 这部分是Pod的期望状态</span>
+</span></span><span style="display:flex;"><span>  containers:
+</span></span><span style="display:flex;"><span>  - image: nigelpoulton/k8sbook:latest
+</span></span><span style="display:flex;"><span>    imagePullPolicy: Always
+</span></span><span style="display:flex;"><span>    name: hello-ctr
+</span></span><span style="display:flex;"><span>    ports:
+</span></span><span style="display:flex;"><span>    - containerPort: <span style="color:#ae81ff">8080</span>
+</span></span><span style="display:flex;"><span>      protocol: TCP
+</span></span><span style="display:flex;"><span>    resources: <span style="color:#f92672">{}</span>
+</span></span><span style="display:flex;"><span>    terminationMessagePath: /dev/termination-log
+</span></span><span style="display:flex;"><span>    terminationMessagePolicy: File
+</span></span><span style="display:flex;"><span>    volumeMounts:
+</span></span><span style="display:flex;"><span>    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+</span></span><span style="display:flex;"><span>      name: kube-api-access-5kwmz
+</span></span><span style="display:flex;"><span>      readOnly: true
+</span></span><span style="display:flex;"><span>  dnsPolicy: ClusterFirst
+</span></span><span style="display:flex;"><span>  enableServiceLinks: true
+</span></span><span style="display:flex;"><span>  nodeName: lzl-c
+</span></span><span style="display:flex;"><span>  preemptionPolicy: PreemptLowerPriority
+</span></span><span style="display:flex;"><span>  priority: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>  restartPolicy: Always
+</span></span><span style="display:flex;"><span>  schedulerName: default-scheduler
+</span></span><span style="display:flex;"><span>  securityContext: <span style="color:#f92672">{}</span>
+</span></span><span style="display:flex;"><span>  serviceAccount: default
+</span></span><span style="display:flex;"><span>  serviceAccountName: default
+</span></span><span style="display:flex;"><span>  terminationGracePeriodSeconds: <span style="color:#ae81ff">30</span>
+</span></span><span style="display:flex;"><span>  tolerations:
+</span></span><span style="display:flex;"><span>  - effect: NoExecute
+</span></span><span style="display:flex;"><span>    key: node.kubernetes.io/not-ready
+</span></span><span style="display:flex;"><span>    operator: Exists
+</span></span><span style="display:flex;"><span>    tolerationSeconds: <span style="color:#ae81ff">300</span>
+</span></span><span style="display:flex;"><span>  - effect: NoExecute
+</span></span><span style="display:flex;"><span>    key: node.kubernetes.io/unreachable
+</span></span><span style="display:flex;"><span>    operator: Exists
+</span></span><span style="display:flex;"><span>    tolerationSeconds: <span style="color:#ae81ff">300</span>
+</span></span><span style="display:flex;"><span>  volumes:
+</span></span><span style="display:flex;"><span>  - name: kube-api-access-5kwmz
+</span></span><span style="display:flex;"><span>    projected:
+</span></span><span style="display:flex;"><span>      defaultMode: <span style="color:#ae81ff">420</span>
+</span></span><span style="display:flex;"><span>      sources:
+</span></span><span style="display:flex;"><span>      - serviceAccountToken:
+</span></span><span style="display:flex;"><span>          expirationSeconds: <span style="color:#ae81ff">3607</span>
+</span></span><span style="display:flex;"><span>          path: token
+</span></span><span style="display:flex;"><span>      - configMap:
+</span></span><span style="display:flex;"><span>          items:
+</span></span><span style="display:flex;"><span>          - key: ca.crt
+</span></span><span style="display:flex;"><span>            path: ca.crt
+</span></span><span style="display:flex;"><span>          name: kube-root-ca.crt
+</span></span><span style="display:flex;"><span>      - downwardAPI:
+</span></span><span style="display:flex;"><span>          items:
+</span></span><span style="display:flex;"><span>          - fieldRef:
+</span></span><span style="display:flex;"><span>              apiVersion: v1
+</span></span><span style="display:flex;"><span>              fieldPath: metadata.namespace
+</span></span><span style="display:flex;"><span>            path: namespace
+</span></span><span style="display:flex;"><span>status:	<span style="color:#75715e"># 这部分是Pod的当前状态</span>
+</span></span><span style="display:flex;"><span>  conditions:
+</span></span><span style="display:flex;"><span>  - lastProbeTime: null
+</span></span><span style="display:flex;"><span>    lastTransitionTime: <span style="color:#e6db74">&#34;2022-01-19T10:26:35Z&#34;</span>
+</span></span><span style="display:flex;"><span>    status: <span style="color:#e6db74">&#34;True&#34;</span>
+</span></span><span style="display:flex;"><span>    type: Initialized
+</span></span><span style="display:flex;"><span>  - lastProbeTime: null
+</span></span><span style="display:flex;"><span>    lastTransitionTime: <span style="color:#e6db74">&#34;2022-01-19T10:26:58Z&#34;</span>
+</span></span><span style="display:flex;"><span>    status: <span style="color:#e6db74">&#34;True&#34;</span>
+</span></span><span style="display:flex;"><span>    type: Ready
+</span></span><span style="display:flex;"><span>  - lastProbeTime: null
+</span></span><span style="display:flex;"><span>    lastTransitionTime: <span style="color:#e6db74">&#34;2022-01-19T10:26:58Z&#34;</span>
+</span></span><span style="display:flex;"><span>    status: <span style="color:#e6db74">&#34;True&#34;</span>
+</span></span><span style="display:flex;"><span>    type: ContainersReady
+</span></span><span style="display:flex;"><span>  - lastProbeTime: null
+</span></span><span style="display:flex;"><span>    lastTransitionTime: <span style="color:#e6db74">&#34;2022-01-19T10:26:35Z&#34;</span>
+</span></span><span style="display:flex;"><span>    status: <span style="color:#e6db74">&#34;True&#34;</span>
+</span></span><span style="display:flex;"><span>    type: PodScheduled
+</span></span><span style="display:flex;"><span>  containerStatuses:
+</span></span><span style="display:flex;"><span>  - containerID: docker://a7cc9815fc32e3f99f57553c6c28aa264576dbc3076784fee485a4306a1f4fcb
+</span></span><span style="display:flex;"><span>    image: nigelpoulton/k8sbook:latest
+</span></span><span style="display:flex;"><span>    imageID: docker-pullable://nigelpoulton/k8sbook@sha256:a983a96a85151320cd6ad0cd9fda3b725a743ed642e58b0597285c6bcb46c90f
+</span></span><span style="display:flex;"><span>    lastState: <span style="color:#f92672">{}</span>
+</span></span><span style="display:flex;"><span>    name: hello-ctr
+</span></span><span style="display:flex;"><span>    ready: true
+</span></span><span style="display:flex;"><span>    restartCount: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>    started: true
+</span></span><span style="display:flex;"><span>    state:
+</span></span><span style="display:flex;"><span>      running:
+</span></span><span style="display:flex;"><span>        startedAt: <span style="color:#e6db74">&#34;2022-01-19T10:26:58Z&#34;</span>
+</span></span><span style="display:flex;"><span>  hostIP: 192.168.230.13
+</span></span><span style="display:flex;"><span>  phase: Running
+</span></span><span style="display:flex;"><span>  podIP: 10.5.2.2
+</span></span><span style="display:flex;"><span>  podIPs:
+</span></span><span style="display:flex;"><span>  - ip: 10.5.2.2
+</span></span><span style="display:flex;"><span>  qosClass: BestEffort
+</span></span><span style="display:flex;"><span>  startTime: <span style="color:#e6db74">&#34;2022-01-19T10:26:35Z&#34;</span>
+</span></span></code></pre></div><ul>
+<li><code>kubectl describe Pods hello-pod</code></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl describe Pods hello-pod
+</span></span><span style="display:flex;"><span>Name:         hello-pod
+</span></span><span style="display:flex;"><span>Namespace:    default
+</span></span><span style="display:flex;"><span>Priority:     <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>Node:         lzl-c/192.168.230.13
+</span></span><span style="display:flex;"><span>Start Time:   Wed, <span style="color:#ae81ff">19</span> Jan <span style="color:#ae81ff">2022</span> 18:26:35 +0800
+</span></span><span style="display:flex;"><span>Labels:       version<span style="color:#f92672">=</span>v1
+</span></span><span style="display:flex;"><span>              zone<span style="color:#f92672">=</span>prod
+</span></span><span style="display:flex;"><span>Annotations:  &lt;none&gt;
+</span></span><span style="display:flex;"><span>Status:       Running
+</span></span><span style="display:flex;"><span>IP:           10.5.2.2
+</span></span><span style="display:flex;"><span>IPs:
+</span></span><span style="display:flex;"><span>  IP:  10.5.2.2
+</span></span><span style="display:flex;"><span>Containers:
+</span></span><span style="display:flex;"><span>  hello-ctr:
+</span></span><span style="display:flex;"><span>    Container ID:   docker://a7cc9815fc32e3f99f57553c6c28aa264576dbc3076784fee485a4306a1f4fcb
+</span></span><span style="display:flex;"><span>    Image:          nigelpoulton/k8sbook:latest
+</span></span><span style="display:flex;"><span>    Image ID:       docker-pullable://nigelpoulton/k8sbook@sha256:a983a96a85151320cd6ad0cd9fda3b725a743ed642e58b0597285c6bcb46c90f
+</span></span><span style="display:flex;"><span>    Port:           8080/TCP
+</span></span><span style="display:flex;"><span>    Host Port:      0/TCP
+</span></span><span style="display:flex;"><span>    State:          Running
+</span></span><span style="display:flex;"><span>      Started:      Wed, <span style="color:#ae81ff">19</span> Jan <span style="color:#ae81ff">2022</span> 18:26:58 +0800
+</span></span><span style="display:flex;"><span>    Ready:          True
+</span></span><span style="display:flex;"><span>    Restart Count:  <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>    Environment:    &lt;none&gt;
+</span></span><span style="display:flex;"><span>    Mounts:
+</span></span><span style="display:flex;"><span>      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-5kwmz <span style="color:#f92672">(</span>ro<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>Conditions:
+</span></span><span style="display:flex;"><span>  Type              Status
+</span></span><span style="display:flex;"><span>  Initialized       True 
+</span></span><span style="display:flex;"><span>  Ready             True 
+</span></span><span style="display:flex;"><span>  ContainersReady   True 
+</span></span><span style="display:flex;"><span>  PodScheduled      True 
+</span></span><span style="display:flex;"><span>Volumes:
+</span></span><span style="display:flex;"><span>  kube-api-access-5kwmz:
+</span></span><span style="display:flex;"><span>    Type:                    Projected <span style="color:#f92672">(</span>a volume that contains injected data from multiple sources<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    TokenExpirationSeconds:  <span style="color:#ae81ff">3607</span>
+</span></span><span style="display:flex;"><span>    ConfigMapName:           kube-root-ca.crt
+</span></span><span style="display:flex;"><span>    ConfigMapOptional:       &lt;nil&gt;
+</span></span><span style="display:flex;"><span>    DownwardAPI:             true
+</span></span><span style="display:flex;"><span>QoS Class:                   BestEffort
+</span></span><span style="display:flex;"><span>Node-Selectors:              &lt;none&gt;
+</span></span><span style="display:flex;"><span>Tolerations:                 node.kubernetes.io/not-ready:NoExecute op<span style="color:#f92672">=</span>Exists <span style="color:#66d9ef">for</span> 300s
+</span></span><span style="display:flex;"><span>                             node.kubernetes.io/unreachable:NoExecute op<span style="color:#f92672">=</span>Exists <span style="color:#66d9ef">for</span> 300s
+</span></span><span style="display:flex;"><span>Events:	<span style="color:#75715e"># Pod生命周期中的一些重要事件</span>
+</span></span><span style="display:flex;"><span>  Type    Reason     Age    From               Message
+</span></span><span style="display:flex;"><span>  ----    ------     ----   ----               -------
+</span></span><span style="display:flex;"><span>  Normal  Scheduled  6m56s  default-scheduler  Successfully assigned default/hello-pod to lzl-c
+</span></span><span style="display:flex;"><span>  Normal  Pulling    6m54s  kubelet            Pulling image <span style="color:#e6db74">&#34;nigelpoulton/k8sbook:latest&#34;</span>
+</span></span><span style="display:flex;"><span>  Normal  Pulled     6m33s  kubelet            Successfully pulled image <span style="color:#e6db74">&#34;nigelpoulton/k8sbook:latest&#34;</span> in 21.212884013s
+</span></span><span style="display:flex;"><span>  Normal  Created    6m33s  kubelet            Created container hello-ctr
+</span></span><span style="display:flex;"><span>  Normal  Started    6m33s  kubelet            Started container hello-ctr
+</span></span></code></pre></div><h3 id="进入pod中的容器内部">进入Pod中的容器内部</h3>
+<ul>
+<li>还可以进入容器执行命令，来查看Pod的信息：<code>kubectl exec hello-pod -- ps aux</code></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl exec hello-pod -- ps aux
+</span></span><span style="display:flex;"><span>PID   USER     TIME  COMMAND
+</span></span><span style="display:flex;"><span>    <span style="color:#ae81ff">1</span> root      0:00 node ./app.js
+</span></span><span style="display:flex;"><span>   <span style="color:#ae81ff">13</span> root      0:00 ps aux
+</span></span></code></pre></div><ul>
+<li>登录到运行容器内部：<code>kubectl exec -it hello-pod -- sh</code></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl exec -it hello-pod -- sh
+</span></span><span style="display:flex;"><span>/src <span style="color:#75715e"># ls</span>
+</span></span><span style="display:flex;"><span>Dockerfile         app.js             package-lock.json  views
+</span></span><span style="display:flex;"><span>README.md          node_modules       package.json
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>/src <span style="color:#75715e"># exit</span>
+</span></span><span style="display:flex;"><span>root@lzl:/home/lzl# 
+</span></span></code></pre></div><p>当Pod中有多个容器时，需要使用<code>--container</code>参数指定想要创建交互式会话的容器，不指定的话默认是第一个容器。</p>
+<p>使用<code>exit</code>退出当前容器。</p>
+<h3 id="删除pod">删除Pod</h3>
+<ul>
+<li><code>kubectl delete -f pod.yaml</code></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl delete -f ./WorkSpace/k8s/pod/Pod.yml 
+</span></span><span style="display:flex;"><span>pod <span style="color:#e6db74">&#34;hello-pod&#34;</span> deleted
+</span></span><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl get Pods
+</span></span><span style="display:flex;"><span>No resources found in default namespace.
+</span></span></code></pre></div><h2 id="使用deployment部署pod">使用Deployment部署Pod</h2>
+<p>Deployment为Kubernetes带来自愈、自动扩缩容、滚动升级以及基于版本的回滚的能力。实际上在底层Deployment是使用的ReplicaSet来完成的，可以理解为，Deployment管理ReplicaSet，而ReplicaSet管理Pod。</p>
+<h3 id="部署deployment">部署Deployment</h3>
+<p>本次部署的文件<code>deploy.yaml</code>如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>apiVersion: apps/v1
+</span></span><span style="display:flex;"><span>kind: Deployment
+</span></span><span style="display:flex;"><span>metadata:
+</span></span><span style="display:flex;"><span>  name: hello-deploy
+</span></span><span style="display:flex;"><span>spec:                       <span style="color:#75715e"># spec下的内容都与Pod有关</span>
+</span></span><span style="display:flex;"><span>  replicas: <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>  selector:                 <span style="color:#75715e"># 表示该Deployment所管理的Pod必须要有的标签</span>
+</span></span><span style="display:flex;"><span>    matchLabels:
+</span></span><span style="display:flex;"><span>      app: hello-world
+</span></span><span style="display:flex;"><span>  minReadySeconds: <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>  strategy:                 <span style="color:#75715e"># 表示更新策略</span>
+</span></span><span style="display:flex;"><span>    type: RollingUpdate
+</span></span><span style="display:flex;"><span>    rollingUpdate:
+</span></span><span style="display:flex;"><span>      maxUnavailable: <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>      maxSurge: <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  template:                 <span style="color:#75715e"># 所管理的Pod的模板，这里只有一个容器</span>
+</span></span><span style="display:flex;"><span>    metadata:
+</span></span><span style="display:flex;"><span>      labels:
+</span></span><span style="display:flex;"><span>        app: hello-world
+</span></span><span style="display:flex;"><span>    spec:
+</span></span><span style="display:flex;"><span>      containers:
+</span></span><span style="display:flex;"><span>      - name: hello-pod
+</span></span><span style="display:flex;"><span>        image: nigelpoulton/k8sbook:latest
+</span></span><span style="display:flex;"><span>        ports:
+</span></span><span style="display:flex;"><span>        - containerPort: <span style="color:#ae81ff">8080</span>
+</span></span></code></pre></div><p>进行部署：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl apply -f ./WorkSpace/k8s/deployment/deploy.yaml 
+</span></span><span style="display:flex;"><span>deployment.apps/hello-deploy created
+</span></span></code></pre></div><h3 id="查看deployment">查看Deployment</h3>
+<ul>
+<li>使用<code>kubectl get</code></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl get deploy hello-deploy
+</span></span><span style="display:flex;"><span>NAME           READY   UP-TO-DATE   AVAILABLE   AGE
+</span></span><span style="display:flex;"><span>hello-deploy   10/10   <span style="color:#ae81ff">10</span>           <span style="color:#ae81ff">10</span>          2m29s
+</span></span></code></pre></div><ul>
+<li>使用<code>kubectl describe</code></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl describe deploy hello-deploy
+</span></span><span style="display:flex;"><span>Name:                   hello-deploy
+</span></span><span style="display:flex;"><span>Namespace:              default
+</span></span><span style="display:flex;"><span>CreationTimestamp:      Wed, <span style="color:#ae81ff">19</span> Jan <span style="color:#ae81ff">2022</span> 19:18:16 +0800
+</span></span><span style="display:flex;"><span>Labels:                 &lt;none&gt;
+</span></span><span style="display:flex;"><span>Annotations:            deployment.kubernetes.io/revision: <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>Selector:               app<span style="color:#f92672">=</span>hello-world
+</span></span><span style="display:flex;"><span>Replicas:               <span style="color:#ae81ff">10</span> desired | <span style="color:#ae81ff">10</span> updated | <span style="color:#ae81ff">10</span> total | <span style="color:#ae81ff">10</span> available | <span style="color:#ae81ff">0</span> unavailable
+</span></span><span style="display:flex;"><span>StrategyType:           RollingUpdate
+</span></span><span style="display:flex;"><span>MinReadySeconds:        <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>RollingUpdateStrategy:  <span style="color:#ae81ff">1</span> max unavailable, <span style="color:#ae81ff">1</span> max surge
+</span></span><span style="display:flex;"><span>Pod Template:
+</span></span><span style="display:flex;"><span>  Labels:  app<span style="color:#f92672">=</span>hello-world
+</span></span><span style="display:flex;"><span>  Containers:
+</span></span><span style="display:flex;"><span>   hello-pod:
+</span></span><span style="display:flex;"><span>    Image:        nigelpoulton/k8sbook:latest
+</span></span><span style="display:flex;"><span>    Port:         8080/TCP
+</span></span><span style="display:flex;"><span>    Host Port:    0/TCP
+</span></span><span style="display:flex;"><span>    Environment:  &lt;none&gt;
+</span></span><span style="display:flex;"><span>    Mounts:       &lt;none&gt;
+</span></span><span style="display:flex;"><span>  Volumes:        &lt;none&gt;
+</span></span><span style="display:flex;"><span>Conditions:
+</span></span><span style="display:flex;"><span>  Type           Status  Reason
+</span></span><span style="display:flex;"><span>  ----           ------  ------
+</span></span><span style="display:flex;"><span>  Available      True    MinimumReplicasAvailable
+</span></span><span style="display:flex;"><span>  Progressing    True    NewReplicaSetAvailable
+</span></span><span style="display:flex;"><span>OldReplicaSets:  &lt;none&gt;
+</span></span><span style="display:flex;"><span>NewReplicaSet:   hello-deploy-65cbc9474c <span style="color:#f92672">(</span>10/10 replicas created<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>Events:
+</span></span><span style="display:flex;"><span>  Type    Reason             Age    From                   Message
+</span></span><span style="display:flex;"><span>  ----    ------             ----   ----                   -------
+</span></span><span style="display:flex;"><span>  Normal  ScalingReplicaSet  4m17s  deployment-controller  Scaled up replica set hello-deploy-65cbc9474c to <span style="color:#ae81ff">10</span>
+</span></span></code></pre></div><p>可以使用<code>kubectl get rs</code>来查看ReplicaSet的状态，以及<code>kubectl describe rs</code>来查看其详细信息</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl get rs
+</span></span><span style="display:flex;"><span>NAME                      DESIRED   CURRENT   READY   AGE
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c   <span style="color:#ae81ff">10</span>        <span style="color:#ae81ff">10</span>        <span style="color:#ae81ff">10</span>      5m55s
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl describe rs hello-deploy-65cbc9474c
+</span></span><span style="display:flex;"><span>Name:           hello-deploy-65cbc9474c
+</span></span><span style="display:flex;"><span>Namespace:      default
+</span></span><span style="display:flex;"><span>Selector:       app<span style="color:#f92672">=</span>hello-world,pod-template-hash<span style="color:#f92672">=</span>65cbc9474c
+</span></span><span style="display:flex;"><span>Labels:         app<span style="color:#f92672">=</span>hello-world
+</span></span><span style="display:flex;"><span>                pod-template-hash<span style="color:#f92672">=</span>65cbc9474c
+</span></span><span style="display:flex;"><span>Annotations:    deployment.kubernetes.io/desired-replicas: <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>                deployment.kubernetes.io/max-replicas: <span style="color:#ae81ff">11</span>
+</span></span><span style="display:flex;"><span>                deployment.kubernetes.io/revision: <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>Controlled By:  Deployment/hello-deploy
+</span></span><span style="display:flex;"><span>Replicas:       <span style="color:#ae81ff">10</span> current / <span style="color:#ae81ff">10</span> desired
+</span></span><span style="display:flex;"><span>Pods Status:    <span style="color:#ae81ff">10</span> Running / <span style="color:#ae81ff">0</span> Waiting / <span style="color:#ae81ff">0</span> Succeeded / <span style="color:#ae81ff">0</span> Failed
+</span></span><span style="display:flex;"><span>Pod Template:
+</span></span><span style="display:flex;"><span>  Labels:  app<span style="color:#f92672">=</span>hello-world
+</span></span><span style="display:flex;"><span>           pod-template-hash<span style="color:#f92672">=</span>65cbc9474c
+</span></span><span style="display:flex;"><span>  Containers:
+</span></span><span style="display:flex;"><span>   hello-pod:
+</span></span><span style="display:flex;"><span>    Image:        nigelpoulton/k8sbook:latest
+</span></span><span style="display:flex;"><span>    Port:         8080/TCP
+</span></span><span style="display:flex;"><span>    Host Port:    0/TCP
+</span></span><span style="display:flex;"><span>    Environment:  &lt;none&gt;
+</span></span><span style="display:flex;"><span>    Mounts:       &lt;none&gt;
+</span></span><span style="display:flex;"><span>  Volumes:        &lt;none&gt;
+</span></span><span style="display:flex;"><span>Events:
+</span></span><span style="display:flex;"><span>  Type    Reason            Age    From                   Message
+</span></span><span style="display:flex;"><span>  ----    ------            ----   ----                   -------
+</span></span><span style="display:flex;"><span>  Normal  SuccessfulCreate  7m39s  replicaset-controller  Created pod: hello-deploy-65cbc9474c-plhwm
+</span></span><span style="display:flex;"><span>  Normal  SuccessfulCreate  7m39s  replicaset-controller  Created pod: hello-deploy-65cbc9474c-8fdqs
+</span></span><span style="display:flex;"><span>  Normal  SuccessfulCreate  7m39s  replicaset-controller  Created pod: hello-deploy-65cbc9474c-dlv5g
+</span></span><span style="display:flex;"><span>  Normal  SuccessfulCreate  7m39s  replicaset-controller  Created pod: hello-deploy-65cbc9474c-x2ddb
+</span></span><span style="display:flex;"><span>  Normal  SuccessfulCreate  7m39s  replicaset-controller  Created pod: hello-deploy-65cbc9474c-qgffd
+</span></span><span style="display:flex;"><span>  Normal  SuccessfulCreate  7m39s  replicaset-controller  Created pod: hello-deploy-65cbc9474c-67nlw
+</span></span><span style="display:flex;"><span>  Normal  SuccessfulCreate  7m39s  replicaset-controller  Created pod: hello-deploy-65cbc9474c-gg4r2
+</span></span><span style="display:flex;"><span>  Normal  SuccessfulCreate  7m39s  replicaset-controller  Created pod: hello-deploy-65cbc9474c-b2v4v
+</span></span><span style="display:flex;"><span>  Normal  SuccessfulCreate  7m39s  replicaset-controller  Created pod: hello-deploy-65cbc9474c-vbzrd
+</span></span><span style="display:flex;"><span>  Normal  SuccessfulCreate  7m39s  replicaset-controller  <span style="color:#f92672">(</span>combined from similar events<span style="color:#f92672">)</span>: Created pod: hello-deploy-65cbc9474c-pjwsh
+</span></span></code></pre></div><h3 id="访问部署的应用">访问部署的应用</h3>
+<p>对于Pod来说，其IP会由于销毁或者重建而改变，Pod的IP是一个变量，通常不能直接使用Pod的IP作为通讯。在K8s中，Kubernetes Service对象则解决了这一问题，它为一组Pod提供了一个固定的DNS域名和IP地址。</p>
+<p>下面定义一个Service与上述Pod进行协同工作。</p>
+<p><code>svc.yaml</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Service</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">hello-svc</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">app</span>: <span style="color:#ae81ff">hello-world</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">type</span>: <span style="color:#ae81ff">NodePort</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ports</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#f92672">port</span>: <span style="color:#ae81ff">8080</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">nodePort</span>: <span style="color:#ae81ff">30001</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">protocol</span>: <span style="color:#ae81ff">TCP</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">selector</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">app</span>: <span style="color:#ae81ff">hello-world</span>
+</span></span></code></pre></div><p>部署Service：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl apply -f ./WorkSpace/k8s/service/svc.yaml
+</span></span><span style="display:flex;"><span>service/hello-svc created
+</span></span></code></pre></div><p>这样我们有两种方式可以访问该应用：</p>
+<ol>
+<li>在集群内部使用DNS名称<code>hello-svc</code>和端口<code>8080</code>访问</li>
+<li>在集群外部通过集群的任意节点和端口号<code>30001</code>访问</li>
+</ol>
+<p>首先我们查看我们刚部署的这10个Pod实例的具体信息：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl get pods -l app<span style="color:#f92672">=</span>hello-world -o wide
+</span></span><span style="display:flex;"><span>NAME                            READY   STATUS    RESTARTS   AGE   IP         NODE    NOMINATED NODE   READINESS GATES
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-67nlw   1/1     Running   <span style="color:#ae81ff">0</span>          72m   10.5.1.4   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-8fdqs   1/1     Running   <span style="color:#ae81ff">0</span>          72m   10.5.2.6   lzl-c   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-b2v4v   1/1     Running   <span style="color:#ae81ff">0</span>          72m   10.5.2.4   lzl-c   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-dlv5g   1/1     Running   <span style="color:#ae81ff">0</span>          72m   10.5.2.7   lzl-c   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-gg4r2   1/1     Running   <span style="color:#ae81ff">0</span>          72m   10.5.2.5   lzl-c   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-pjwsh   1/1     Running   <span style="color:#ae81ff">0</span>          72m   10.5.2.3   lzl-c   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-plhwm   1/1     Running   <span style="color:#ae81ff">0</span>          72m   10.5.1.5   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-qgffd   1/1     Running   <span style="color:#ae81ff">0</span>          72m   10.5.1.2   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-vbzrd   1/1     Running   <span style="color:#ae81ff">0</span>          72m   10.5.1.6   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-x2ddb   1/1     Running   <span style="color:#ae81ff">0</span>          72m   10.5.1.3   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span></code></pre></div><p>k8s自动为这些Pod分配了IP地址。</p>
+<blockquote>
+<p>引自官方文档：</p>
+<p>Kubernetes Service 从逻辑上定义了运行在集群中的一组 Pod，这些 Pod 提供了相同的功能。 当每个 Service 创建时，会被分配一个唯一的 IP 地址（也称为 clusterIP）。 这个 IP 地址与一个 Service 的生命周期绑定在一起，当 Service 存在的时候它也不会改变。 可以配置 Pod 使它与 Service 进行通信，Pod 知道与 Service 通信将被自动地负载均衡到该 Service 中的某些 Pod 上。</p>
+</blockquote>
+<p>我们查看创建的Service的信息：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl get svc hello-svc
+</span></span><span style="display:flex;"><span>NAME        TYPE       CLUSTER-IP       EXTERNAL-IP   PORT<span style="color:#f92672">(</span>S<span style="color:#f92672">)</span>          AGE
+</span></span><span style="display:flex;"><span>hello-svc   NodePort   10.110.196.234   &lt;none&gt;        8080:30001/TCP   19m
+</span></span><span style="display:flex;"><span>root@lzl:/home/lzl# kubectl describe svc hello-svc
+</span></span><span style="display:flex;"><span>Name:                     hello-svc
+</span></span><span style="display:flex;"><span>Namespace:                default
+</span></span><span style="display:flex;"><span>Labels:                   app<span style="color:#f92672">=</span>hello-world
+</span></span><span style="display:flex;"><span>Annotations:              &lt;none&gt;
+</span></span><span style="display:flex;"><span>Selector:                 app<span style="color:#f92672">=</span>hello-world
+</span></span><span style="display:flex;"><span>Type:                     NodePort
+</span></span><span style="display:flex;"><span>IP Family Policy:         SingleStack
+</span></span><span style="display:flex;"><span>IP Families:              IPv4
+</span></span><span style="display:flex;"><span>IP:                       10.110.196.234
+</span></span><span style="display:flex;"><span>IPs:                      10.110.196.234
+</span></span><span style="display:flex;"><span>Port:                     &lt;unset&gt;  8080/TCP
+</span></span><span style="display:flex;"><span>TargetPort:               8080/TCP
+</span></span><span style="display:flex;"><span>NodePort:                 &lt;unset&gt;  30001/TCP
+</span></span><span style="display:flex;"><span>Endpoints:                10.5.1.2:8080,10.5.1.3:8080,10.5.1.4:8080 + <span style="color:#ae81ff">7</span> more...
+</span></span><span style="display:flex;"><span>Session Affinity:         None
+</span></span><span style="display:flex;"><span>External Traffic Policy:  Cluster
+</span></span><span style="display:flex;"><span>Events:                   &lt;none&gt;
+</span></span></code></pre></div><p><strong>这里我遇到了集群内部和集群外部都无法访问应用的情况</strong></p>
+<ul>
+<li>集群内部无法访问
+<ul>
+<li>在Pod运行的节点上可以访问，但是在集群其他节点上无法访问</li>
+<li>无法访问Service</li>
+</ul>
+</li>
+<li>集群外部无法访问：可以通过运行Pod的主机地址访问，而无法通过没有运行Pod的集群主机地址进行访问</li>
+</ul>
+<blockquote>
+<p>解决方案在下一节</p>
+</blockquote>
+<p>将问题解决后，我们来看。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl get pods -o wide
+</span></span><span style="display:flex;"><span>NAME                           READY   STATUS    RESTARTS        AGE   IP          NODE    NOMINATED NODE   READINESS GATES
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-2hp8j   1/1     Running   <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>8m20s ago<span style="color:#f92672">)</span>   39m   10.5.1.4    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-4lhld   1/1     Running   <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>8m20s ago<span style="color:#f92672">)</span>   38m   10.5.1.11   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-7pn94   1/1     Running   <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>8m20s ago<span style="color:#f92672">)</span>   35m   10.5.1.5    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-9d444   1/1     Running   <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>8m20s ago<span style="color:#f92672">)</span>   35m   10.5.1.3    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-lhx2j   1/1     Running   <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>8m20s ago<span style="color:#f92672">)</span>   37m   10.5.1.9    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-nwcp8   1/1     Running   <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>8m20s ago<span style="color:#f92672">)</span>   36m   10.5.1.2    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-prwwd   1/1     Running   <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>8m19s ago<span style="color:#f92672">)</span>   36m   10.5.1.7    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-rflnv   1/1     Running   <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>8m19s ago<span style="color:#f92672">)</span>   34m   10.5.1.6    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-tbpt2   1/1     Running   <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>8m19s ago<span style="color:#f92672">)</span>   37m   10.5.1.10   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-z88ct   1/1     Running   <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>8m19s ago<span style="color:#f92672">)</span>   39m   10.5.1.8    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl get svc -o wide
+</span></span><span style="display:flex;"><span>NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT<span style="color:#f92672">(</span>S<span style="color:#f92672">)</span>          AGE   SELECTOR
+</span></span><span style="display:flex;"><span>hello-svc    NodePort    10.101.13.201   &lt;none&gt;        8080:30001/TCP   18h   app<span style="color:#f92672">=</span>hello-world
+</span></span><span style="display:flex;"><span>kubernetes   ClusterIP   10.96.0.1       &lt;none&gt;        443/TCP          18h   &lt;none&gt;
+</span></span></code></pre></div><h4 id="从集群内访问">从集群内访问</h4>
+<p>以服务实例<code>hello-deploy-59866ff45-2hp8j</code>为例，其地址为<code>10.5.1.4:8080</code>。因此，在集群内部任何一台机器访问该地址都可以访问到这个应用。</p>
+<p>同样的，<code>hello-svc</code>的地址是<code>10.101.13.201:8080</code>，加入集群的任何一台主机都可以通过该地址访问到应用。</p>
+<p>**特别的，与Pod的IP不同，Service的IP是固定不变的，而Pod的IP会跟随Deployment的更新、扩缩容等操作改变。**Service实际上相当于所有Pod的一个网关，它有固定的IP地址，并且将请求Pod的流量负载均衡到不同的Pod上，并在Pod地址改变时完成服务发现。</p>
+<h4 id="从集群外访问">从集群外访问</h4>
+<p>如果在集群外，那么访问集群内的任何一台主机的<code>30001</code>端口都可以连接到该应用，因为前面<code>svc.yaml</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span> ports:
+</span></span><span style="display:flex;"><span>  - port: <span style="color:#ae81ff">8080</span>
+</span></span><span style="display:flex;"><span>    nodePort: <span style="color:#ae81ff">30001</span>
+</span></span><span style="display:flex;"><span>    protocol: TCP
+</span></span></code></pre></div><p>帮我们做了集群内到集群外的端口映射。</p>
+<p><img src="https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220121163556.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p><img src="https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220121163510.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h2 id="解决由于iptables版本差异导致的k8s网络问题">解决由于iptables版本差异导致的K8s网络问题</h2>
+<p>如上文，我是用Ubuntu18.04搭建K8s1.22.4集群，在启动Service做应用网络入口时，出现了上述问题。找了很久的资料之后认为是k8s1.22.4在使用iptables配置网络规则时由于版本较新，其使用的配置命令在Ubuntu18.04版本上的iptables无法解析，导致网络出现问题。</p>
+<ul>
+<li><a class="link" href="https://bugs.launchpad.net/ubuntu/&#43;source/linux-meta-hwe-5.4/&#43;bug/1899690"  target="_blank" rel="noopener"
+    >https://bugs.launchpad.net/ubuntu/+source/linux-meta-hwe-5.4/+bug/1899690</a></li>
+</ul>
+<p>所以我将虚拟机换为Ubuntu20.04后，该问题得到解决。由此看出，K8s对于环境版本一致性的要求还是比较高的。</p>
+<h2 id="解决由于虚拟机挂起恢复虚拟机后集群网络异常的问题">解决由于虚拟机挂起，恢复虚拟机后集群网络异常的问题</h2>
+<p>在虚拟机挂起，再恢复之后，集群网络出现了问题，具体表现在：</p>
+<ol>
+<li>无法通过Pod地址访问应用</li>
+<li>无法通过Service地址访问应用</li>
+<li>集群间Pod无法联通</li>
+</ol>
+<p>在一篇博文中找到了解决方法：https://blog.csdn.net/weixin_43293361/article/details/114731838</p>
+<p>首先，查看Master Node的网络，发现原本的<code>cni0</code>和<code>flannel.1</code>网络均不存在了：</p>
+<p><img src="https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220121164938.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>然后查看了Work Node的网络，上述两个网络也是不存在的。所以按照<a class="link" href="https://blog.csdn.net/weixin_43293361/article/details/114731838"  target="_blank" rel="noopener"
+    >博文</a>给出的方法：</p>
+<p>1）在Master Node删除flannel网络组件：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>kubectl delete -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+</span></span></code></pre></div><p>2）在Master Node和Work Node上重置集群网络配置（集群所有节点上）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>ifconfig cni0 down
+</span></span><span style="display:flex;"><span>ip link delete cni0
+</span></span><span style="display:flex;"><span>ifconfig flannel.1 down
+</span></span><span style="display:flex;"><span>ip link delete flannel.1
+</span></span><span style="display:flex;"><span>rm -rf /var/lib/cni/flannel/*
+</span></span><span style="display:flex;"><span>rm -rf /var/lib/cni/networks/cbr0/*
+</span></span><span style="display:flex;"><span>rm -rf /var/lib/cni/cache/*
+</span></span><span style="display:flex;"><span>rm -f /etc/cni/net.d/*
+</span></span><span style="display:flex;"><span>systemctl restart kubelet
+</span></span><span style="display:flex;"><span>systemctl restart docker
+</span></span><span style="display:flex;"><span>chmod a+w /var/run/docker.sock
+</span></span></code></pre></div><p>3）最后在Master Node重新安装flannel网络组件：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+</span></span></code></pre></div><p>4）查看集群各个节点的网络情况，<code>cni0</code>和<code>flannel.1</code>网络均正常出现，然后等待Deployment的Pod自愈，这样集群网络就可以正常恢复。</p>
+<h2 id="滚动升级与回滚">滚动升级与回滚</h2>
+<h3 id="滚动升级">滚动升级</h3>
+<p>在升级使用的<code>deploy.yaml</code>文件中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>apiVersion: apps/v1
+</span></span><span style="display:flex;"><span>kind: Deployment
+</span></span><span style="display:flex;"><span>metadata:
+</span></span><span style="display:flex;"><span>  name: hello-deploy
+</span></span><span style="display:flex;"><span>spec:
+</span></span><span style="display:flex;"><span>  replicas: <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>  selector:
+</span></span><span style="display:flex;"><span>    matchLabels:
+</span></span><span style="display:flex;"><span>      app: hello-world
+</span></span><span style="display:flex;"><span>  minReadySeconds: <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>  strategy:
+</span></span><span style="display:flex;"><span>    type: RollingUpdate	<span style="color:#75715e"># 滚动更新</span>
+</span></span><span style="display:flex;"><span>    rollingUpdate:
+</span></span><span style="display:flex;"><span>      maxUnavailable: 1	<span style="color:#75715e"># 集群中最多有一个不可用Pod</span>
+</span></span><span style="display:flex;"><span>      maxSurge: 1		<span style="color:#75715e"># 集群中Pod最多超过预期值1个</span>
+</span></span><span style="display:flex;"><span>  template:
+</span></span><span style="display:flex;"><span>    metadata:
+</span></span><span style="display:flex;"><span>      labels:
+</span></span><span style="display:flex;"><span>        app: hello-world
+</span></span><span style="display:flex;"><span>    spec:
+</span></span><span style="display:flex;"><span>      containers:
+</span></span><span style="display:flex;"><span>      - name: hello-pod
+</span></span><span style="display:flex;"><span>        image: nigelpoulton/k8sbook:edge	<span style="color:#75715e"># 使用了另一个版本的镜像</span>
+</span></span><span style="display:flex;"><span>        ports:
+</span></span><span style="display:flex;"><span>        - containerPort: <span style="color:#ae81ff">8080</span>
+</span></span></code></pre></div><p>与上一个<code>deploy.yaml</code>不同，这里使用了另一个版本的镜像，更新策略由<code>strategy</code>下的内容决定。</p>
+<p>进行滚动升级：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl apply -f deploy.yaml --record
+</span></span><span style="display:flex;"><span>Flag --record has been deprecated, --record will be removed in the future
+</span></span><span style="display:flex;"><span>deployment.apps/hello-deploy configured
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl rollout status deployment hello-deploy
+</span></span><span style="display:flex;"><span>Waiting <span style="color:#66d9ef">for</span> deployment <span style="color:#e6db74">&#34;hello-deploy&#34;</span> rollout to finish: <span style="color:#ae81ff">2</span> out of <span style="color:#ae81ff">10</span> new replicas have been updated...
+</span></span><span style="display:flex;"><span>^Croot@lzl-a:/home/lzl/WP/k8s/deploy# kubectl get deploy
+</span></span><span style="display:flex;"><span>NAME           READY   UP-TO-DATE   AVAILABLE   AGE
+</span></span><span style="display:flex;"><span>hello-deploy   10/10   <span style="color:#ae81ff">2</span>            <span style="color:#ae81ff">9</span>           17h
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl get deploy
+</span></span><span style="display:flex;"><span>NAME           READY   UP-TO-DATE   AVAILABLE   AGE
+</span></span><span style="display:flex;"><span>hello-deploy   10/10   <span style="color:#ae81ff">3</span>            <span style="color:#ae81ff">9</span>           17h
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl get deploy
+</span></span><span style="display:flex;"><span>NAME           READY   UP-TO-DATE   AVAILABLE   AGE
+</span></span><span style="display:flex;"><span>hello-deploy   9/10    <span style="color:#ae81ff">5</span>            <span style="color:#ae81ff">9</span>           17h
+</span></span></code></pre></div><p>可以看到，如Docker Swarm一样，在升级过程中，同时存在新版本与旧版本的应用，直至整个升级过程结束。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl get deploy hello-deploy
+</span></span><span style="display:flex;"><span>NAME           READY   UP-TO-DATE   AVAILABLE   AGE
+</span></span><span style="display:flex;"><span>hello-deploy   10/10   <span style="color:#ae81ff">10</span>           <span style="color:#ae81ff">10</span>          17h
+</span></span></code></pre></div><h3 id="回滚">回滚</h3>
+<p>Kubernetes会维护Deployment的版本历史记录：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl rollout history deployment hello-deploy
+</span></span><span style="display:flex;"><span>deployment.apps/hello-deploy 
+</span></span><span style="display:flex;"><span>REVISION  CHANGE-CAUSE
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">1</span>         &lt;none&gt;
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">2</span>         kubectl apply --filename<span style="color:#f92672">=</span>deploy.yaml --record<span style="color:#f92672">=</span>true
+</span></span></code></pre></div><p>对于Deployment依赖的ReplicaSet来说，每次更新都会保留旧版本的ReplicaSet同时创建一个新的ReplicaSet：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl get rs
+</span></span><span style="display:flex;"><span>NAME                      DESIRED   CURRENT   READY   AGE
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45    <span style="color:#ae81ff">10</span>        <span style="color:#ae81ff">10</span>        <span style="color:#ae81ff">10</span>      158m
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c   <span style="color:#ae81ff">0</span>         <span style="color:#ae81ff">0</span>         <span style="color:#ae81ff">0</span>       20h
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl describe rs
+</span></span><span style="display:flex;"><span>Name:           hello-deploy-59866ff45
+</span></span><span style="display:flex;"><span>Namespace:      default
+</span></span><span style="display:flex;"><span>Selector:       app<span style="color:#f92672">=</span>hello-world,pod-template-hash<span style="color:#f92672">=</span>59866ff45
+</span></span><span style="display:flex;"><span>Labels:         app<span style="color:#f92672">=</span>hello-world
+</span></span><span style="display:flex;"><span>                pod-template-hash<span style="color:#f92672">=</span>59866ff45
+</span></span><span style="display:flex;"><span>Annotations:    deployment.kubernetes.io/desired-replicas: <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>                deployment.kubernetes.io/max-replicas: <span style="color:#ae81ff">11</span>
+</span></span><span style="display:flex;"><span>                deployment.kubernetes.io/revision: <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>                kubernetes.io/change-cause: kubectl apply --filename<span style="color:#f92672">=</span>deploy.yaml --record<span style="color:#f92672">=</span>true
+</span></span><span style="display:flex;"><span>Controlled By:  Deployment/hello-deploy
+</span></span><span style="display:flex;"><span>Replicas:       <span style="color:#ae81ff">10</span> current / <span style="color:#ae81ff">10</span> desired
+</span></span><span style="display:flex;"><span>Pods Status:    <span style="color:#ae81ff">10</span> Running / <span style="color:#ae81ff">0</span> Waiting / <span style="color:#ae81ff">0</span> Succeeded / <span style="color:#ae81ff">0</span> Failed
+</span></span><span style="display:flex;"><span>Pod Template:
+</span></span><span style="display:flex;"><span>  Labels:  app<span style="color:#f92672">=</span>hello-world
+</span></span><span style="display:flex;"><span>           pod-template-hash<span style="color:#f92672">=</span>59866ff45
+</span></span><span style="display:flex;"><span>  Containers:
+</span></span><span style="display:flex;"><span>   hello-pod:
+</span></span><span style="display:flex;"><span>    Image:        nigelpoulton/k8sbook:edge
+</span></span><span style="display:flex;"><span>    Port:         8080/TCP
+</span></span><span style="display:flex;"><span>    Host Port:    0/TCP
+</span></span><span style="display:flex;"><span>    Environment:  &lt;none&gt;
+</span></span><span style="display:flex;"><span>    Mounts:       &lt;none&gt;
+</span></span><span style="display:flex;"><span>  Volumes:        &lt;none&gt;
+</span></span><span style="display:flex;"><span>Events:           &lt;none&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Name:           hello-deploy-65cbc9474c
+</span></span><span style="display:flex;"><span>Namespace:      default
+</span></span><span style="display:flex;"><span>Selector:       app<span style="color:#f92672">=</span>hello-world,pod-template-hash<span style="color:#f92672">=</span>65cbc9474c
+</span></span><span style="display:flex;"><span>Labels:         app<span style="color:#f92672">=</span>hello-world
+</span></span><span style="display:flex;"><span>                pod-template-hash<span style="color:#f92672">=</span>65cbc9474c
+</span></span><span style="display:flex;"><span>Annotations:    deployment.kubernetes.io/desired-replicas: <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>                deployment.kubernetes.io/max-replicas: <span style="color:#ae81ff">11</span>
+</span></span><span style="display:flex;"><span>                deployment.kubernetes.io/revision: <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>Controlled By:  Deployment/hello-deploy
+</span></span><span style="display:flex;"><span>Replicas:       <span style="color:#ae81ff">0</span> current / <span style="color:#ae81ff">0</span> desired
+</span></span><span style="display:flex;"><span>Pods Status:    <span style="color:#ae81ff">0</span> Running / <span style="color:#ae81ff">0</span> Waiting / <span style="color:#ae81ff">0</span> Succeeded / <span style="color:#ae81ff">0</span> Failed
+</span></span><span style="display:flex;"><span>Pod Template:
+</span></span><span style="display:flex;"><span>  Labels:  app<span style="color:#f92672">=</span>hello-world
+</span></span><span style="display:flex;"><span>           pod-template-hash<span style="color:#f92672">=</span>65cbc9474c
+</span></span><span style="display:flex;"><span>  Containers:
+</span></span><span style="display:flex;"><span>   hello-pod:
+</span></span><span style="display:flex;"><span>    Image:        nigelpoulton/k8sbook:latest
+</span></span><span style="display:flex;"><span>    Port:         8080/TCP
+</span></span><span style="display:flex;"><span>    Host Port:    0/TCP
+</span></span><span style="display:flex;"><span>    Environment:  &lt;none&gt;
+</span></span><span style="display:flex;"><span>    Mounts:       &lt;none&gt;
+</span></span><span style="display:flex;"><span>  Volumes:        &lt;none&gt;
+</span></span><span style="display:flex;"><span>Events:           &lt;none&gt;
+</span></span></code></pre></div><p>通过ReplicaSet的信息，可以清楚的知道两个ReplicaSet所做的操作，并且由于旧版本ReplicaSet的存在，回滚操作变得更加简单。下面将应用回滚到版本1，同时别忘记再更新一下yaml文件：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl rollout undo deployment hello-deploy --to-revision<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>deployment.apps/hello-deploy rolled back
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl get pods -o wide
+</span></span><span style="display:flex;"><span>NAME                            READY   STATUS              RESTARTS       AGE    IP          NODE    NOMINATED NODE   READINESS GATES
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-2hp8j    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>135m ago<span style="color:#f92672">)</span>   166m   10.5.1.4    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-4lhld    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>135m ago<span style="color:#f92672">)</span>   165m   10.5.1.11   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-7pn94    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>135m ago<span style="color:#f92672">)</span>   162m   10.5.1.5    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-9d444    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>135m ago<span style="color:#f92672">)</span>   162m   10.5.1.3    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-lhx2j    1/1     Terminating         <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>135m ago<span style="color:#f92672">)</span>   164m   10.5.1.9    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-nwcp8    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>135m ago<span style="color:#f92672">)</span>   163m   10.5.1.2    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-prwwd    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>135m ago<span style="color:#f92672">)</span>   163m   10.5.1.7    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-rflnv    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>135m ago<span style="color:#f92672">)</span>   161m   10.5.1.6    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-tbpt2    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>135m ago<span style="color:#f92672">)</span>   165m   10.5.1.10   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-z88ct    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>135m ago<span style="color:#f92672">)</span>   166m   10.5.1.8    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-98bh2   0/1     ContainerCreating   <span style="color:#ae81ff">0</span>              10s    &lt;none&gt;      lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-d4g24   0/1     ContainerCreating   <span style="color:#ae81ff">0</span>              10s    &lt;none&gt;      lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl rollout status deployment hello-deploy
+</span></span><span style="display:flex;"><span>Waiting <span style="color:#66d9ef">for</span> deployment <span style="color:#e6db74">&#34;hello-deploy&#34;</span> rollout to finish: <span style="color:#ae81ff">2</span> out of <span style="color:#ae81ff">10</span> new replicas have been updated...
+</span></span><span style="display:flex;"><span>^Croot@lzl-a:/home/lzl/WP/k8s/deploy# kubectl get pods -o wide
+</span></span><span style="display:flex;"><span>NAME                            READY   STATUS              RESTARTS       AGE    IP          NODE    NOMINATED NODE   READINESS GATES
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-2hp8j    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>136m ago<span style="color:#f92672">)</span>   167m   10.5.1.4    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-4lhld    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>136m ago<span style="color:#f92672">)</span>   166m   10.5.1.11   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-7pn94    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>136m ago<span style="color:#f92672">)</span>   163m   10.5.1.5    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-9d444    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>136m ago<span style="color:#f92672">)</span>   162m   10.5.1.3    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-nwcp8    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>136m ago<span style="color:#f92672">)</span>   164m   10.5.1.2    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-prwwd    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>136m ago<span style="color:#f92672">)</span>   164m   10.5.1.7    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-rflnv    1/1     Terminating         <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>136m ago<span style="color:#f92672">)</span>   162m   10.5.1.6    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-tbpt2    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>136m ago<span style="color:#f92672">)</span>   165m   10.5.1.10   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-59866ff45-z88ct    1/1     Running             <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>136m ago<span style="color:#f92672">)</span>   167m   10.5.1.8    lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-98bh2   1/1     Running             <span style="color:#ae81ff">0</span>              47s    10.5.1.12   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-d4g24   0/1     ContainerCreating   <span style="color:#ae81ff">0</span>              47s    &lt;none&gt;      lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-kglhr   0/1     ContainerCreating   <span style="color:#ae81ff">0</span>              2s     &lt;none&gt;      lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl rollout status deployment hello-deploy
+</span></span><span style="display:flex;"><span>Waiting <span style="color:#66d9ef">for</span> deployment <span style="color:#e6db74">&#34;hello-deploy&#34;</span> rollout to finish: <span style="color:#ae81ff">3</span> out of <span style="color:#ae81ff">10</span> new replicas have been updated...
+</span></span><span style="display:flex;"><span>^<span style="color:#f92672">[[</span>AWaiting <span style="color:#66d9ef">for</span> deployment <span style="color:#e6db74">&#34;hello-deploy&#34;</span> rollout to finish: <span style="color:#ae81ff">3</span> out of <span style="color:#ae81ff">10</span> new replicas have been updated...
+</span></span><span style="display:flex;"><span>^Croot@lzl-a:/home/lzl/WP/k8s/deploykubectl get deploy hello-deploy
+</span></span><span style="display:flex;"><span>NAME           READY   UP-TO-DATE   AVAILABLE   AGE
+</span></span><span style="display:flex;"><span>hello-deploy   10/10   <span style="color:#ae81ff">3</span>            <span style="color:#ae81ff">9</span>           20h
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl get deploy hello-deploy
+</span></span><span style="display:flex;"><span>NAME           READY   UP-TO-DATE   AVAILABLE   AGE
+</span></span><span style="display:flex;"><span>hello-deploy   10/10   <span style="color:#ae81ff">10</span>           <span style="color:#ae81ff">10</span>          20h
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s/deploy# kubectl get pods -o wide
+</span></span><span style="display:flex;"><span>NAME                            READY   STATUS    RESTARTS   AGE     IP          NODE    NOMINATED NODE   READINESS GATES
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-7jrwq   1/1     Running   <span style="color:#ae81ff">0</span>          4m32s   10.5.1.19   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-98bh2   1/1     Running   <span style="color:#ae81ff">0</span>          7m56s   10.5.1.12   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-d4g24   1/1     Running   <span style="color:#ae81ff">0</span>          7m56s   10.5.1.13   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-hkr5r   1/1     Running   <span style="color:#ae81ff">0</span>          6m39s   10.5.1.15   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-jdwsr   1/1     Running   <span style="color:#ae81ff">0</span>          3m29s   10.5.1.21   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-kglhr   1/1     Running   <span style="color:#ae81ff">0</span>          7m11s   10.5.1.14   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-n4mqz   1/1     Running   <span style="color:#ae81ff">0</span>          4m1s    10.5.1.20   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-p7zgs   1/1     Running   <span style="color:#ae81ff">0</span>          6m7s    10.5.1.16   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-rqtrg   1/1     Running   <span style="color:#ae81ff">0</span>          5m36s   10.5.1.17   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-xxk2n   1/1     Running   <span style="color:#ae81ff">0</span>          5m4s    10.5.1.18   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span></code></pre></div><p>和滚动升级一样，回滚过程中也同时存在新旧版本的应用。由于回滚是命令操作，没有使用到<code>deploy.yaml</code>文件，因此要注意应用版本与部署文件中镜像版本不一致的问题，可以手动更改部署文件。</p>
+<h2 id="删除deployment和service">删除Deployment和Service</h2>
+<p>不再使用该Service和Pod时，将这两个对象删除，使用命令：<code>kubectl delete -f</code>。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s# kubectl delete -f ./deploy/deploy.yaml 
+</span></span><span style="display:flex;"><span>deployment.apps <span style="color:#e6db74">&#34;hello-deploy&#34;</span> deleted
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s# kubectl delete -f ./service/svc.yaml 
+</span></span><span style="display:flex;"><span>service <span style="color:#e6db74">&#34;hello-svc&#34;</span> deleted
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s# kubectl get pods -o wide
+</span></span><span style="display:flex;"><span>NAME                            READY   STATUS        RESTARTS   AGE     IP          NODE    NOMINATED NODE   READINESS GATES
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-7jrwq   1/1     Terminating   <span style="color:#ae81ff">0</span>          10m     10.5.1.19   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-98bh2   1/1     Terminating   <span style="color:#ae81ff">0</span>          13m     10.5.1.12   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-d4g24   1/1     Terminating   <span style="color:#ae81ff">0</span>          13m     10.5.1.13   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-hkr5r   1/1     Terminating   <span style="color:#ae81ff">0</span>          12m     10.5.1.15   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-jdwsr   1/1     Terminating   <span style="color:#ae81ff">0</span>          9m19s   10.5.1.21   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-kglhr   1/1     Terminating   <span style="color:#ae81ff">0</span>          13m     10.5.1.14   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-n4mqz   1/1     Terminating   <span style="color:#ae81ff">0</span>          9m51s   10.5.1.20   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-p7zgs   1/1     Terminating   <span style="color:#ae81ff">0</span>          11m     10.5.1.16   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-rqtrg   1/1     Terminating   <span style="color:#ae81ff">0</span>          11m     10.5.1.17   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>hello-deploy-65cbc9474c-xxk2n   1/1     Terminating   <span style="color:#ae81ff">0</span>          10m     10.5.1.18   lzl-b   &lt;none&gt;           &lt;none&gt;
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s# kubectl get svc -o wide
+</span></span><span style="display:flex;"><span>NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT<span style="color:#f92672">(</span>S<span style="color:#f92672">)</span>   AGE   SELECTOR
+</span></span><span style="display:flex;"><span>kubernetes   ClusterIP   10.96.0.1    &lt;none&gt;        443/TCP   20h   &lt;none&gt;
+</span></span><span style="display:flex;"><span>root@lzl-a:/home/lzl/WP/k8s# kubectl get pods -o wide
+</span></span><span style="display:flex;"><span>No resources found in default namespace.
+</span></span></code></pre></div>
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/kubernetes/">Kubernetes</a>
+        
+            <a href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">云原生</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/%E6%90%AD%E5%BB%BA1%E4%B8%AAmaster%E8%8A%82%E7%82%B9%E5%92%8C2%E4%B8%AAwork%E8%8A%82%E7%82%B9%E7%9A%84%E9%9B%86%E7%BE%A4k8s%E5%AE%9E%E8%B7%B5-2/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">搭建1个Master节点和2个Work节点的集群(k8s实践-2)</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E7%AC%94%E8%AE%B0-showar-right-sizing-and-efficient-scheduling-of-microservices/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">笔记 &gt; SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E5%90%AF%E5%8A%A8k8s%E7%9A%84%E4%B8%BB%E8%8A%82%E7%82%B9k8s%E5%AE%9E%E8%B7%B5-1/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">启动k8s的主节点(k8s实践-1)</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E7%AC%94%E8%AE%B0-service-level-fault-injection-testing/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">笔记 &gt; Service-Level Fault Injection Testing</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%BD%91%E5%85%B3--kong/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">微服务网关--kong</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

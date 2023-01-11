@@ -1,47 +1,88 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Pages on Li Duo</title>
-    <link>https://lizonglingo.github.io/page/</link>
-    <description>Recent content in Pages on Li Duo</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>zh-CN</language>
-    <lastBuildDate>Tue, 28 May 2019 00:00:00 +0000</lastBuildDate><atom:link href="https://lizonglingo.github.io/page/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>归档</title>
-      <link>https://lizonglingo.github.io/archives/</link>
-      <pubDate>Tue, 28 May 2019 00:00:00 +0000</pubDate>
-      
-      <guid>https://lizonglingo.github.io/archives/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>关于</title>
-      <link>https://lizonglingo.github.io/%E5%85%B3%E4%BA%8E/</link>
-      <pubDate>Thu, 28 Feb 2019 00:00:00 +0000</pubDate>
-      
-      <guid>https://lizonglingo.github.io/%E5%85%B3%E4%BA%8E/</guid>
-      <description>欢迎来到我的小站！🤝 🏠 关于本站 未完待续 2023年1月11日，我又将博客的实现方案换到现在的 Hugo + Github 2020年1月21日，本站完成从 Coding</description>
-    </item>
-    
-    <item>
-      <title>链接</title>
-      <link>https://lizonglingo.github.io/%E9%93%BE%E6%8E%A5/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://lizonglingo.github.io/%E9%93%BE%E6%8E%A5/</guid>
-      <description>To use this feature, add links section to frontmatter. This page&amp;rsquo;s frontmatter: links: - title: GitHub description: GitHub is the world&amp;#39;s largest software development platform. website: https://github.com image: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png - title: TypeScript description: TypeScript is a typed superset of JavaScript that compiles to plain JavaScript. website: https://www.typescriptlang.org image: ts-logo-128.jpg image field accepts both local and external images.</description>
-    </item>
-    
-    <item>
-      <title>搜索</title>
-      <link>https://lizonglingo.github.io/search/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://lizonglingo.github.io/search/</guid>
-      <description></description>
-    </item>
-    
-  </channel>
+    <channel>
+        <title>Pages on Li Duo</title>
+        <link>https://lizonglingo.github.io/page/</link>
+        <description>Recent content in Pages on Li Duo</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-CN</language>
+        <lastBuildDate>Tue, 28 May 2019 00:00:00 +0000</lastBuildDate><atom:link href="https://lizonglingo.github.io/page/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>归档</title>
+        <link>https://lizonglingo.github.io/archives/</link>
+        <pubDate>Tue, 28 May 2019 00:00:00 +0000</pubDate>
+        
+        <guid>https://lizonglingo.github.io/archives/</guid>
+        <description></description>
+        </item>
+        <item>
+        <title>关于</title>
+        <link>https://lizonglingo.github.io/%E5%85%B3%E4%BA%8E/</link>
+        <pubDate>Thu, 28 Feb 2019 00:00:00 +0000</pubDate>
+        
+        <guid>https://lizonglingo.github.io/%E5%85%B3%E4%BA%8E/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;欢迎来到我的小站！🤝&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;-关于本站&#34;&gt;🏠 关于本站&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;未完待续&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;2023年1月11日，我又将博客的实现方案换到现在的 Hugo + Github&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;2020年1月21日，本站完成从 Coding+Hexo的迁移，这次迁移使用 Gridea+Github 作为博客管理工具和托管&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;2018年末，认为技术好的人都会有自己博客的我，使用 Coding+Hexo 的方案搭建了自己的第一个博客&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;-博主&#34;&gt;👨‍💻 博主&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;学生 (能不能 V 我 50 因为 &amp;ldquo;KFC-CRAZY-THURSDAY-VME50&amp;rdquo; )&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;-兴趣爱好&#34;&gt;⛹ 兴趣爱好&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;🍜&lt;/li&gt;
+&lt;li&gt;💻目前喜欢写 Go，关注 Kubernetes 和围绕其的 CloudNative 开源生态&lt;/li&gt;
+&lt;li&gt;🎸刺猬、新裤子、万青&amp;hellip;&lt;/li&gt;
+&lt;li&gt;🎤许嵩、许巍、周杰伦&amp;hellip;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;-联系我&#34;&gt;📬 联系我&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;有需要请留言&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>链接</title>
+        <link>https://lizonglingo.github.io/%E9%93%BE%E6%8E%A5/</link>
+        <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+        
+        <guid>https://lizonglingo.github.io/%E9%93%BE%E6%8E%A5/</guid>
+        <description>&lt;p&gt;To use this feature, add &lt;code&gt;links&lt;/code&gt; section to frontmatter.&lt;/p&gt;
+&lt;p&gt;This page&amp;rsquo;s frontmatter:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;links&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - &lt;span style=&#34;color:#f92672&#34;&gt;title&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;GitHub&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;description&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;GitHub is the world&amp;#39;s largest software development platform.&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;website&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;https://github.com&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;image&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - &lt;span style=&#34;color:#f92672&#34;&gt;title&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;TypeScript&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;description&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;TypeScript is a typed superset of JavaScript that compiles to plain JavaScript.&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;website&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;https://www.typescriptlang.org&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;image&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;ts-logo-128.jpg&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;image&lt;/code&gt; field accepts both local and external images.&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>搜索</title>
+        <link>https://lizonglingo.github.io/search/</link>
+        <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+        
+        <guid>https://lizonglingo.github.io/search/</guid>
+        <description></description>
+        </item>
+        
+    </channel>
 </rss>

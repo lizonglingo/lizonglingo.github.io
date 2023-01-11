@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='学习Docker覆盖网络的时候，自然免不了与数据中心大二层网络技术的关系，然后补了一下相关的知识。 从Docker覆盖网络谈起 对于不同网络中容'>
+<title>从Docker覆盖网络引出大二层网络</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/%E4%BB%8Edocker%E8%A6%86%E7%9B%96%E7%BD%91%E7%BB%9C%E5%BC%95%E5%87%BA%E5%A4%A7%E4%BA%8C%E5%B1%82%E7%BD%91%E7%BB%9C/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='从Docker覆盖网络引出大二层网络'>
+<meta property='og:description' content='学习Docker覆盖网络的时候，自然免不了与数据中心大二层网络技术的关系，然后补了一下相关的知识。 从Docker覆盖网络谈起 对于不同网络中容'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/%E4%BB%8Edocker%E8%A6%86%E7%9B%96%E7%BD%91%E7%BB%9C%E5%BC%95%E5%87%BA%E5%A4%A7%E4%BA%8C%E5%B1%82%E7%BD%91%E7%BB%9C/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='云原生' /><meta property='article:tag' content='docker' /><meta property='article:published_time' content='2021-11-20T11:24:40&#43;08:00'/><meta property='article:modified_time' content='2021-11-20T11:24:40&#43;08:00'/>
+<meta name="twitter:title" content="从Docker覆盖网络引出大二层网络">
+<meta name="twitter:description" content="学习Docker覆盖网络的时候，自然免不了与数据中心大二层网络技术的关系，然后补了一下相关的知识。 从Docker覆盖网络谈起 对于不同网络中容">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#从docker覆盖网络谈起">从Docker覆盖网络谈起</a></li>
+    <li><a href="#vxlan">VXLAN</a>
+      <ul>
+        <li><a href="#vlan">VLAN</a></li>
+        <li><a href="#vxlan-1">VXLAN</a></li>
+      </ul>
+    </li>
+    <li><a href="#为什么数据中心需要使用大二层网络">为什么数据中心需要使用大二层网络？</a>
+      <ul>
+        <li><a href="#二层网络和三层网络对比">二层网络和三层网络对比</a></li>
+        <li><a href="#大二层网络">大二层网络</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/" >
+                云原生
+            </a>
+        
+            <a href="/categories/docker/" >
+                docker
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/%E4%BB%8Edocker%E8%A6%86%E7%9B%96%E7%BD%91%E7%BB%9C%E5%BC%95%E5%87%BA%E5%A4%A7%E4%BA%8C%E5%B1%82%E7%BD%91%E7%BB%9C/">从Docker覆盖网络引出大二层网络</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Nov 20, 2021</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 6 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>学习Docker覆盖网络的时候，自然免不了与数据中心大二层网络技术的关系，然后补了一下相关的知识。</p>
+</blockquote>
+<h2 id="从docker覆盖网络谈起">从Docker覆盖网络谈起</h2>
+<p>对于不同网络中容器的安全、可靠通信问题十分关键。Docker通过覆盖网络技术，创建扁平、安全的二层网络连接不同物理网络的容器，连接到覆盖网络的容器可以直接通信。</p>
+<p><img src="https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211120_113444_edit_815400474937555.jpg"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>如上图所示，两个属于不同物理网络的节点，通过连接到同一个<code>Overlay</code>覆盖网络可以直接完成通信。覆盖网络创建了虚拟二层网络<code>10.0.0.0/24</code>然后为这两个节点分配了IP地址。也就是说，在节点1上<code>ping 10.0.0.4</code>可以通，并且只需要经过1跳。</p>
+<p>那么Overlay是怎么实现的。</p>
+<h2 id="vxlan">VXLAN</h2>
+<h3 id="vlan">VLAN</h3>
+<p>为了隔离二层网络的广播域，又能使网络中用户相互访问，我们使用划分VLAN的方式，构建虚拟局域网。同一个VLAN中的用户可以直接通信，同属于一个广播域。这些VLAN报文通过在MAC帧添加VLAN标记来进行传输。</p>
+<p>问题就在于，VLAN支持用户数量太少了。</p>
+<p>数据中心需要支持的虚拟机数量远远大于VLAN支持的数量。为了与依赖的网络硬件设备解耦，并支持大规模虚拟机网络管理，一些做虚拟化的IT厂商推出了一些SND技术，VXLAN就是。</p>
+<h3 id="vxlan-1">VXLAN</h3>
+<p>VXLAN的实现是在需要接入覆盖网络的主机上，通过虚拟化的交换机、虚拟化的网络适配器来实现在三层网络上虚拟出一个二层网络。</p>
+<ul>
+<li>设计目的就在于：<strong>允许用户基于已经存在的三层网络创建虚拟的二层网络</strong>。</li>
+<li>使用的主要技术是：<strong>基于UDP封装的隧道技术</strong>。VXLAN基于三层IP网络创建了隧道。在隧道两端，VXLAN隧道终端VTEP完成封装和解封装。</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/IMG_20211120_114959_edit_816311714547833.jpg"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>为了实现在三层网络上虚拟出二层覆盖网络，大致有下面几个步骤。</p>
+<ol>
+<li>在主机上创建一个Sandbox网络命名空间，这相当于在主机上运行了一个独立的网络栈（可以看作以容器方式运行）。</li>
+<li>在Sandbox中创建一个虚拟交换机（虚拟网桥）。</li>
+<li>在主机中创建一个VXLAN隧道终端VTEP，并把它的一端接入到虚拟交换机上，另一端则接入主机的网络栈。接入主机网络栈后，VTEP就从主机所连接的基础网络中获取到主机的IP地址，并以UDP Socket的方式绑定到4789端口。</li>
+<li>这样一来，不同主机上的两个VTEP通过VXLAN隧道连接在了一起，创建了一个覆盖网络。</li>
+<li>经过以上步骤，这个覆盖网络中的主机向下是连通了，那向上怎么去传递数据呢？所以，主机继续创建虚拟以太网适配器（虚拟网卡），并将这个虚拟网卡接入虚拟交换机上，这样从交换机上来的数据帧就可以被转发。</li>
+</ol>
+<p>下面来看一个完整的通过覆盖网络的数据传输过程：</p>
+<ol>
+<li>node1节点上的容器叫C1，node2的叫C2。</li>
+<li>C1去<code>ping 10.0.0.4</code>也就是C2。这个请求的流量，通过连接到虚拟交换机的虚拟网卡发出。但此时虚拟交换机并不知道从哪个接口转发出去。因为虚拟交换机中暂时没有与该IP对应的MAC地址。</li>
+<li>所以虚拟交换机会向所有接口转发。连接到虚拟交换机的VXLAN隧道终端VTEP知道它自己应该接收并转发这个数据帧，所以它会返回自己的MAC地址，并且虚拟交换机中交换表就新增了这一条转发条目，以后发往该IP的数据帧都转发给VTEP。（实际上就是二层网络的ARP协议在主机中使用软件模拟）</li>
+<li>为什么VTEP知道自己应该转发发往C2的10.0.0.4这个IP的数据帧呢？因为Docker启动容器时，会将自己的网络信息通过Gossip协议发送给相同Swarm集群的其他节点。</li>
+<li>虚拟交换机把数据帧转发给VTEP，VTEP继续封装，加入VXLAN Header等信息，这样这条数据帧就可以在真实的基础网络中透明传输了。</li>
+<li>VTEP将数据帧放到UDP包中，设置端口4789和C2真实的目的地址，然后交给底层网络。</li>
+<li>这条数据包在基础网络中透明传输，到达node2，把它交给UDP的4789端口处理，由于VTEP绑定了4789端口，所以进一步交给VTEP处理。</li>
+<li>VTEP解封装后，向上交给虚拟交换机，再转发到C2对应的虚拟网卡，这样C2就收到了这条数据。</li>
+</ol>
+<h2 id="为什么数据中心需要使用大二层网络">为什么数据中心需要使用大二层网络？</h2>
+<p>数据中心为用户管理了大量的虚拟机，为了对物理机进行维护、升级，就有了迁移虚拟机的需求。重要的是，对虚拟机的迁移在用户看来应该是透明无感知的。这就要求在迁移的过程中，虚拟机需要正常提供服务，它的网络属性如IP需要保持不变。</p>
+<p>如果使用传统的二三层网络结构（如VLAN划分的2层网络），地址数量限制了虚拟机动态迁移只能在一个较小的局部范围中。为了实现大规模、跨地域数据中心的虚拟机动态迁移，就需要构建大二层网络，实现虚拟机的无障碍动态迁移。</p>
+<h3 id="二层网络和三层网络对比">二层网络和三层网络对比</h3>
+<blockquote>
+<p>来源：</p>
+<p><a class="link" href="https://nc.haut.edu.cn/info/1034/4213.htm"  target="_blank" rel="noopener"
+    >https://nc.haut.edu.cn/info/1034/4213.htm</a></p>
+<p><a class="link" href="https://zhuanlan.zhihu.com/p/108713008"  target="_blank" rel="noopener"
+    >https://zhuanlan.zhihu.com/p/108713008</a></p>
+</blockquote>
+<p>在网络结构中，有二层网络和三层网络两种选择。在这里的二层、三层是按照逻辑拓扑结构进行的分类，并不是说ISO七层模型中的数据链路层和网络层，而是<strong>指核心层，汇聚层和接入层，这三层都部署的就是三层网络结构，二层网络结构没有汇聚层</strong>。</p>
+<p>只有核心层和接入层的<strong>二层网络结构模式运行简便</strong>，交换机根据MAC地址表进行数据包的转发，有则转发，无则泛洪，即将数据包广播发送到所有端口，如果目的终端收到给出回应，那么交换机就可以将该MAC地址添加到地址表中，这是交换机对MAC地址进行建立的过程。</p>
+<p>但这样频繁的对未知的MAC目标的数据包进行广播，在大规模的网络架构中形成的网络风暴是非常庞大的，这也很大程度上限制了二层网络规模的扩大，因此<strong>二层网络的组网能力非常有限，所以一般只是用来搭建小局域网</strong>。</p>
+<p>与二层网络结构不同的是，<strong>三层网络结构可以组建大型的网络</strong>。</p>
+<p><strong>核心层</strong>是整个网络的支撑脊梁和数据传输通道，重要性不言而喻，因此在整个三层网络结构中，核心层的设备要求是最高的，必须配备高性能的数据冗余转接设备和防止负载过剩的均衡负载的设备，以降低各核心层交换机所需承载的数据量。（网络的高速交换主干）</p>
+<p><strong>汇聚层</strong>是连接网络的核心层和各个接入的应用层，在两层之间承担“媒介传输”的作用。汇聚层应该具备以下功能：实施安全功能（划分 VLAN和配置 ACL）、工作组整体接入功能、虚拟网络过滤功能。因此，<strong>汇聚层设备应采用三层交换机</strong>。（提供基于策略的连接）</p>
+<p><strong>接入层</strong>的面向对象主要是终端客户，为终端客户提供接入功能。（将工作站接入网络）</p>
+<p>二层网络仅仅通过MAC寻址即可实现通讯，但仅仅是同一个冲突域内；三层网络则需要通过IP路由实现跨网段的通讯，可以跨多个冲突域。</p>
+<h3 id="大二层网络">大二层网络</h3>
+<blockquote>
+<p>来源：</p>
+<p><a class="link" href="https://blog.csdn.net/xinjixun3641/article/details/84334384"  target="_blank" rel="noopener"
+    >https://blog.csdn.net/xinjixun3641/article/details/84334384</a></p>
+</blockquote>
+<p>大二层网络基本上都是<strong>针对数据中心场景的</strong>，因为它实际上就是为了解决数据中心的服务器虚拟化之后的虚拟机动态迁移这一特定需求而出现的。其实<strong>学校网络也是一个相当于数据中心的网络</strong>，因为他需要对整个校园提供上网服务，例如WIFI漫游等。</p>
+<p>为了实现虚拟机的大范围甚至跨地域的动态迁移，就要求把VM迁移可能涉及的<strong>所有服务器都纳入同一个二层网络域</strong>，这样才能实现VM的<strong>大范围无障碍迁移</strong>。这就是大二层网络！</p>
+<p><strong>一个真正意义的大二层网络至少要能容纳1万以上的主机，才能叫做大二层网络。</strong></p>
+<p>传统的二层网络为啥大不起来？其实说起来也简单，二层网络的核心问题就是环路问题以及由此产生的<strong>广播风暴问题</strong>。</p>
+<p>传统的二层技术为啥不能支持大二层？<strong>基于VLAN+xSTP技术的二层网络，可能容纳的主机数量通常都不会超过1K</strong>。</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">云原生</a>
+        
+            <a href="/tags/docker/">docker</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/%E4%BD%BF%E7%94%A8docker-swarm%E7%AE%A1%E7%90%86%E6%9C%8D%E5%8A%A1%E9%9B%86%E7%BE%A4/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">使用Docker Swarm管理服务集群</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E4%BD%BF%E7%94%A8docker-compose%E9%83%A8%E7%BD%B2%E5%BA%94%E7%94%A8/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">使用docker-compose部署应用</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E4%BA%91%E5%8E%9F%E7%94%9F%E5%9C%A8%E5%AE%9E%E8%B7%B5%E4%B8%AD%E7%9A%84%E6%8A%80%E6%9C%AF%E7%BB%84%E6%88%90/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">云原生在实践中的技术组成</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E4%BA%91%E8%AE%A1%E7%AE%97%E7%BD%91%E7%BB%9C%E4%B8%8E%E5%AE%89%E5%85%A8%E7%AE%80%E8%AE%B0/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">《云计算网络与安全》简记</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

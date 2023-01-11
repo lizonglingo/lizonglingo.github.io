@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='接处理机调度与死锁（一），本篇主要讲述死锁部分内容。 四.死锁概述 本节排版有些问题，可以先看本章第三部分对死锁概念的解释及定义，之后再来看第二'>
+<title>处理机调度与死锁（二）</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/%E5%A4%84%E7%90%86%E6%9C%BA%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%AD%BB%E9%94%81%E4%BA%8C/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='处理机调度与死锁（二）'>
+<meta property='og:description' content='接处理机调度与死锁（一），本篇主要讲述死锁部分内容。 四.死锁概述 本节排版有些问题，可以先看本章第三部分对死锁概念的解释及定义，之后再来看第二'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/%E5%A4%84%E7%90%86%E6%9C%BA%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%AD%BB%E9%94%81%E4%BA%8C/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='操作系统' /><meta property='article:published_time' content='2019-01-26T10:24:20&#43;08:00'/><meta property='article:modified_time' content='2019-01-26T10:24:20&#43;08:00'/>
+<meta name="twitter:title" content="处理机调度与死锁（二）">
+<meta name="twitter:description" content="接处理机调度与死锁（一），本篇主要讲述死锁部分内容。 四.死锁概述 本节排版有些问题，可以先看本章第三部分对死锁概念的解释及定义，之后再来看第二">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#四死锁概述">四.死锁概述</a>
+      <ul>
+        <li><a href="#1资源问题">1.资源问题</a></li>
+        <li><a href="#2计算机系统中的死锁">2.计算机系统中的死锁</a></li>
+        <li><a href="#3死锁的定义必要条件和处理方法">3.死锁的定义、必要条件和处理方法</a></li>
+      </ul>
+    </li>
+    <li><a href="#六预防死锁">六.预防死锁</a>
+      <ul>
+        <li><a href="#1破坏请求和保持条件">1.破坏“请求和保持”条件</a></li>
+        <li><a href="#2破坏不可抢占资源条件">2.破坏“不可抢占资源”条件</a></li>
+        <li><a href="#3破坏循环等待条件">3.破坏“循环等待”条件</a></li>
+      </ul>
+    </li>
+    <li><a href="#七避免死锁">七.避免死锁</a>
+      <ul>
+        <li><a href="#1系统安全状态">1.系统安全状态</a></li>
+        <li><a href="#2利用银行家算法避免死锁">2.利用银行家算法避免死锁</a></li>
+      </ul>
+    </li>
+    <li><a href="#八死锁的检测与解除">八.死锁的检测与解除</a>
+      <ul>
+        <li><a href="#1死锁的检测">1.死锁的检测</a></li>
+        <li><a href="#2死锁的解除">2.死锁的解除</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" >
+                操作系统
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/%E5%A4%84%E7%90%86%E6%9C%BA%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%AD%BB%E9%94%81%E4%BA%8C/">处理机调度与死锁（二）</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jan 26, 2019</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 9 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>接处理机调度与死锁（一），本篇主要讲述死锁部分内容。</p>
+</blockquote>
+<h2 id="四死锁概述">四.死锁概述</h2>
+<blockquote>
+<p>本节排版有些问题，可以先看本章第三部分对死锁概念的解释及定义，之后再来看第二部分计算机系统中的死锁可能会更好理解。</p>
+</blockquote>
+<h3 id="1资源问题">1.资源问题</h3>
+<ul>
+<li>引起死锁的资源类型：临界资源（需要互斥访问，不可被抢占的资源）。</li>
+</ul>
+<h4 id="1可重用性资源和消耗性资源">（1）可重用性资源和消耗性资源</h4>
+<ul>
+<li>可重用性资源</li>
+</ul>
+<blockquote>
+<p>1）独占使用，不允许共享。</p>
+<p>2）使用方法：请求资源  ——&gt;  使用资源  ——&gt;   释放资源</p>
+<p>3）在系统中数量相对固定，进程在运行期间不能创建和删除。</p>
+</blockquote>
+<ul>
+<li>可消耗性资源（临时性资源）</li>
+</ul>
+<blockquote>
+<p>1）在系统中数量可以不断变化</p>
+<p>2）进程在运行过程中可以（生产者）创造和（消费者）消耗。</p>
+</blockquote>
+<h4 id="2可抢占性资源和不可抢占性资源">（2）可抢占性资源和不可抢占性资源</h4>
+<ul>
+<li>可抢占性资源：&lt; 处理机 &gt;  &lt; 内存 &gt;</li>
+<li>不可抢占性资源：&lt; 磁带机 &gt;  &lt; 刻录机 &gt;  &lt; 打印机 &gt;</li>
+</ul>
+<h3 id="2计算机系统中的死锁">2.计算机系统中的死锁</h3>
+<ul>
+<li>死锁的起因：源于多个进程对资源的竞争，包括不可抢占性资源和可消耗性资源。</li>
+</ul>
+<h4 id="1竞争不可抢断性资源引起死锁">（1）竞争不可抢断性资源引起死锁</h4>
+<blockquote>
+<p>共享文件时的死锁情况：</p>
+<p><img src="https://i.loli.net/2019/01/26/5c4bc86030670.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+</blockquote>
+<h4 id="2竞争可消耗性资源引起死锁">（2）竞争可消耗性资源引起死锁</h4>
+<blockquote>
+<p>进程之间通信时的死锁：</p>
+<p><img src="https://i.loli.net/2019/01/26/5c4bc907cba2b.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+</blockquote>
+<h4 id="3进程推进顺序不当引起死锁">（3）进程推进顺序不当引起死锁</h4>
+<blockquote>
+<p>进程推进顺序对死锁的影响：</p>
+<p><img src="https://i.loli.net/2019/01/26/5c4bca31cec7f.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+</blockquote>
+<h3 id="3死锁的定义必要条件和处理方法">3.死锁的定义、必要条件和处理方法</h3>
+<h4 id="1死锁的定义">（1）死锁的定义</h4>
+<ul>
+<li>死锁：如果一组进程中的每一个进程都在等待仅由该进程中的其他进程才能引发的事件，那么该组进程就是死锁的（Deadlock）。</li>
+</ul>
+<p>饥饿与死锁：</p>
+<blockquote>
+<ul>
+<li>饥饿：线程无限等待</li>
+</ul>
+<blockquote>
+<p>例如：低优先级的线程等待着不断被高优先级线程所使用的资源。</p>
+</blockquote>
+<ul>
+<li>死锁：等待资源形成环路</li>
+</ul>
+<blockquote>
+<p>线程A拥有资源1并且等待资源2</p>
+<p>线程B拥有资源2并且等待资源1</p>
+</blockquote>
+<ul>
+<li>死锁 ——&gt; 饥饿（反之不成立）</li>
+</ul>
+<blockquote>
+<p>饥饿可以结束（但不是必须的）</p>
+<p>死锁如果没有外力介入无法结束</p>
+</blockquote>
+</blockquote>
+<h4 id="2产生死锁的必要条件">（2）产生死锁的必要条件</h4>
+<p><strong>产生死锁必须同时具备以下四个必要条件：</strong></p>
+<ul>
+<li>互斥条件：要求在一段时间内某资源仅被一进程占用。</li>
+<li>请求和保持条件：当前已拥有资源的进程，仍能申请新的资源；而且，当该进程因新的资源被其他进程占用而阻塞时，对已获得的资源保持不放。</li>
+<li>不可抢占条件：进程已获得的资源，只能在使用完时自行释放。</li>
+<li>循环等待条件：在发生死锁时，必然存在一个进程 —— 资源的环形链。即进程集合{ $P_0 , P_1 , &hellip;. , P_n$ } 对资源的请求成环状：$ P_0  -&gt;  P_1  -&gt;  P_2  -&gt;  &hellip; P_n  -&gt;  P_0$</li>
+</ul>
+<blockquote>
+<p><img src="https://i.loli.net/2019/01/26/5c4bd0cb0eef5.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p><img src="https://i.loli.net/2019/01/26/5c4bd0efdbbca.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+</blockquote>
+<h4 id="3处理死锁的方法">（3）处理死锁的方法</h4>
+<ul>
+<li>预防死锁</li>
+</ul>
+<blockquote>
+<p>1）通过设置某些条件，以破坏产生死锁的四个必要条件之一的一个或几个条件，来防止发生死锁。</p>
+<p>2）易实现，但可能导致资源利用率和系统吞吐量低。</p>
+</blockquote>
+<ul>
+<li>避免死锁</li>
+</ul>
+<blockquote>
+<p>1）在资源的动态分配过程中，用某种方法去防止系统进入不安全状态，从而避免发生死锁。</p>
+<p>2）可获得较高的资源利用率和系统吞吐量，但难度较大。</p>
+</blockquote>
+<ul>
+<li>检测死锁</li>
+</ul>
+<blockquote>
+<p>1）通过系统设置的检测机构，及时地检测出死锁的发生，并精确地确定与死锁有关的进程和资源；然后采取适当措施。</p>
+<p>2）从系统中将已发生的死锁清除掉，需要采用一些用于强制性抢夺资源或者终止任务的技术。</p>
+</blockquote>
+<ul>
+<li>解除死锁</li>
+</ul>
+<blockquote>
+<p>常用方法：撤销或挂起一些进程，回收资源分配给其他处于阻塞的进程。</p>
+<p>特点：资源利用率好，系统吞吐量大。实现难度最大。</p>
+</blockquote>
+<h2 id="六预防死锁">六.预防死锁</h2>
+<ul>
+<li>预防死锁的方法</li>
+</ul>
+<blockquote>
+<p>使四个必要条件中的第2、3、4条件中的一个或者几个不能成立，以防止发生死锁。</p>
+<p>1）方法一：破坏“请求和保持”条件</p>
+<p>2）方法二：破坏“不可抢占”条件</p>
+<p>3）方法三：破坏“循环等待”条件</p>
+</blockquote>
+<h3 id="1破坏请求和保持条件">1.破坏“请求和保持”条件</h3>
+<ul>
+<li>破坏“请求和保持”条件：系统确保当一个进程在请求资源时，它不能持有不可抢占的资源。</li>
+</ul>
+<h4 id="1第一种协议预先静态分配法">（1）第一种协议（预先静态分配法）</h4>
+<ul>
+<li>系统要求所有进程在开始运行之前，必须一次性地申请在整个运行过程中所需要的全部资源。</li>
+</ul>
+<blockquote>
+<p>破坏“请求”条件：进程在整个运行期间，不会再提出资源要求</p>
+<p>破坏“保持”条件：等待期间进程未占有任何资源</p>
+</blockquote>
+<ul>
+<li>优点：简单、易于实现、安全</li>
+<li>缺点：资源浪费严重，进程经常发生饥饿现象</li>
+</ul>
+<h4 id="2第二种协议阶段性资源分配法">（2）第二种协议（阶段性资源分配法）</h4>
+<ul>
+<li>允许一个进程只获得运行初期所需的资源后便开始运行，进程运行过程中再逐步释放已经分配给自己、且已用毕的全部资源，然后再请求新的所需资源。</li>
+</ul>
+<h3 id="2破坏不可抢占资源条件">2.破坏“不可抢占资源”条件</h3>
+<ul>
+<li>当一个已经保持了某些不可被抢占资源的进程，提出新的资源请求而不能得到满足时，它必须释放已经保持的所有资源，待以后需要时再重新申请。</li>
+<li>实现难度较大，且要付出很大代价。</li>
+<li>反复申请和释放资源，使进程的执行无限地推迟。延长进程的周转时间，增加系统开销，降低系统吞吐量。</li>
+</ul>
+<h3 id="3破坏循环等待条件">3.破坏“循环等待”条件</h3>
+<ul>
+<li>系统将所有资源类型按线性排序，并赋予不同的序号，所有进程对资源的请求必须严格按资源序号递增的次序提出。这样，在资源分配图中，不会出现环路，因此摒弃了“环路等待”条件。</li>
+<li>优点：与前两种策略相比，资源利用率和系统吞吐量都有明显提高。</li>
+<li>缺点</li>
+</ul>
+<blockquote>
+<p>1）限制新设备类型的增加</p>
+<p>2）作业（进程）使用各类资源的顺序，与系统规定顺序不同而造成资源浪费</p>
+<p>3）限制用户的自主编程</p>
+</blockquote>
+<h2 id="七避免死锁">七.避免死锁</h2>
+<h3 id="1系统安全状态">1.系统安全状态</h3>
+<ul>
+<li>避免死锁的方法：将系统的状态分为安全状态和不安全状态，只要系统的状态处于安全状态，便可避免发生死锁。</li>
+<li>资源分配方法：允许进程动态地申请资源，系统在进行分配之前，先计算资源分配的安全性。若此次分配不会导致系统进入不安全状态，便将资源分配给进程；否则，进程等待。</li>
+</ul>
+<h4 id="1安全状态">（1）安全状态</h4>
+<ul>
+<li>安全状态：指系统能按照某种进程推进顺序如 &lt; $P_1 , P_2 , P_3 , &hellip; , P_n$ &gt; （称 &lt; $P_1 , P_2 , P_3 , &hellip; , P_n$ &gt; 为安全序列），来为每个进程分配其所需资源，直至最大需求，使每个进程都顺利完成。</li>
+<li>不安全状态：不存在安全序列的状态。</li>
+<li>避免死锁的实质：如何使系统不进入不安全状态。</li>
+<li><strong>结论：并非所有不安全状态都是死锁状态，但只要系统处于安全状态便可避免死锁状态。</strong></li>
+</ul>
+<h4 id="2安全状态举例">（2）安全状态举例</h4>
+<p><img src="https://i.loli.net/2019/01/26/5c4c013b6565a.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<blockquote>
+<p>不按照安全序列分配资源，则系统可能会由安全状态进入不安全状态。</p>
+</blockquote>
+<h3 id="2利用银行家算法避免死锁">2.利用银行家算法避免死锁</h3>
+<h4 id="1银行家算法中的数据结构">（1）银行家算法中的数据结构</h4>
+<ul>
+<li>可利用资源向量 Available ：是一个含有 m 个元素的数组，其中每一个元素代表一类可利用的资源数目，其初始值使系统中所配置的该类全部可用资源数目。其值随资源的分配和回收而动态地改变。</li>
+<li>最大需求矩阵 Max ：是一个 n×m 的矩阵，定义了系统中 n 个进程中的每一个进程对 m 类资源的最大需求。</li>
+<li>分配矩阵 Allocation ：是一个 n×m 的矩阵，定义了系统中每一类资源当前__已分配__给每一进程的资源数。</li>
+<li>需求矩阵 Need ：是一个 n×m 的矩阵，表示每一个进程尚需的该类资源数。</li>
+</ul>
+<blockquote>
+<p>银行家算法中的数据结构</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> n; <span style="color:#75715e">//系统中进程的总数 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span> m;  <span style="color:#75715e">//资源类总数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span> Available[m];
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> Max[n,m];
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> Allocation[n,m];
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> Need[n,m];
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> Request[n,m];
+</span></span></code></pre></div></blockquote>
+<ul>
+<li>上述三个矩阵的关系</li>
+</ul>
+<blockquote>
+<p>Need[ i , j ] = Max[ i , j ] - Allocation[ i , j ]</p>
+<p>其中：</p>
+<p>Need[ i , j ] = k表示进程 i 还需要 $R_j$ 类资源 k 个。</p>
+<p>Max[ i , j ] = k表示进程 i 还需要 $R_j$ 类资源的最大数目为 k。</p>
+<p>Allocation[ i , j ] = k表示进程 i 当前已分得 $R_j$ 类资源的数目为。</p>
+<p>Available[ j ] = k表示系统中现有 $R_j$ 类资源 k 个。</p>
+</blockquote>
+<h4 id="2银行家算法">（2）银行家算法</h4>
+<p>设$Request_i$是进程$P_i$的请求向量。</p>
+<p>例：$Request_i$[ j ] = k</p>
+<p><img src="https://i.loli.net/2019/01/26/5c4c0a23b2571.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<h4 id="3安全性算法">（3）安全性算法</h4>
+<ul>
+<li>为进行安全性检查，定义数据结构：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> Work[m];
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> Finish[n];
+</span></span></code></pre></div><ul>
+<li>安全性检查步骤</li>
+</ul>
+<blockquote>
+<p>1）Work = Available     Finish[ i ] = false</p>
+<p>2）寻找满足条件的 i ：</p>
+<blockquote>
+<p>Finish[ i ] = false &amp;&amp; Need[ i , j ] &lt;= Work</p>
+<p>if not find</p>
+<p>转4）</p>
+</blockquote>
+<p>3）Work[ i ] = Work[ i ] + Allocation[ i , j ]  &amp;&amp;  Finish[ i ] = true   转2）</p>
+<p>4）若对所有 i ，Finish[ i ] = true都满足，则系统处于安全状态，否则处于不安全状态</p>
+</blockquote>
+<h4 id="4银行家算法举例">（4）银行家算法举例</h4>
+<p>假定系统中有五个进程｛$ P_0 , P_1 , P_2 , P_3 , P_4$｝和三类资源｛A, B, C｝，各种资源的数量分别为10、5、7。</p>
+<blockquote>
+<p>$T_0$时刻资源分配表：</p>
+<p><img src="https://i.loli.net/2019/01/26/5c4c0e527595a.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p><img src="https://i.loli.net/2019/01/26/5c4c0effa5425.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>工作向量Work，它表示系统可提供给进程所需运行时间的各类资源的数目</p>
+<p>$T_0$时刻的安全序列：</p>
+<p><img src="https://i.loli.net/2019/01/26/5c4c0f6507df0.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>当$P_1$发出请求向量Request（1，0，2）</p>
+<p>系统作如如下动作：</p>
+<p>1）合理性检查：$Request_i(1,0,2) &lt;= Need_i(1,2,2)$</p>
+<p>2）查库存：$Request_i(1,0,2) &lt;= Available(1,2,2)$</p>
+<p>3）试分配</p>
+<p>4）安全性检查</p>
+<p>5）得出结论：因为可以找到一个安全序列{$P_1,P_2, P_4,P_0, P_2$}，系统是安全的，所以可以满足P1的资源申请</p>
+<p><img src="https://i.loli.net/2019/01/26/5c4c10e44d1b4.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<hr>
+<p>若P4发出请求向量Request（3，3，0）</p>
+<p><img src="https://i.loli.net/2019/01/26/5c4c12467c7e0.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>这种情况，就不能满足要求。$P_4$就需要继续等待。</p>
+<hr>
+<p>若P0发出请求向量Request（0，2，0）</p>
+<p>系统进行如下操作：</p>
+<p>1）合理性检查：$Request_0$（0，2，0） &lt;= $Need_0$（7，4，3）</p>
+<p>2）查库存：$Request_0$（0，2，0） &lt;= $Available$（2，3，0）</p>
+<p>3）试分配</p>
+<p>4）安全性检查</p>
+<p>5）结论：可用资源Available(2,1,0)已不能满足任何进程的需要，系统进入不安全状态，拒绝$P_0$的资源申请。</p>
+<p><img src="https://i.loli.net/2019/01/26/5c4c1326bfda5.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+</blockquote>
+<h2 id="八死锁的检测与解除">八.死锁的检测与解除</h2>
+<h3 id="1死锁的检测">1.死锁的检测</h3>
+<ul>
+<li>
+<p>当系统为进程分配资源时，若未采取任何限制措施，则系统必须提供检测和解除死锁的手段。为此系统必须有：</p>
+<blockquote>
+<p>1）保存有关资源的请求和分配信息</p>
+<p>2）提供一种算法，以利用这些信息来检测系统是否已进入死锁状态</p>
+</blockquote>
+</li>
+<li>
+<p>检测时机：</p>
+<blockquote>
+<p>1）进程等待时检测死锁（其缺点是系统的开销大）</p>
+<p>2）定时检测</p>
+<p>3）系统资源利用率下降时检测死锁</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="1资源分配图">（1）资源分配图</h4>
+<blockquote>
+<p><img src="https://i.loli.net/2019/01/26/5c4c151318de4.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+</blockquote>
+<h4 id="2死锁定理">（2）死锁定理</h4>
+<ul>
+<li>
+<p>充分条件：当且仅当系统某状态S所对应的资源分配图是不可完全简化的，则S是死锁状态，而不可化简的进程是被死锁的进程。</p>
+</li>
+<li>
+<p>完全简化：通过一系列简化后，所有的进程都成为孤立节点。</p>
+</li>
+<li>
+<p>不可能完全简化：通过任何过程都不能使图完全简化。。</p>
+</li>
+<li>
+<p>资源分配图的简化</p>
+<blockquote>
+<p><img src="https://i.loli.net/2019/01/26/5c4c1825c9767.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+</blockquote>
+</li>
+</ul>
+<h4 id="3死锁检测中的数据结构">（3）死锁检测中的数据结构</h4>
+<ol>
+<li>
+<p>可利用资源向量Available，它表示了m 类资源中每一类资源的可用数目。</p>
+</li>
+<li>
+<p>把不占用资源的进程（向量Allocation = 0）记入L表中， 即$L_i$∪L。</p>
+</li>
+<li>
+<p>从进程集合中找到一个$Request_i$ ≤ Work的进程，做如下处理：</p>
+</li>
+</ol>
+<blockquote>
+<p>将其资源分配图简化，释放出资源，增加工作向量Work = Work + $Allocation_i$。 将它记入L表中。</p>
+</blockquote>
+<ol start="4">
+<li>若不能把所有进程都记入L表中，便表明系统状态S的资源分配图是不可完全简化的。因此，该系统状态将发生死锁。</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>Work  <span style="color:#f92672">=</span>  Available;
+</span></span><span style="display:flex;"><span>L  <span style="color:#f92672">=</span> {Li <span style="color:#f92672">|</span> Allocationi<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span> <span style="color:#960050;background-color:#1e0010">∩</span> Requesti<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>} <span style="color:#75715e">//孤立进程点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">for</span> (all  Li <span style="color:#960050;background-color:#1e0010">不属于</span> L) 
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>   <span style="color:#a6e22e">For</span> (all Requesti <span style="color:#f92672">&lt;=</span> Work) 
+</span></span><span style="display:flex;"><span>   {  
+</span></span><span style="display:flex;"><span>   	Work  <span style="color:#f92672">=</span> Work <span style="color:#f92672">+</span> Allocationi;
+</span></span><span style="display:flex;"><span>   	Li<span style="color:#960050;background-color:#1e0010">∪</span>L
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>deadlock  <span style="color:#f92672">=</span>  <span style="color:#a6e22e">not</span> (L<span style="color:#f92672">=</span>{P1, P2, <span style="color:#960050;background-color:#1e0010">…</span>, Pn})
+</span></span></code></pre></div><h3 id="2死锁的解除">2.死锁的解除</h3>
+<ul>
+<li>
+<p>当发现有进程死锁时，便应立即把它们从死锁状态解脱出来，常采用的两种方法是：</p>
+<blockquote>
+<p>1）剥夺资源：从其它进程剥夺足够数量的资源给死锁进程。</p>
+<p>2）撤消进程：</p>
+<p>最简单的方法是撤消全部死锁的进程，使全部死锁进程都夭折掉。</p>
+<p>稍微温和一点的方法是按照某种顺序逐个地撤消进程，直至有足够的资源可用，死锁状态消除为止。</p>
+</blockquote>
+</li>
+<li>
+<p>对撤消进程方法，选择原则可采用下面的一种：</p>
+<blockquote>
+<p>1）目前为止消耗的处理机时间最少；</p>
+<p>2）目前为止产生的输出最少；</p>
+<p>3）预计剩下的时间最长；</p>
+<p>4）目前为止分配的资源总量最少；</p>
+<p>5）优先级最低。</p>
+</blockquote>
+</li>
+<li>
+<p>为把系统从死锁状态中解脱出来，所花费的代价可表示为：</p>
+<blockquote>
+<p>$ R(S)<em>{min} = min{C</em>{ui}}+min{C_{uj}}+min{C_{uk}}+…$</p>
+<p>付出代价最小的死锁解除方法：</p>
+<p><img src="https://i.loli.net/2019/01/26/5c4c1bf430a87.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+</blockquote>
+<blockquote>
+<p>更新于   2019/01/26   &mdash;   16:39</p>
+</blockquote>
+</li>
+</ul>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/%E5%A4%84%E7%90%86%E6%9C%BA%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%AD%BB%E9%94%81%E4%B8%80/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">处理机调度与死锁(一)</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

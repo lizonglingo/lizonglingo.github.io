@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='今天用到颜色映射，就顺便整理一下使用matplotlib中的pyplot经常用到的颜色映射的一些参数，转自前辈的博文 import numpy as np import matplotlib.pyplot as plt # Have colormaps separated'>
+<title>matplotlib中pyplot颜色映射参数整理</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/matplotlib%E4%B8%ADpyplot%E9%A2%9C%E8%89%B2%E6%98%A0%E5%B0%84%E5%8F%82%E6%95%B0%E6%95%B4%E7%90%86/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='matplotlib中pyplot颜色映射参数整理'>
+<meta property='og:description' content='今天用到颜色映射，就顺便整理一下使用matplotlib中的pyplot经常用到的颜色映射的一些参数，转自前辈的博文 import numpy as np import matplotlib.pyplot as plt # Have colormaps separated'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/matplotlib%E4%B8%ADpyplot%E9%A2%9C%E8%89%B2%E6%98%A0%E5%B0%84%E5%8F%82%E6%95%B0%E6%95%B4%E7%90%86/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='数据分析' /><meta property='article:tag' content='Python' /><meta property='article:published_time' content='2019-02-09T11:15:53&#43;08:00'/><meta property='article:modified_time' content='2019-02-09T11:15:53&#43;08:00'/>
+<meta name="twitter:title" content="matplotlib中pyplot颜色映射参数整理">
+<meta name="twitter:description" content="今天用到颜色映射，就顺便整理一下使用matplotlib中的pyplot经常用到的颜色映射的一些参数，转自前辈的博文 import numpy as np import matplotlib.pyplot as plt # Have colormaps separated">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90/" >
+                数据分析
+            </a>
+        
+            <a href="/categories/python/" >
+                Python
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/matplotlib%E4%B8%ADpyplot%E9%A2%9C%E8%89%B2%E6%98%A0%E5%B0%84%E5%8F%82%E6%95%B0%E6%95%B4%E7%90%86/">matplotlib中pyplot颜色映射参数整理</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Feb 09, 2019</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 1 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>今天用到颜色映射，就顺便整理一下使用matplotlib中的pyplot经常用到的颜色映射的一些参数，转自<a class="link" href="https://blog.csdn.net/Mr_Cat123/article/details/78638491"  target="_blank" rel="noopener"
+    >前辈的博文</a></p>
+</blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np  
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> matplotlib.pyplot <span style="color:#66d9ef">as</span> plt  
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Have colormaps separated into categories:  </span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># http://matplotlib.org/examples/color/colormaps_reference.html  </span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>cmaps <span style="color:#f92672">=</span> [(<span style="color:#e6db74">&#39;Perceptually Uniform Sequential&#39;</span>,  
+</span></span><span style="display:flex;"><span>                            [<span style="color:#e6db74">&#39;viridis&#39;</span>, <span style="color:#e6db74">&#39;inferno&#39;</span>, <span style="color:#e6db74">&#39;plasma&#39;</span>, <span style="color:#e6db74">&#39;magma&#39;</span>]),  
+</span></span><span style="display:flex;"><span>         (<span style="color:#e6db74">&#39;Sequential&#39;</span>,     [<span style="color:#e6db74">&#39;Blues&#39;</span>, <span style="color:#e6db74">&#39;BuGn&#39;</span>, <span style="color:#e6db74">&#39;BuPu&#39;</span>,  
+</span></span><span style="display:flex;"><span>                             <span style="color:#e6db74">&#39;GnBu&#39;</span>, <span style="color:#e6db74">&#39;Greens&#39;</span>, <span style="color:#e6db74">&#39;Greys&#39;</span>, <span style="color:#e6db74">&#39;Oranges&#39;</span>, <span style="color:#e6db74">&#39;OrRd&#39;</span>,  
+</span></span><span style="display:flex;"><span>                             <span style="color:#e6db74">&#39;PuBu&#39;</span>, <span style="color:#e6db74">&#39;PuBuGn&#39;</span>, <span style="color:#e6db74">&#39;PuRd&#39;</span>, <span style="color:#e6db74">&#39;Purples&#39;</span>, <span style="color:#e6db74">&#39;RdPu&#39;</span>,  
+</span></span><span style="display:flex;"><span>                             <span style="color:#e6db74">&#39;Reds&#39;</span>, <span style="color:#e6db74">&#39;YlGn&#39;</span>, <span style="color:#e6db74">&#39;YlGnBu&#39;</span>, <span style="color:#e6db74">&#39;YlOrBr&#39;</span>, <span style="color:#e6db74">&#39;YlOrRd&#39;</span>]),  
+</span></span><span style="display:flex;"><span>         (<span style="color:#e6db74">&#39;Sequential (2)&#39;</span>, [<span style="color:#e6db74">&#39;afmhot&#39;</span>, <span style="color:#e6db74">&#39;autumn&#39;</span>, <span style="color:#e6db74">&#39;bone&#39;</span>, <span style="color:#e6db74">&#39;cool&#39;</span>,  
+</span></span><span style="display:flex;"><span>                             <span style="color:#e6db74">&#39;copper&#39;</span>, <span style="color:#e6db74">&#39;gist_heat&#39;</span>, <span style="color:#e6db74">&#39;gray&#39;</span>, <span style="color:#e6db74">&#39;hot&#39;</span>,  
+</span></span><span style="display:flex;"><span>                             <span style="color:#e6db74">&#39;pink&#39;</span>, <span style="color:#e6db74">&#39;spring&#39;</span>, <span style="color:#e6db74">&#39;summer&#39;</span>, <span style="color:#e6db74">&#39;winter&#39;</span>]),  
+</span></span><span style="display:flex;"><span>         (<span style="color:#e6db74">&#39;Diverging&#39;</span>,      [<span style="color:#e6db74">&#39;BrBG&#39;</span>, <span style="color:#e6db74">&#39;bwr&#39;</span>, <span style="color:#e6db74">&#39;coolwarm&#39;</span>, <span style="color:#e6db74">&#39;PiYG&#39;</span>, <span style="color:#e6db74">&#39;PRGn&#39;</span>, <span style="color:#e6db74">&#39;PuOr&#39;</span>,  
+</span></span><span style="display:flex;"><span>                             <span style="color:#e6db74">&#39;RdBu&#39;</span>, <span style="color:#e6db74">&#39;RdGy&#39;</span>, <span style="color:#e6db74">&#39;RdYlBu&#39;</span>, <span style="color:#e6db74">&#39;RdYlGn&#39;</span>, <span style="color:#e6db74">&#39;Spectral&#39;</span>,  
+</span></span><span style="display:flex;"><span>                             <span style="color:#e6db74">&#39;seismic&#39;</span>]),  
+</span></span><span style="display:flex;"><span>         (<span style="color:#e6db74">&#39;Qualitative&#39;</span>,    [<span style="color:#e6db74">&#39;Accent&#39;</span>, <span style="color:#e6db74">&#39;Dark2&#39;</span>, <span style="color:#e6db74">&#39;Paired&#39;</span>, <span style="color:#e6db74">&#39;Pastel1&#39;</span>,  
+</span></span><span style="display:flex;"><span>                             <span style="color:#e6db74">&#39;Pastel2&#39;</span>, <span style="color:#e6db74">&#39;Set1&#39;</span>, <span style="color:#e6db74">&#39;Set2&#39;</span>, <span style="color:#e6db74">&#39;Set3&#39;</span>]),  
+</span></span><span style="display:flex;"><span>         (<span style="color:#e6db74">&#39;Miscellaneous&#39;</span>,  [<span style="color:#e6db74">&#39;gist_earth&#39;</span>, <span style="color:#e6db74">&#39;terrain&#39;</span>, <span style="color:#e6db74">&#39;ocean&#39;</span>, <span style="color:#e6db74">&#39;gist_stern&#39;</span>,  
+</span></span><span style="display:flex;"><span>                             <span style="color:#e6db74">&#39;brg&#39;</span>, <span style="color:#e6db74">&#39;CMRmap&#39;</span>, <span style="color:#e6db74">&#39;cubehelix&#39;</span>,  
+</span></span><span style="display:flex;"><span>                             <span style="color:#e6db74">&#39;gnuplot&#39;</span>, <span style="color:#e6db74">&#39;gnuplot2&#39;</span>, <span style="color:#e6db74">&#39;gist_ncar&#39;</span>,  
+</span></span><span style="display:flex;"><span>                             <span style="color:#e6db74">&#39;nipy_spectral&#39;</span>, <span style="color:#e6db74">&#39;jet&#39;</span>, <span style="color:#e6db74">&#39;rainbow&#39;</span>,  
+</span></span><span style="display:flex;"><span>                             <span style="color:#e6db74">&#39;gist_rainbow&#39;</span>, <span style="color:#e6db74">&#39;hsv&#39;</span>, <span style="color:#e6db74">&#39;flag&#39;</span>, <span style="color:#e6db74">&#39;prism&#39;</span>])]  
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>nrows <span style="color:#f92672">=</span> max(len(cmap_list) <span style="color:#66d9ef">for</span> cmap_category, cmap_list <span style="color:#f92672">in</span> cmaps)  
+</span></span><span style="display:flex;"><span>gradient <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>linspace(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">256</span>)  
+</span></span><span style="display:flex;"><span>gradient <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>vstack((gradient, gradient))  
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">plot_color_gradients</span>(cmap_category, cmap_list):  
+</span></span><span style="display:flex;"><span>    fig, axes <span style="color:#f92672">=</span> plt<span style="color:#f92672">.</span>subplots(nrows<span style="color:#f92672">=</span>nrows)  
+</span></span><span style="display:flex;"><span>    fig<span style="color:#f92672">.</span>subplots_adjust(top<span style="color:#f92672">=</span><span style="color:#ae81ff">0.95</span>, bottom<span style="color:#f92672">=</span><span style="color:#ae81ff">0.01</span>, left<span style="color:#f92672">=</span><span style="color:#ae81ff">0.2</span>, right<span style="color:#f92672">=</span><span style="color:#ae81ff">0.99</span>)  
+</span></span><span style="display:flex;"><span>    axes[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>set_title(cmap_category <span style="color:#f92672">+</span> <span style="color:#e6db74">&#39; colormaps&#39;</span>, fontsize<span style="color:#f92672">=</span><span style="color:#ae81ff">14</span>)  
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> ax, name <span style="color:#f92672">in</span> zip(axes, cmap_list):  
+</span></span><span style="display:flex;"><span>        ax<span style="color:#f92672">.</span>imshow(gradient, aspect<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;auto&#39;</span>, cmap<span style="color:#f92672">=</span>plt<span style="color:#f92672">.</span>get_cmap(name))  
+</span></span><span style="display:flex;"><span>        pos <span style="color:#f92672">=</span> list(ax<span style="color:#f92672">.</span>get_position()<span style="color:#f92672">.</span>bounds)  
+</span></span><span style="display:flex;"><span>        x_text <span style="color:#f92672">=</span> pos[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">-</span> <span style="color:#ae81ff">0.01</span>  
+</span></span><span style="display:flex;"><span>        y_text <span style="color:#f92672">=</span> pos[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">+</span> pos[<span style="color:#ae81ff">3</span>]<span style="color:#f92672">/</span><span style="color:#ae81ff">2.</span>  
+</span></span><span style="display:flex;"><span>        fig<span style="color:#f92672">.</span>text(x_text, y_text, name, va<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;center&#39;</span>, ha<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;right&#39;</span>, fontsize<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>)  
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Turn off *all* ticks &amp; spines, not just the ones with colormaps.  </span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> ax <span style="color:#f92672">in</span> axes:  
+</span></span><span style="display:flex;"><span>        ax<span style="color:#f92672">.</span>set_axis_off()  
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> cmap_category, cmap_list <span style="color:#f92672">in</span> cmaps:  
+</span></span><span style="display:flex;"><span>    plot_color_gradients(cmap_category, cmap_list)  
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>show() 
+</span></span></code></pre></div><p>这样，我们得到matplotlib中内嵌的colormaps：</p>
+<p><img src="https://i.loli.net/2019/02/09/5c5e494361671.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p><img src="https://i.loli.net/2019/02/09/5c5e49659d6f3.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p><img src="https://i.loli.net/2019/02/09/5c5e497343d9d.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p><img src="https://i.loli.net/2019/02/09/5c5e4983a1c9b.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p><img src="https://i.loli.net/2019/02/09/5c5e4998033d1.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p><img src="https://i.loli.net/2019/02/09/5c5e49b3ee6f0.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<blockquote>
+<p>或者访问 <a class="link" href="http://matplotlib.org/"  target="_blank" rel="noopener"
+    >http://matplotlib.org/</a>    -&gt; Examples  -&gt; Color Examples  -&gt;  colormaps_reference</p>
+<p>顺便安利一下《流浪地球》！</p>
+</blockquote>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90/">数据分析</a>
+        
+            <a href="/tags/python/">Python</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/%E6%9A%82%E6%97%B6%E8%A7%A3%E5%86%B3pycharm%E5%87%BA%E7%8E%B0runtime-error-r6034%E7%9A%84%E6%8A%A5%E9%94%99/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">暂时解决Pycharm出现Runtime Error R6034的报错</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

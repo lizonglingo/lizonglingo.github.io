@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='反转字符串 编写一个函数，其作用是将输入的字符串反转过来。输入字符串以字符数组 char[] 的形式给出。 不要给另外的数组分配额外的空间，你必须原地修改输入'>
+<title>leetcode字符串初等整理</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/leetcode%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%88%9D%E7%AD%89%E6%95%B4%E7%90%86/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='leetcode字符串初等整理'>
+<meta property='og:description' content='反转字符串 编写一个函数，其作用是将输入的字符串反转过来。输入字符串以字符数组 char[] 的形式给出。 不要给另外的数组分配额外的空间，你必须原地修改输入'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/leetcode%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%88%9D%E7%AD%89%E6%95%B4%E7%90%86/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='算法' /><meta property='article:published_time' content='2020-05-20T21:35:30&#43;08:00'/><meta property='article:modified_time' content='2020-05-20T21:35:30&#43;08:00'/>
+<meta name="twitter:title" content="leetcode字符串初等整理">
+<meta name="twitter:description" content="反转字符串 编写一个函数，其作用是将输入的字符串反转过来。输入字符串以字符数组 char[] 的形式给出。 不要给另外的数组分配额外的空间，你必须原地修改输入">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#反转字符串">反转字符串</a></li>
+    <li><a href="#整数反转">整数反转</a></li>
+    <li><a href="#字符串中的第一个唯一字符">字符串中的第一个唯一字符</a></li>
+    <li><a href="#有效的字母异位词">有效的字母异位词</a></li>
+    <li><a href="#验证回文字符串">验证回文字符串</a></li>
+    <li><a href="#字符串转换整数atoi">字符串转换整数(atoi)</a></li>
+    <li><a href="#实现strstr">实现strStr()</a></li>
+    <li><a href="#外观数列">外观数列</a></li>
+    <li><a href="#最长公共前缀">最长公共前缀</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E7%AE%97%E6%B3%95/" >
+                算法
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/leetcode%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%88%9D%E7%AD%89%E6%95%B4%E7%90%86/">leetcode字符串初等整理</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">May 20, 2020</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 10 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="反转字符串">反转字符串</h2>
+<p>编写一个函数，其作用是将输入的字符串反转过来。输入字符串以字符数组 <code>char[]</code> 的形式给出。</p>
+<p>不要给另外的数组分配额外的空间，你必须<strong>原地修改输入数组</strong>、使用 O(1) 的额外空间解决这一问题。</p>
+<p>你可以假设数组中的所有字符都是 <a class="link" href="https://baike.baidu.com/item/ASCII"  target="_blank" rel="noopener"
+    >ASCII</a> 码表中的可打印字符。</p>
+<p><strong>示例 1：</strong></p>
+<pre tabindex="0"><code>输入：[&#34;h&#34;,&#34;e&#34;,&#34;l&#34;,&#34;l&#34;,&#34;o&#34;]
+输出：[&#34;o&#34;,&#34;l&#34;,&#34;l&#34;,&#34;e&#34;,&#34;h&#34;]
+</code></pre><p><strong>示例 2：</strong></p>
+<pre tabindex="0"><code>输入：[&#34;H&#34;,&#34;a&#34;,&#34;n&#34;,&#34;n&#34;,&#34;a&#34;,&#34;h&#34;]
+输出：[&#34;h&#34;,&#34;a&#34;,&#34;n&#34;,&#34;n&#34;,&#34;a&#34;,&#34;H&#34;]
+</code></pre><p><strong>代码</strong>:</p>
+<p>思路和翻转整数数组的思路一致，两个指针分别从前后开始扫描，进行交换。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">reverseString</span>(<span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> s, <span style="color:#66d9ef">int</span> sSize) {
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 用反转数组相同的方式
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> i;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> (i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> sSize <span style="color:#f92672">/</span> <span style="color:#ae81ff">2</span>; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">char</span> temp <span style="color:#f92672">=</span> s[sSize <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">-</span> i];
+</span></span><span style="display:flex;"><span>		s[sSize <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">-</span> i] <span style="color:#f92672">=</span> s[i];
+</span></span><span style="display:flex;"><span>		s[i] <span style="color:#f92672">=</span> temp;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="整数反转">整数反转</h2>
+<p>给出一个 32 位的有符号整数，你需要将这个整数中每位上的数字进行反转。</p>
+<p><strong>示例 1:</strong></p>
+<pre tabindex="0"><code>输入: 123
+输出: 321
+</code></pre><p><strong>示例 2:</strong></p>
+<pre tabindex="0"><code>输入: -123
+输出: -321
+</code></pre><p><strong>示例 3:</strong></p>
+<pre tabindex="0"><code>输入: 120
+输出: 21
+</code></pre><p><strong>注意:</strong></p>
+<p>假设我们的环境只能存储得下 32 位的有符号整数，则其数值范围为 [−231,  231 − 1]。请根据这个假设，如果反转后整数溢出那么就返回 0。</p>
+<p><strong>代码</strong>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">reverse</span>(<span style="color:#66d9ef">int</span> x){
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">long</span> count<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span>(x<span style="color:#f92672">!=</span><span style="color:#ae81ff">0</span>){
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 翻转整数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        count<span style="color:#f92672">=</span>count<span style="color:#f92672">*</span><span style="color:#ae81ff">10</span><span style="color:#f92672">+</span>x<span style="color:#f92672">%</span><span style="color:#ae81ff">10</span>;
+</span></span><span style="display:flex;"><span>        x<span style="color:#f92672">=</span>x<span style="color:#f92672">/</span><span style="color:#ae81ff">10</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> count<span style="color:#f92672">&gt;</span><span style="color:#ae81ff">2147483647</span><span style="color:#f92672">||</span>count<span style="color:#f92672">&lt;-</span><span style="color:#ae81ff">2147483648</span><span style="color:#f92672">?</span><span style="color:#ae81ff">0</span><span style="color:#f92672">:</span>count;	<span style="color:#75715e">// 直接给出范围判断是否溢出
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h2 id="字符串中的第一个唯一字符">字符串中的第一个唯一字符</h2>
+<p>给定一个字符串，找到它的第一个不重复的字符，并返回它的索引。如果不存在，则返回 -1。</p>
+<p><strong>案例:</strong></p>
+<pre tabindex="0"><code>s = &#34;leetcode&#34;
+返回 0.
+
+s = &#34;loveleetcode&#34;,
+返回 2.
+</code></pre><p>**注意事项：**您可以假定该字符串只包含小写字母。</p>
+<p><strong>代码</strong>：</p>
+<p>本题我用暴力法做的，在时间上不是很理想。</p>
+<p>二重循环，外层遍历的元素与内层遍历的除本身外的元素进行比较，<code>find</code>表示是否找到相同的数，<code>find=0</code>就说明第<code>i</code>个元素只有一个，同时置<code>have=1</code>表示存在这样的元素。返回其索引。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">firstUniqChar</span>(<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span> s) {
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 得到长度
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> len <span style="color:#f92672">=</span> <span style="color:#a6e22e">strlen</span>(s);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> have <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> i, j;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> (i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> len; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">int</span> find <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">for</span> (j <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; j <span style="color:#f92672">&lt;</span> len; j<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> (i <span style="color:#f92672">==</span> j) <span style="color:#66d9ef">continue</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> (s[i] <span style="color:#f92672">==</span> s[j]) {
+</span></span><span style="display:flex;"><span>				find <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> (find <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>			have <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> have <span style="color:#f92672">?</span> i : <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>另外，其他人用了更好的方法，也就是使用辅助数组，记录每个元素出现的次数，在上一篇数组内容中也出现了这个方法。我想到这个方法时，没有考虑周全，误以为在遍历辅助数组时，只能从<code>i=0 to n</code>遍历，导致不能确定第一个为<code>1</code>就是第一个元素。但是，完全可以按照原数组的元素排列进行遍历，也就是将<code>s[i]-'a'</code>作为遍历指针。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">firstUniqChar</span>(<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span> s){
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> i, len <span style="color:#f92672">=</span> <span style="color:#a6e22e">strlen</span>(s);
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 构造辅助数组
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> p[<span style="color:#ae81ff">26</span>];
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">memset</span>(p, <span style="color:#ae81ff">0</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">int</span>) <span style="color:#f92672">*</span> <span style="color:#ae81ff">26</span>);
+</span></span><span style="display:flex;"><span>   <span style="color:#75715e">// 首先根据原数组的元素出现情况进行填充
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">for</span>(i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> len; i<span style="color:#f92672">++</span>){
+</span></span><span style="display:flex;"><span>        p[s[i] <span style="color:#f92672">-</span> <span style="color:#e6db74">&#39;a&#39;</span>]<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 再由 s[i]-&#39;a&#39; 作为遍历指针遍历辅助数组，寻找第一个只出现一次的元素
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">for</span>(i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> len; i<span style="color:#f92672">++</span>){
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span>(p[s[i] <span style="color:#f92672">-</span> <span style="color:#e6db74">&#39;a&#39;</span>] <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> i;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="有效的字母异位词">有效的字母异位词</h2>
+<p>给定两个字符串 <em>s</em> 和 <em>t</em> ，编写一个函数来判断 <em>t</em> 是否是 <em>s</em> 的字母异位词。</p>
+<p><strong>示例 1:</strong></p>
+<pre tabindex="0"><code>输入: s = &#34;anagram&#34;, t = &#34;nagaram&#34;
+输出: true
+</code></pre><p><strong>示例 2:</strong></p>
+<pre tabindex="0"><code>输入: s = &#34;rat&#34;, t = &#34;car&#34;
+输出: false
+</code></pre><p><strong>说明:</strong>
+你可以假设字符串只包含小写字母。</p>
+<p><strong>进阶:</strong>
+如果输入字符串包含 unicode 字符怎么办？你能否调整你的解法来应对这种情况？</p>
+<p><strong>代码</strong>:</p>
+<p>这道题目让我想到了高中化学学的同分异构体，也就是所有对应的字母个数相同，但是排列方式不同。所以本道题采用辅助数组的形式，分别统计字符串<code>s</code>和<code>t</code>中每个字母出现的次数，接着再比较两个辅助数组是否相同即可。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">bool</span> <span style="color:#a6e22e">isAnagram</span>(<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span> s, <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span> t) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> lens <span style="color:#f92672">=</span> <span style="color:#a6e22e">strlen</span>(s);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> lent <span style="color:#f92672">=</span> <span style="color:#a6e22e">strlen</span>(t);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> (lens <span style="color:#f92672">!=</span> lent)<span style="color:#66d9ef">return</span>  false;		<span style="color:#75715e">// 如果长度不相等，之间返回错误
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 下面用两个辅助数组，分别记录两个字符串中，每个字母出现的次数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> temps[<span style="color:#ae81ff">26</span>], tempt[<span style="color:#ae81ff">26</span>];
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">memset</span>(temps, <span style="color:#ae81ff">0</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">int</span>) <span style="color:#f92672">*</span> <span style="color:#ae81ff">26</span>);
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">memset</span>(tempt, <span style="color:#ae81ff">0</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">int</span>) <span style="color:#f92672">*</span> <span style="color:#ae81ff">26</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 开始统计数量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> i;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> (i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> lens; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>		temps[s[i] <span style="color:#f92672">-</span> <span style="color:#e6db74">&#39;a&#39;</span>]<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>		tempt[t[i] <span style="color:#f92672">-</span> <span style="color:#e6db74">&#39;a&#39;</span>]<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 比较辅助数组
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">bool</span> is <span style="color:#f92672">=</span> true;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> (i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">26</span>; i<span style="color:#f92672">++</span>) {	<span style="color:#75715e">// 注意这个数组是26个元素
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">if</span> (temps[i] <span style="color:#f92672">!=</span> tempt[i]) {
+</span></span><span style="display:flex;"><span>			is <span style="color:#f92672">=</span> false;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> is;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="验证回文字符串">验证回文字符串</h2>
+<p>给定一个字符串，验证它是否是回文串，只考虑字母和数字字符，可以忽略字母的大小写。</p>
+<p>**说明：**本题中，我们将空字符串定义为有效的回文串。</p>
+<p><strong>示例 1:</strong></p>
+<pre tabindex="0"><code>输入: &#34;A man, a plan, a canal: Panama&#34;
+输出: true
+</code></pre><p><strong>示例 2:</strong></p>
+<pre tabindex="0"><code>输入: &#34;race a car&#34;
+输出: false
+</code></pre><p><strong>代码</strong>:</p>
+<ul>
+<li>构造函数<code>islod()</code>来判断现读取到的字符是否为字母或者数字；</li>
+<li>现对字符串的字母进行大小写统一转换，便于比较，这里全部转为小写字母；</li>
+<li>使用双指针分别从头和尾进行遍历，对于既不是数字也不是字母的字符忽略，然后比较两个指针所指元素是否相同。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">bool</span> <span style="color:#a6e22e">islod</span>(<span style="color:#66d9ef">char</span> c) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span>	
+</span></span><span style="display:flex;"><span>        ((c <span style="color:#f92672">&gt;=</span> <span style="color:#e6db74">&#39;a&#39;</span><span style="color:#f92672">&amp;&amp;</span>c <span style="color:#f92672">&lt;=</span> <span style="color:#e6db74">&#39;z&#39;</span>) <span style="color:#f92672">||</span> (c <span style="color:#f92672">&gt;=</span> <span style="color:#e6db74">&#39;A&#39;</span><span style="color:#f92672">&amp;&amp;</span>c <span style="color:#f92672">&lt;=</span> <span style="color:#e6db74">&#39;Z&#39;</span>) <span style="color:#f92672">||</span> (c <span style="color:#f92672">&gt;=</span> <span style="color:#e6db74">&#39;0&#39;</span><span style="color:#f92672">&amp;&amp;</span>c <span style="color:#f92672">&lt;=</span> <span style="color:#e6db74">&#39;9&#39;</span>)) <span style="color:#f92672">?</span> true <span style="color:#f92672">:</span> false;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">bool</span> <span style="color:#a6e22e">isPalindrome</span>(<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span> s) {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> lens <span style="color:#f92672">=</span> <span style="color:#a6e22e">strlen</span>(s);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">bool</span> re <span style="color:#f92672">=</span> true;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 首先进行大小写转化方便判断
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> p;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> (p <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; p <span style="color:#f92672">&lt;</span> lens; p<span style="color:#f92672">++</span>) 
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> (s[p] <span style="color:#f92672">&gt;=</span> <span style="color:#e6db74">&#39;A&#39;</span><span style="color:#f92672">&amp;&amp;</span>s[p] <span style="color:#f92672">&lt;=</span> <span style="color:#e6db74">&#39;Z&#39;</span>) s[p] <span style="color:#f92672">+=</span> <span style="color:#ae81ff">32</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> f, l;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> (f <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>, l <span style="color:#f92672">=</span> lens <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>; f <span style="color:#f92672">&lt;</span> l; f<span style="color:#f92672">++</span>, l<span style="color:#f92672">--</span>) {
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 首先需要判断是否是有效字符
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">while</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">islod</span>(s[f]) <span style="color:#f92672">&amp;&amp;</span> f <span style="color:#f92672">&lt;</span> l ) f<span style="color:#f92672">++</span>;	<span style="color:#75715e">// 循环直到 f 为合法字符
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">while</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">islod</span>(s[l]) <span style="color:#f92672">&amp;&amp;</span> f <span style="color:#f92672">&lt;</span> l ) l<span style="color:#f92672">--</span>;	<span style="color:#75715e">// 循环直到 l 为合法字符
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 然后判断一下f l避免越界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">if</span> ( <span style="color:#f92672">!</span>(f <span style="color:#f92672">&lt;</span> l) ) <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 再进行判断
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">if</span> (s[f] <span style="color:#f92672">!=</span> s[l]) {
+</span></span><span style="display:flex;"><span>			re <span style="color:#f92672">=</span> false;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> re;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="字符串转换整数atoi">字符串转换整数(atoi)</h2>
+<p>请你来实现一个 <code>atoi</code> 函数，使其能将字符串转换成整数。</p>
+<p>首先，该函数会根据需要丢弃无用的开头空格字符，直到寻找到第一个非空格的字符为止。接下来的转化规则如下：</p>
+<ul>
+<li>如果第一个非空字符为正或者负号时，则将该符号与之后面尽可能多的连续数字字符组合起来，形成一个有符号整数。</li>
+<li>假如第一个非空字符是数字，则直接将其与之后连续的数字字符组合起来，形成一个整数。</li>
+<li>该字符串在有效的整数部分之后也可能会存在多余的字符，那么这些字符可以被忽略，它们对函数不应该造成影响。</li>
+</ul>
+<p>注意：假如该字符串中的第一个非空格字符不是一个有效整数字符、字符串为空或字符串仅包含空白字符时，则你的函数不需要进行转换，即无法进行有效转换。</p>
+<p>在任何情况下，若函数不能进行有效的转换时，请返回 0 。</p>
+<p><strong>提示：</strong></p>
+<ul>
+<li>本题中的空白字符只包括空格字符 <code>' '</code> 。</li>
+<li>假设我们的环境只能存储 32 位大小的有符号整数，那么其数值范围为 [−231,  231 − 1]。如果数值超过这个范围，请返回  INT_MAX (231 − 1) 或 INT_MIN (−231) 。</li>
+</ul>
+<p><strong>示例 1:</strong></p>
+<pre tabindex="0"><code>输入: &#34;42&#34;
+输出: 42
+</code></pre><p><strong>示例 2:</strong></p>
+<pre tabindex="0"><code>输入: &#34;   -42&#34;
+输出: -42
+解释: 第一个非空白字符为 &#39;-&#39;, 它是一个负号。
+     我们尽可能将负号与后面所有连续出现的数字组合起来，最后得到 -42 。
+</code></pre><p><strong>示例 3:</strong></p>
+<pre tabindex="0"><code>输入: &#34;4193 with words&#34;
+输出: 4193
+解释: 转换截止于数字 &#39;3&#39; ，因为它的下一个字符不为数字。
+</code></pre><p><strong>示例 4:</strong></p>
+<pre tabindex="0"><code>输入: &#34;words and 987&#34;
+输出: 0
+解释: 第一个非空字符是 &#39;w&#39;, 但它不是数字或正、负号。
+     因此无法执行有效的转换。
+</code></pre><p><strong>示例 5:</strong></p>
+<pre tabindex="0"><code>输入: &#34;-91283472332&#34;
+输出: -2147483648
+解释: 数字 &#34;-91283472332&#34; 超过 32 位有符号整数范围。 
+     因此返回 INT_MIN (−231) 。
+</code></pre><p><strong>代码</strong>:</p>
+<p>这个题目写了很久，最后&hellip;还是学习学习别人写的吧&hellip;这个判断溢出的方法真的很巧妙，在以前都是直接暴力判断溢出的，因为很多题目假设只有32位，所以直接用数判断未免属于不合法的手段。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">myAtoi</span>(<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span> str) {
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 移除开头的空格
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">while</span> (<span style="color:#f92672">*</span>str <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39; &#39;</span>) <span style="color:#f92672">++</span>str;  <span style="color:#75715e">// 此时 str 指向第一个不为空格的字符 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 如果带有正负号，记录正负性
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> flag <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> (<span style="color:#f92672">*</span>str <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;-&#39;</span>) {
+</span></span><span style="display:flex;"><span>		flag <span style="color:#f92672">=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>		<span style="color:#f92672">++</span>str;
+</span></span><span style="display:flex;"><span>	} <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> (<span style="color:#f92672">*</span>str <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;+&#39;</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#f92672">++</span>str;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> ret <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 因为只能使用 32 位 int，因此将 ret 乘 10 后再与 INT_MAX 比较可能会溢出
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">// 因此使用 ret 与 INT_MAX/10 比较
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> div <span style="color:#f92672">=</span> INT_MAX <span style="color:#f92672">/</span> <span style="color:#ae81ff">10</span>;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">while</span> (<span style="color:#f92672">*</span>str <span style="color:#f92672">&lt;=</span> <span style="color:#e6db74">&#39;9&#39;</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">*</span>str <span style="color:#f92672">&gt;=</span> <span style="color:#e6db74">&#39;0&#39;</span>) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">int</span> dig <span style="color:#f92672">=</span> <span style="color:#f92672">*</span>str <span style="color:#f92672">-</span> <span style="color:#e6db74">&#39;0&#39;</span>;
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 若 ret 比 div 小，则 ret * 10 + dig 也一定小于 INT_MAX，不会溢出
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#75715e">// 若 ret 与 div 相等，只有 dig 比 8 小时不会溢出
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#75715e">// 此处本来需要正负分开讨论，INT_MAX 个位是 7，INT_MIN 个位是 8
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#75715e">// -INT_MIN 在 int 中会溢出，当 dig == 8 时直接当作溢出处理
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">if</span> (ret <span style="color:#f92672">&lt;</span> div <span style="color:#f92672">||</span> (ret <span style="color:#f92672">==</span> div <span style="color:#f92672">&amp;&amp;</span> dig <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">8</span>)) {
+</span></span><span style="display:flex;"><span>			ret <span style="color:#f92672">=</span> ret <span style="color:#f92672">*</span> <span style="color:#ae81ff">10</span> <span style="color:#f92672">+</span> dig;
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">++</span>str;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 溢出，根据正负性返回值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> (flag <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">?</span> INT_MAX : INT_MIN);
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> flag <span style="color:#f92672">*</span> ret;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="实现strstr">实现strStr()</h2>
+<p>实现 <a class="link" href="https://baike.baidu.com/item/strstr/811469"  target="_blank" rel="noopener"
+    >strStr()</a> 函数。</p>
+<p>给定一个 haystack 字符串和一个 needle 字符串，在 haystack 字符串中找出 needle 字符串出现的第一个位置 (从0开始)。如果不存在，则返回  <strong>-1</strong>。</p>
+<p><strong>示例 1:</strong></p>
+<pre tabindex="0"><code>输入: haystack = &#34;hello&#34;, needle = &#34;ll&#34;
+输出: 2
+</code></pre><p><strong>示例 2:</strong></p>
+<pre tabindex="0"><code>输入: haystack = &#34;aaaaa&#34;, needle = &#34;bba&#34;
+输出: -1
+</code></pre><p><strong>说明:</strong></p>
+<p>当 <code>needle</code> 是空字符串时，我们应当返回什么值呢？这是一个在面试中很好的问题。</p>
+<p>对于本题而言，当 <code>needle</code> 是空字符串时我们应当返回 0 。这与C语言的 <a class="link" href="https://baike.baidu.com/item/strstr/811469"  target="_blank" rel="noopener"
+    >strstr()</a> 以及 Java的 <a class="link" href="https://docs.oracle.com/javase/7/docs/api/java/lang/String.html#indexOf%28java.lang.String%29"  target="_blank" rel="noopener"
+    >indexOf()</a> 定义相符。</p>
+<p><strong>代码</strong>:</p>
+<p>KMP，双100%，永远滴神！我觉得书上讲的都比较含糊，可以找视频来看一下这个算法，主要是求<code>next</code>数组。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">/* 前缀表  */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">prefix_table</span>(<span style="color:#66d9ef">char</span> pattern[], <span style="color:#66d9ef">int</span> prefix[], <span style="color:#66d9ef">int</span> n) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	prefix[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> len <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">while</span> (i <span style="color:#f92672">&lt;</span> n) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> (pattern[i] <span style="color:#f92672">==</span> pattern[len]) {
+</span></span><span style="display:flex;"><span>			len<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>			prefix[i] <span style="color:#f92672">=</span> len;
+</span></span><span style="display:flex;"><span>			i<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> (len <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>				len <span style="color:#f92672">=</span> prefix[len <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>];
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>				prefix[i] <span style="color:#f92672">=</span> len;
+</span></span><span style="display:flex;"><span>				i<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/* 左移前缀表 */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">move_prefix_table</span>(<span style="color:#66d9ef">int</span> prefix[], <span style="color:#66d9ef">int</span> n) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> i;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> (i <span style="color:#f92672">=</span> n <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>; i <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>; i<span style="color:#f92672">--</span>) {
+</span></span><span style="display:flex;"><span>		prefix[i] <span style="color:#f92672">=</span> prefix[i <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>];
+</span></span><span style="display:flex;"><span>	} 
+</span></span><span style="display:flex;"><span>	prefix[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/* kmp search */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">kmp_search</span>(<span style="color:#66d9ef">char</span> text[], <span style="color:#66d9ef">char</span> pattern[]) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> n <span style="color:#f92672">=</span> <span style="color:#a6e22e">strlen</span>(pattern);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> m <span style="color:#f92672">=</span> <span style="color:#a6e22e">strlen</span>(text);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> <span style="color:#f92672">*</span>prefix <span style="color:#f92672">=</span> <span style="color:#a6e22e">malloc</span>(<span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">int</span>)<span style="color:#f92672">*</span>n);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">prefix_table</span>(pattern, prefix, n);
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">move_prefix_table</span>(prefix, n);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	text[i]		len(text) = m
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	pattern[j]	len[pattern] = n
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	*/</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>, j <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">while</span> (i <span style="color:#f92672">&lt;</span> m) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> (j <span style="color:#f92672">==</span> n <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">&amp;&amp;</span> text[i] <span style="color:#f92672">==</span> pattern[j]) {
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">/*printf(&#34;%d&#34;, i - j);
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">			j = prefix[j];*/</span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> i <span style="color:#f92672">-</span> j;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> (text[i] <span style="color:#f92672">==</span> pattern[j]) {
+</span></span><span style="display:flex;"><span>			i<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>			j<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>			j <span style="color:#f92672">=</span> prefix[j];
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> (j <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>				i<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>				j<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">strStr</span>(<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span> haystack, <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span> needle) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> lenn <span style="color:#f92672">=</span> <span style="color:#a6e22e">strlen</span>(needle);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> (lenn <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">kmp_search</span>(haystack, needle);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="外观数列">外观数列</h2>
+<p>「外观数列」是一个整数序列，从数字 1 开始，序列中的每一项都是对前一项的描述。前五项如下：</p>
+<pre tabindex="0"><code>1.     1
+2.     11
+3.     21
+4.     1211
+5.     111221
+</code></pre><p><code>1</code> 被读作  <code>&quot;one 1&quot;</code>  (<code>&quot;一个一&quot;</code>) , 即 <code>11</code>。
+<code>11</code> 被读作 <code>&quot;two 1s&quot;</code> (<code>&quot;两个一&quot;</code>）, 即 <code>21</code>。
+<code>21</code> 被读作 <code>&quot;one 2&quot;</code>,  &ldquo;<code>one 1&quot;</code> （<code>&quot;一个二&quot;</code> ,  <code>&quot;一个一&quot;</code>) , 即 <code>1211</code>。</p>
+<p>给定一个正整数 <em>n</em>（1 ≤ <em>n</em> ≤ 30），输出外观数列的第 <em>n</em> 项。</p>
+<p>注意：整数序列中的每一项将表示为一个字符串。</p>
+<p><strong>示例 1:</strong></p>
+<pre tabindex="0"><code>输入: 1
+输出: &#34;1&#34;
+解释：这是一个基本样例。
+</code></pre><p><strong>示例 2:</strong></p>
+<pre tabindex="0"><code>输入: 4
+输出: &#34;1211&#34;
+解释：当 n = 3 时，序列是 &#34;21&#34;，其中我们有 &#34;2&#34; 和 &#34;1&#34; 两组，&#34;2&#34; 可以读作 &#34;12&#34;，也就是出现频次 = 1 而 值 = 2；类似 &#34;1&#34; 可以读作 &#34;11&#34;。所以答案是 &#34;12&#34; 和 &#34;11&#34; 组合在一起，也就是 &#34;1211&#34;。
+</code></pre><p><strong>代码</strong>:</p>
+<p>这个题目比较有意思。</p>
+<p>使用了两个数组，数组<code>res</code>作为结果项和初始项，数组<code>tmp</code>作为对<code>res</code>处理后的进行保存的中间项，然后每一轮结束时，将数组<code>tmp</code>的内容复制到<code>res</code>中，再下一轮以<code>res</code>作为初始串进行处理。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">countAndSay</span>(<span style="color:#66d9ef">int</span> n) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>res <span style="color:#f92672">=</span> (<span style="color:#66d9ef">char</span><span style="color:#f92672">*</span>)<span style="color:#a6e22e">malloc</span>(<span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">char</span>) <span style="color:#f92672">*</span> <span style="color:#ae81ff">5000</span>);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>tmp <span style="color:#f92672">=</span> (<span style="color:#66d9ef">char</span><span style="color:#f92672">*</span>)<span style="color:#a6e22e">malloc</span>(<span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">char</span>) <span style="color:#f92672">*</span> <span style="color:#ae81ff">5000</span>);
+</span></span><span style="display:flex;"><span>	res[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;1&#39;</span>; res[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;\0&#39;</span>;     <span style="color:#75715e">// res 初始化为 &#34;1&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> len <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;                     <span style="color:#75715e">// len 为 res 的有效长度
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">while</span> (<span style="color:#f92672">--</span>n) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>, j <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">while</span> (i <span style="color:#f92672">&lt;</span> len) {             <span style="color:#75715e">// 对 res 的每位字符 c 进行报数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			<span style="color:#66d9ef">int</span> count <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">char</span> c <span style="color:#f92672">=</span> res[i<span style="color:#f92672">++</span>];
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">while</span> (i <span style="color:#f92672">&lt;</span> len <span style="color:#f92672">&amp;&amp;</span> res[i] <span style="color:#f92672">==</span> c)    <span style="color:#75715e">// 计算本轮报数结果，即本轮有几个 c
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				i<span style="color:#f92672">++</span>, count<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>			tmp[j<span style="color:#f92672">++</span>] <span style="color:#f92672">=</span> count <span style="color:#f92672">+</span> <span style="color:#e6db74">&#39;0&#39;</span>;           <span style="color:#75715e">// 将报数结果存入 tmp
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			tmp[j<span style="color:#f92672">++</span>] <span style="color:#f92672">=</span> c;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		tmp[j] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;\0&#39;</span>;
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">strcpy</span>(res, tmp);                     <span style="color:#75715e">// 将 tmp 复制到 res，并更新 res 长度
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		len <span style="color:#f92672">=</span> j;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> res;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="最长公共前缀">最长公共前缀</h2>
+<p>编写一个函数来查找字符串数组中的最长公共前缀。</p>
+<p>如果不存在公共前缀，返回空字符串 <code>&quot;&quot;</code>。</p>
+<p><strong>示例 1:</strong></p>
+<pre tabindex="0"><code>输入: [&#34;flower&#34;,&#34;flow&#34;,&#34;flight&#34;]
+输出: &#34;fl&#34;
+</code></pre><p><strong>示例 2:</strong></p>
+<pre tabindex="0"><code>输入: [&#34;dog&#34;,&#34;racecar&#34;,&#34;car&#34;]
+输出: &#34;&#34;
+解释: 输入不存在公共前缀。
+</code></pre><p><strong>说明:</strong></p>
+<p>所有输入只包含小写字母 <code>a-z</code> 。</p>
+<p><strong>代码</strong>:</p>
+<p>本题使用暴力法，但是由于公共前缀的问题，使用暴力法的时间表现还可以。求最短的元素，以其长度为基准进行搜索。然后双重循环求公共前缀。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">longestCommonPrefix</span>(<span style="color:#66d9ef">char</span> <span style="color:#f92672">**</span> strs, <span style="color:#66d9ef">int</span> strsSize) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span>(strsSize<span style="color:#f92672">==</span><span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>p <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> p;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span>(strsSize<span style="color:#f92672">==</span><span style="color:#ae81ff">1</span>) <span style="color:#66d9ef">return</span> strs[<span style="color:#ae81ff">0</span>];
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 先找出最短的元素
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> minlen <span style="color:#f92672">=</span> <span style="color:#a6e22e">strlen</span>(strs[<span style="color:#ae81ff">0</span>]);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> i;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> (i <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>; i <span style="color:#f92672">&lt;</span> strsSize; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> (minlen <span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">strlen</span>(strs[i])) {
+</span></span><span style="display:flex;"><span>			minlen <span style="color:#f92672">=</span> <span style="color:#a6e22e">strlen</span>(strs[i]);
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 循环求解找最长公共前缀
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> front, j;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">bool</span> valid <span style="color:#f92672">=</span> true;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> (front <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; front <span style="color:#f92672">&lt;</span> minlen; front<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">for</span> (j <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; j <span style="color:#f92672">&lt;</span> strsSize <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>; j<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> (strs[j][front] <span style="color:#f92672">!=</span> strs[j <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>][front]) {
+</span></span><span style="display:flex;"><span>				valid <span style="color:#f92672">=</span> false;
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>valid) <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 此时，front为 最长公共前缀的长度,假设最大1000
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">char</span> res[<span style="color:#ae81ff">1000</span>];
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>restr <span style="color:#f92672">=</span> res;
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">memset</span>(res, <span style="color:#ae81ff">0</span>, <span style="color:#66d9ef">sizeof</span>(res));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;%d&#34;</span>, <span style="color:#a6e22e">strlen</span>(res));
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> k;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> (k <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; k <span style="color:#f92672">&lt;</span> front; k<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>		res[k] <span style="color:#f92672">=</span> strs[<span style="color:#ae81ff">0</span>][k];
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> restr;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>我这样做麻烦了&hellip;列垂直扫描不用那么麻烦。唉 <strong>):</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">longestCommonPrefix</span>(<span style="color:#66d9ef">char</span> <span style="color:#f92672">**</span> strs, <span style="color:#66d9ef">int</span> strsSize){
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span>(strsSize<span style="color:#f92672">==</span><span style="color:#ae81ff">0</span>) <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;&#34;</span>;  <span style="color:#75715e">//如果字符串数组为空，直接返回&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">for</span>(<span style="color:#66d9ef">int</span> i<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>;i<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">strlen</span>(strs[<span style="color:#ae81ff">0</span>]);i<span style="color:#f92672">++</span>){   <span style="color:#75715e">//i表示列，strlen(strs[0])表示第一个字符串长度
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">for</span>(<span style="color:#66d9ef">int</span> j<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>;j<span style="color:#f92672">&lt;</span>strsSize;j<span style="color:#f92672">++</span>){    <span style="color:#75715e">//j表示行
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span>(strs[<span style="color:#ae81ff">0</span>][i]<span style="color:#f92672">!=</span>strs[j][i]){ <span style="color:#75715e">//如果比较字符串的第i列不同，该列结束，直接跳出
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                strs[<span style="color:#ae81ff">0</span>][i]<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;\0&#39;</span>;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> strs[<span style="color:#ae81ff">0</span>];
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">作者：</span>cmtsa
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">链接：</span>https:<span style="color:#75715e">//leetcode-cn.com/problems/longest-common-prefix/solution/cchui-zhi-sao-miao-chao-duan-dai-ma-by-cmtsa/
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#960050;background-color:#1e0010">来源：力扣（</span>LeetCode<span style="color:#960050;background-color:#1e0010">）</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</span>
+</span></span></code></pre></div>
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/leetcode%E6%95%B0%E7%BB%84%E5%88%9D%E7%AD%89%E6%95%B4%E7%90%86/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">leetcode数组初等整理</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/leetcode%E7%BA%BF%E6%80%A7%E9%97%AE%E9%A2%98%E5%90%88%E8%BE%91%E6%95%B0%E7%BB%84%E9%93%BE%E8%A1%A8%E6%A0%88%E9%98%9F%E5%88%97/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">leetcode线性问题合辑（数组、链表、栈、队列）</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E5%B8%B8%E8%A7%81%E7%9A%84%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E6%80%BB%E7%BB%93/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">常见的排序算法总结</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E7%94%A8%E4%B8%8D%E5%90%8C%E7%AE%97%E6%B3%95%E8%A7%A3%E5%86%B30/1%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">用不同算法解决0/1背包问题</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

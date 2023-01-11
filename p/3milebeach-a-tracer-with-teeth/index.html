@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='来源：ACM SoCC&#39;21 作者：UC Santa Cruz 摘要 提出3MileBeach，一个针对微服务架构的追踪和故障注入平台。 通过介入一个消息序列化库，避免了代码层面的'>
+<title>3MileBeach: A Tracer with Teeth</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/3milebeach-a-tracer-with-teeth/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='3MileBeach: A Tracer with Teeth'>
+<meta property='og:description' content='来源：ACM SoCC&#39;21 作者：UC Santa Cruz 摘要 提出3MileBeach，一个针对微服务架构的追踪和故障注入平台。 通过介入一个消息序列化库，避免了代码层面的'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/3milebeach-a-tracer-with-teeth/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='云原生' /><meta property='article:tag' content='微服务' /><meta property='article:tag' content='链路追踪' /><meta property='article:tag' content='故障注入' /><meta property='article:published_time' content='2022-03-14T19:12:33&#43;08:00'/><meta property='article:modified_time' content='2022-03-14T19:12:33&#43;08:00'/>
+<meta name="twitter:title" content="3MileBeach: A Tracer with Teeth">
+<meta name="twitter:description" content="来源：ACM SoCC&#39;21 作者：UC Santa Cruz 摘要 提出3MileBeach，一个针对微服务架构的追踪和故障注入平台。 通过介入一个消息序列化库，避免了代码层面的">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#摘要">摘要</a></li>
+    <li><a href="#追踪和故障注入现存的问题">追踪和故障注入现存的问题</a></li>
+    <li><a href="#3milebeach的能力">3MileBeach的能力</a></li>
+    <li><a href="#motivation">Motivation</a>
+      <ul>
+        <li><a href="#time-of-check-to-time-of-usertocttou-error">Time of Check to Time of User(TOCTTOU error)</a></li>
+        <li><a href="#temporal-discretization">Temporal Discretization</a></li>
+        <li><a href="#communication-is-the-thing">Communication is The Thing</a></li>
+      </ul>
+    </li>
+    <li><a href="#实现">实现</a>
+      <ul>
+        <li><a href="#架构抽象">架构抽象</a></li>
+        <li><a href="#数据结构">数据结构</a></li>
+        <li><a href="#算法">算法</a></li>
+      </ul>
+    </li>
+    <li><a href="#实验">实验</a>
+      <ul>
+        <li><a href="#实验设置">实验设置</a></li>
+        <li><a href="#tracing-benchmark">Tracing Benchmark</a></li>
+        <li><a href="#fault-injection">Fault Injection</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/" >
+                云原生
+            </a>
+        
+            <a href="/categories/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" >
+                微服务
+            </a>
+        
+            <a href="/categories/%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/" >
+                链路追踪
+            </a>
+        
+            <a href="/categories/%E6%95%85%E9%9A%9C%E6%B3%A8%E5%85%A5/" >
+                故障注入
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/3milebeach-a-tracer-with-teeth/">3MileBeach: A Tracer with Teeth</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Mar 14, 2022</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 10 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>来源：ACM SoCC'21</p>
+<p>作者：UC Santa Cruz</p>
+</blockquote>
+<h2 id="摘要">摘要</h2>
+<ul>
+<li>提出<em>3MileBeach</em>，一个针对微服务架构的追踪和故障注入平台。</li>
+<li>通过介入一个消息序列化库，避免了代码层面的监控（这是传统的追踪和故障注入会做的），可以提供更细粒度的追踪和故障注入。</li>
+<li><em>3MileBeach</em>提供了一个消息级别的分布式追踪，其开销只有最先进追踪框架的一半；提供故障注入比现有方案有更高的精度。</li>
+<li>使用<em>3MileBeach</em>进行一种新型故障注入<em>Temporal Fault Injection</em>（TFI）。</li>
+</ul>
+<h2 id="追踪和故障注入现存的问题">追踪和故障注入现存的问题</h2>
+<ul>
+<li>运行时开销和工作量过大；</li>
+<li>对异构应用程序和基础代码，基础设置的入侵性改动；</li>
+<li>微服务组件以不同的语言进行设计，之间使用不同的通信机制；</li>
+<li>故障注入需要在精度、粒度和成本上进行取舍。</li>
+</ul>
+<h2 id="3milebeach的能力">3MileBeach的能力</h2>
+<ul>
+<li>其只需要应用程序级的插件就能实现功能；</li>
+<li>提供细粒度的追踪，比最先进的技术节省25%~50%的成本；</li>
+<li>提供丰富且严格的跟踪指标；</li>
+<li>支持大规模并发故障注入，适用于生产环境；</li>
+<li>实现新型故障注入模式TFI，这基于时序谓词（nlp中的技术），可以识别可能处于休眠状态中的技术。</li>
+</ul>
+<h2 id="motivation">Motivation</h2>
+<p>目前最先进的分布式系统故障注入存在两个基础的问题：</p>
+<ol>
+<li>存在对细粒度、并发测试、不受blast radius影响的需求；</li>
+<li>现有的故障注入技术没有足够的表现力。</li>
+</ol>
+<h3 id="time-of-check-to-time-of-usertocttou-error">Time of Check to Time of User(TOCTTOU error)</h3>
+<p>假设一个在线购物平台存在如下问题，用户准备为购物车的物品付款时调用前端：</p>
+<ol>
+<li>前端发送一条消息给信用卡服务来验证（一个下游服务用来验证用户信用卡信息）；</li>
+<li>如果验证成功，前端会发送信息给商品服务来计算费用；</li>
+<li>计算完成后再次调用信用服务，扣除费用。</li>
+</ol>
+<p>试想这种情况：第一次调用信用卡服务成功，通过验证，而第二次（提出扣费申请时）发送了一个错误请求。</p>
+<p>简单来说，同一个服务在一小段时间后从可用状态变为不可用。</p>
+<h3 id="temporal-discretization">Temporal Discretization</h3>
+<p>大多数故障注入工具没有考虑到时间维度上的故障。</p>
+<p>首先，时间是一个连续的概念，往往考虑在请求的生命周期里发生故障，而忽略在发送请求时刻、流传输中发生故障；在一个确定时间引入故障或许没有什么意义。</p>
+<p>以上述案例为例，将前端服务视为黑盒，可以观察到信用卡服务可能不可用的四个离散的逻辑时间：</p>
+<ol>
+<li>在前端的第一次请求到来之前；</li>
+<li>在前端第一次请求到来之后，信用卡服务返回响应之前；</li>
+<li>在信用卡服务返回第一次响应之后，和前端请求第二次到来之前；</li>
+<li>在前端第二次请求到来之后，信用卡服务返回第二次响应之前。</li>
+</ol>
+<p>如果以粗粒度来看，前端调用信用卡服务发生的错误实际上又<strong>可以分为粒度更小的四种导致错误的原因</strong>。</p>
+<!-- raw HTML omitted -->
+<h3 id="communication-is-the-thing">Communication is The Thing</h3>
+<p>3MileBeach为能够达成细粒度故障注入，从消息序列化、反序列化入手。例如从gRPC请求转换为HTTP请求，存在Protocol Buffer到JSON的序列化和反序列化过程。<strong>在该过程中添加元数据来装饰消息，以跟踪每个消息的上下文</strong>。</p>
+<p>因为远程服务的故障总是表现为服务边界出现的延迟、报错等错误。通过错误处理，避免引发blast radius，从而可以实现并发测试。</p>
+<p>通过对第三方库的修改（增加请求和响应消息的上下文传播），来对事件进行持续跟踪，记录完整的服务调用历程。</p>
+<p>通过故障注入逻辑检查这些数据，就可以得知以下信息：</p>
+<ul>
+<li>错误来自哪一个请求？which</li>
+<li>当前是哪一个服务遇到了错误？where</li>
+<li>注入的是什么服务？how</li>
+<li>故障何时被注入？when</li>
+</ul>
+<h2 id="实现">实现</h2>
+<h3 id="架构抽象">架构抽象</h3>
+<p>下图定义了边界组件模型，即微服务框架和服务处理程序之间的边界。</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220312124636575.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220312124636575"
+	
+	
+></p>
+<p>大多数微服务框架都提供了服务处理handler和边界组件的交互方式。</p>
+<p>Panorama [40] 通过将可观察性抽象为直接调用处理程序函数的方向和以（输入/输出）队列/代理作为缓存层的异步调用处理程序函数的间接性，引入了组件交互的四种设计模式。</p>
+<ol>
+<li>Full direction。所有的函数被分配到一个线程，在该线程中依次调用入站操作、处理请求、出站操作。</li>
+<li>Inbound indirection。在被工作线程选择之前，将入站消息存到队列中，当出站组件调用时，被唤醒执行。</li>
+<li>Outbound indirection。入站组件和服务handler直接在一个工作线程中调用，处理后将消息放到出站线程队列等待被网络运输。</li>
+<li>Full indirection。将入站和出站的消息都放入队列进行调度，中间通过服务handler和网络请求唤醒调用。</li>
+</ol>
+<p>第2，3，4种做法都实现了上下文传播机制，可以通过handler和边界组件传递身份信息。</p>
+<p>因此3MileBeach选择上述的上下文传播的设计模式。</p>
+<p>入站组件对从网络来的row message进行反序列化，调用service handler。出站组件将处理后的message进行序列化。</p>
+<p>对数据流进行两种抽象：</p>
+<ol>
+<li>Direct Response Circle（<strong>DRC</strong>）；</li>
+<li>Synchronized Request-Response Circle（<strong>SRC</strong>）。</li>
+</ol>
+<h3 id="数据结构">数据结构</h3>
+<p>将负载命名为<em>3mb-payload</em>，具体实现称为<strong>Trace</strong>。Trace是一个高层数据结构，由以下三部分组成：</p>
+<ol>
+<li>一系列的事件（Event-s）；</li>
+<li>必要的追踪元数据（如ID），来帮助3MileBeach为追踪识别和组装事件；</li>
+<li>一个故障注入配置列表（fault injection configuration-s，FIC-s）</li>
+</ol>
+<h4 id="event">Event</h4>
+<p>Event记录了一个事件的必要信息，从中可以知道在什么时候那哪个服务接收或者发送了一个请求或一个响应，并且具体的服务名字。</p>
+<ul>
+<li>Timestamp</li>
+<li>Service</li>
+<li>Action</li>
+<li>MessageType</li>
+<li>Name</li>
+<li>UUID</li>
+<li>&hellip;</li>
+</ul>
+<p>如下图所示，有4个事件联系到同一个UUID，指明一个SRC。</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220312135514421.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220312135514421"
+	
+	
+></p>
+<p>其中两个由Svc1记录，一个是在Svc1发送请求时记录的，另一个是在Svc1接收响应时记录的。</p>
+<h4 id="fault-injection-configuration">Fault Injection Configuration</h4>
+<p>使用FIC来描述一个TFI和RLFI（Request Level Fault Injection）测试案例。</p>
+<p>考虑一个应用由n个服务组成。RLFI在客户端级请求生命周期中将故障注入服务。我们使用FIC{Type: Crash, Name: Svc_i}来表示服务i的故障。为测试所有的崩溃模式，RLFI的实验空间有$2^n$个。但是在模拟客户端级别的请求时，不需要调用全部的微服务。例如有m个服务不会被调用，实际上只需要调用$2^{n-m}$个案例。</p>
+<p>在TFI中，根据逻辑时序在某个测试的执行期间模拟故障。文章使用<strong>After</strong>，这是一个<strong>TFIMetas</strong>列表，用此存储故障的临时先决条件。TFI 可以触发的故障空间是RLFI故障空间的超集，因为当After为空时，RLFI是TFI的特例。</p>
+<p>另外通过时间离散化，FIC可以大大减少TFI的测试空间。</p>
+<!-- raw HTML omitted -->
+<p>如上图 ，Svc1在处理客户端请求时，从Svc0处接收到Req1和Req2。RLFI只判断这两个请是成功还是失败。如果希望Req2失败而不影响Req1，我们模拟的错误应发生在t1-t2时，而在t3之后结束。</p>
+<p>而TFI通过模拟崩溃时间来缩减故障的注入时间段，即在t1-t2之间注入故障，使用如下FIC来描述：FIC{Type: Crash, Name: Req2, After: [TFIMeta{Name: Req1, Times:1}]}。</p>
+<h3 id="算法">算法</h3>
+<p>本部分主要讲如何通过序列化<em>3mb-payload</em>来接入边界组件，以及重写序列化函数在数据流中的作用。</p>
+<h4 id="interpose-via-serialization-functions">Interpose via Serialization Functions</h4>
+<p>为追踪处理客户端请求的服务，3MileBeach扩展了序列化函数，叫做<strong>Deserialize’ Serialize’</strong>。使用存储S来存储追踪的上下文对象Ctx。Ctx来源于现存的上下文传播机制，携带了请求的元数据。</p>
+<p>在入站组件中，3MileBeach从入站消息获取ID，并将ID分配给Ctx（算法1）。当服务handler发送请求时，3MileBeach将观测到的追踪数据（这个数据存在S中）附加在出站消息中（算法2）。下表中有相关的关键函数。</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220313151022017.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220313151022017"
+	
+	
+></p>
+<h4 id="serialization-functions-and-data-flows">Serialization Functions and Data Flows</h4>
+<ul>
+<li>Direct Response Circle (DRC)</li>
+</ul>
+<ol>
+<li>框架从上游服务或client接收请求；</li>
+<li>入站组件唤醒Deserialize’将请求反序列化，将事件作为追踪记录，并存储到S中，将追踪元数据写到Ctx中；</li>
+<li>框架调用服务handler并等待调用结束;</li>
+<li>框架收到响应；</li>
+<li>出站组件唤醒Serialize’，并从S中检索追踪Ctx的元数据，追加到发送事件，序列化响应；</li>
+<li>框架返回响应到上游服务或client。</li>
+</ol>
+<ul>
+<li>Synchronized Request-Response Circle (SRC)</li>
+</ul>
+<ol>
+<li>服务handler通过阻塞函数调用发送一个请求到下游服务；</li>
+<li>出站组件唤醒Serialize’，从S和Ctx中检索追踪数据，这些数据是微服务从上游服务或client的SEND事件中来的，模拟了故障信息。调用序列化函数对消息进行序列化；</li>
+<li>框架发送请求给下游服务并等待响应；</li>
+<li>框架收到下游的响应；</li>
+<li>入站请求唤醒Deserialize将响应反序列化，追加事件并存储；</li>
+<li>服务handler会接受响应。</li>
+</ol>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220313155122436.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220313155122436"
+	
+	
+></p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220313155136954.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220313155136954"
+	
+	
+></p>
+<h4 id="fault-simulation">Fault Simulation</h4>
+<p>3MileBeach通过模拟下游的外部可观测错误来实现故障注入，从请求者的角度来看，这些错误可能是由于网络问题或者返回响应的handler产生。</p>
+<p>3MileBeach不会因为故障测试而崩溃或者重启，因此可以执行并发测试，也能控制blast radius。</p>
+<p>典型的SRC包括两个服务和两个数据流。（Requester Responder ReqFlow RespFlow）。故障触发时，requester不能知道下游的故障根源，这取决于具体的实现，它能知道这些错误的返回码，例如timeout、connection closed、package loss等，依次证实的确发现了问题。</p>
+<p>3MileBeach在FICs定义的故障触发条件得到满足时触发故障。</p>
+<h2 id="实验">实验</h2>
+<p>测量3MileBeach框架的端到端的延迟来展示其效率表现，并提供两个本地案例。</p>
+<h3 id="实验设置">实验设置</h3>
+<ul>
+<li>演示程序：Hipster Shop，一个部署在GKE上的微服务程序。</li>
+<li>客户端生成测试用例来进行跟踪和故障注入、应用性能调整及错误定位。</li>
+</ul>
+<h4 id="hipster-shop">Hipster Shop</h4>
+<p>包含以下微服务：</p>
+<ul>
+<li>Frontend - <strong>Svc_fe</strong></li>
+<li>CART - <strong>Svc_cart</strong></li>
+<li>Recommendation</li>
+<li>ProductCatalog - <strong>Svc_p</strong></li>
+<li>Shipping</li>
+<li>Currency - <strong>Svc_c</strong></li>
+<li>Payment</li>
+<li>Email</li>
+<li>Checkout</li>
+<li>Ad - <strong>Svc_a</strong></li>
+</ul>
+<p>涉及到的序列化库有：</p>
+<ul>
+<li>JSON</li>
+<li>PROTOCOL</li>
+<li>RESTFUL</li>
+<li>GRPC</li>
+<li>GORILLA等</li>
+</ul>
+<p>开发语言：</p>
+<ul>
+<li>GO</li>
+<li>C#</li>
+<li>Node.js</li>
+<li>Python</li>
+<li>Java</li>
+</ul>
+<p>综上，可以看出这个应用很适合作为microservice的代表来对3MileBeach进行测试。</p>
+<h4 id="clusters">Clusters</h4>
+<p>集群情况如下：</p>
+<!-- raw HTML omitted -->
+<h4 id="client">Client</h4>
+<p>客户端在不同级别的并发下向Svc_fe发送请求，使用N来确定并发数。同时，将应用和Client部署在一个集群上以最大程度减少网络延迟。</p>
+<h3 id="tracing-benchmark">Tracing Benchmark</h3>
+<p>本部分涉及到链路追踪情况，主要考察增加链路追踪给系统带来的延迟上的开销。通过并发测量端到端延迟来比较。</p>
+<p>在进行追踪时势必会给系统增加开销，因此在这方面进行比较，与Jaeger框架进行比较。以下为延迟情况以及延迟和吞吐量之间的关系。</p>
+<!-- raw HTML omitted -->
+<!-- raw HTML omitted -->
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220314162513457.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220314162513457"
+	
+	
+></p>
+<h3 id="fault-injection">Fault Injection</h3>
+<p>为测试3MileBeach对TFI测试的速度，在Svc_fe中设计了两个bug：</p>
+<ol>
+<li>DEEPRLFI。它在Svc_a和Svc_c都关闭时可以触发，不受事件影响。所以需要使用<em>3mb-payloads</em>来同时触发Svc_a和Svc_c的崩溃。</li>
+<li>SimpleTFI。是一个TOCTTOU bug。为了触发这个问题，需要让请求携带可以使Svc_c崩溃的<em>3mb-payloads</em>。</li>
+</ol>
+<p>通过下面几个图详细说明：</p>
+<p>（a）第一次调用Svc_c，Svc_fe可以容错；若Svc_c可访问，Svc_fe会认为在整个过程中Svc_c都是可以工作的；反正，Svc_fe会执行回退策略，使用默认的价钱。注意红色！的位置，Currency没有正常返回数据，但Svc_fe最终仍可以正常运行完，参考最后的绿色箭头。使用RLFI去模拟Svc_c的崩溃可以得到对应的结果。</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220314163636670.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220314163636670"
+	
+	
+></p>
+<p>（b）当Svc_a不可用时，Svc_fe会应用回退策略，使用默认的广告推荐，并继续向Svc_c发送请求进行结算。使用RLFI去模拟Svc_a的崩溃可以得到对应的结果。</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220314163715311.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220314163715311"
+	
+	
+></p>
+<p>（c）由上面两张图看出，在Currency和Ad二者中，只有一个出现问题时并不会引发Frontend的崩溃。下图则表示当Ad和Currency都崩溃时，Fronted才会崩。</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220314163733335.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220314163733335"
+	
+	
+></p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220314163756339.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220314163756339"
+	
+	
+></p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">云原生</a>
+        
+            <a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/">微服务</a>
+        
+            <a href="/tags/%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/">链路追踪</a>
+        
+            <a href="/tags/%E6%95%85%E9%9A%9C%E6%B3%A8%E5%85%A5/">故障注入</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/service-level-fault-injection-testing/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Service-Level Fault Injection Testing</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/showar-right-sizing-and-efficient-scheduling-of-microservices/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E7%AC%94%E8%AE%B0-showar-right-sizing-and-efficient-scheduling-of-microservices/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">笔记 &gt; SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E7%AC%94%E8%AE%B0-service-level-fault-injection-testing/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">笔记 &gt; Service-Level Fault Injection Testing</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%BD%91%E5%85%B3--kong/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">微服务网关--kong</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

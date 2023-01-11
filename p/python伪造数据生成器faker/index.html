@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='本文转自前辈的文章 原文链接：Hjqjk&amp;rsquo;s Blog 我们在开发中常常需要利用一些假数据来做测试,这种时候就可以使用 Faker 来伪造数据从而用来测'>
+<title>Python伪造数据生成器：Faker</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/python%E4%BC%AA%E9%80%A0%E6%95%B0%E6%8D%AE%E7%94%9F%E6%88%90%E5%99%A8faker/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='Python伪造数据生成器：Faker'>
+<meta property='og:description' content='本文转自前辈的文章 原文链接：Hjqjk&amp;rsquo;s Blog 我们在开发中常常需要利用一些假数据来做测试,这种时候就可以使用 Faker 来伪造数据从而用来测'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/python%E4%BC%AA%E9%80%A0%E6%95%B0%E6%8D%AE%E7%94%9F%E6%88%90%E5%99%A8faker/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='数据分析' /><meta property='article:tag' content='Python' /><meta property='article:published_time' content='2019-03-14T12:29:45&#43;08:00'/><meta property='article:modified_time' content='2019-03-14T12:29:45&#43;08:00'/>
+<meta name="twitter:title" content="Python伪造数据生成器：Faker">
+<meta name="twitter:description" content="本文转自前辈的文章 原文链接：Hjqjk&amp;rsquo;s Blog 我们在开发中常常需要利用一些假数据来做测试,这种时候就可以使用 Faker 来伪造数据从而用来测">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#安装">安装</a></li>
+    <li><a href="#使用">使用</a></li>
+    <li><a href="#本地化">本地化</a></li>
+    <li><a href="#方法介绍">方法介绍</a>
+      <ul>
+        <li><a href="#address-地址">address 地址</a></li>
+        <li><a href="#person-人物">person 人物</a></li>
+        <li><a href="#barcode-条码">barcode 条码</a></li>
+        <li><a href="#color-颜色">color 颜色</a></li>
+        <li><a href="#company-公司">company 公司</a></li>
+        <li><a href="#credit_card-银行信用卡">credit_card 银行信用卡</a></li>
+        <li><a href="#currency-货币">currency 货币</a></li>
+        <li><a href="#date_time-时间日期">date_time 时间日期</a></li>
+        <li><a href="#file-文件">file 文件</a></li>
+        <li><a href="#internet-互联网">internet 互联网</a></li>
+        <li><a href="#job-工作">job 工作</a></li>
+        <li><a href="#lorem-乱数假文">lorem 乱数假文</a></li>
+        <li><a href="#misc-杂项">misc 杂项</a></li>
+        <li><a href="#phone_number-电话号码">phone_number 电话号码</a></li>
+        <li><a href="#python数据">python数据</a></li>
+        <li><a href="#profile-人物描述信息">profile 人物描述信息</a></li>
+        <li><a href="#ssn-社会安全码身份证">ssn 社会安全码(身份证)</a></li>
+        <li><a href="#user_agent-用户代理">user_agent 用户代理</a></li>
+        <li><a href="#平台信息伪造">平台信息伪造</a></li>
+        <li><a href="#浏览器伪造">浏览器伪造</a></li>
+      </ul>
+    </li>
+    <li><a href="#自定义扩展">自定义扩展</a></li>
+    <li><a href="#随机控制">随机控制</a></li>
+    <li><a href="#命令行生成">命令行生成</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90/" >
+                数据分析
+            </a>
+        
+            <a href="/categories/python/" >
+                Python
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/python%E4%BC%AA%E9%80%A0%E6%95%B0%E6%8D%AE%E7%94%9F%E6%88%90%E5%99%A8faker/">Python伪造数据生成器：Faker</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Mar 14, 2019</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 10 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>本文转自前辈的文章</p>
+<p>原文链接：<a class="link" href="https://www.hjqjk.com/2017/Python-moudle-Faker.html"  target="_blank" rel="noopener"
+    >Hjqjk&rsquo;s Blog</a></p>
+</blockquote>
+<p>我们在开发中常常需要利用一些假数据来做测试,这种时候就可以使用 <code>Faker</code> 来伪造数据从而用来测试。</p>
+<p><a class="link" href="https://github.com/joke2k/faker"  target="_blank" rel="noopener"
+    ><strong>Faker</strong></a> 是一个可以让你生成伪造数据的Python包。当你需要初始化数据库，创建美观的XML文档，不断产生数据来进行压力测试或者想从生产服务器上拉取匿名数据的时候，Faker将是你最棒的选择。</p>
+<h2 id="安装">安装</h2>
+<p>Faker库已经被提交到 <a class="link" href="https://pypi.python.org/pypi/Faker"  target="_blank" rel="noopener"
+    ><strong>pip</strong></a>，可以通过 pip 工具直接安装。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>pip install Faker
+</span></span></code></pre></div><h2 id="使用">使用</h2>
+<p><a class="link" href="http://faker.readthedocs.io/en/master/"  target="_blank" rel="noopener"
+    ><strong>官方文档</strong></a></p>
+<p>faker 提供了一个工厂函数，用来创建数据：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#f92672">from</span> faker <span style="color:#f92672">import</span> Factory
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake1 <span style="color:#f92672">=</span> Factory<span style="color:#f92672">.</span>create()
+</span></span></code></pre></div><p>当然，也提供一个Faker类来创建实例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#f92672">from</span> faker <span style="color:#f92672">import</span> Faker
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake2 <span style="color:#f92672">=</span> Faker()
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> 
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake2<span style="color:#f92672">.</span>name()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Audrey Robinson&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake2<span style="color:#f92672">.</span>address()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;4266 Fritz Shore</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">Lewischester, AL 24594-7593&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake2<span style="color:#f92672">.</span>text()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Odio porro unde sint aliquid beatae. Ex officiis porro nostrum laboriosam deleniti nisi. A aut molestiae ratione ipsam perspiciatis facere.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">Dicta incidunt at deleniti recusandae accusamus quisquam.&#39;</span>
+</span></span></code></pre></div><p>每次调用方法 <code>fake.name()</code> 都会产生不同的（随机）结果。这是因为 faker 向 <code>faker.Generator.method_name()</code> 调用了 <code>faker.Generator.format(method_name)</code>。</p>
+<h2 id="本地化">本地化</h2>
+<p>在用 <code>Faker()</code> 创建 faker 实例时，可以为实例指定本地化区域参数，默认为 ‘en_US`，因此生成的姓名、地址等都是美国的。
+要生成中文伪造数据，只需：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake <span style="color:#f92672">=</span> Faker(<span style="color:#e6db74">&#34;zh_CN&#34;</span>)
+</span></span></code></pre></div><h2 id="方法介绍">方法介绍</h2>
+<p>如上面例子，每次调用 fake 实例的 <code>name()</code>方法时，都会产生不同随机姓名。fake 实例还有很多方法可用，这些方法分为以下几类：</p>
+<ul>
+<li>address 地址</li>
+<li>person 人物类：性别、姓名等</li>
+<li>barcode 条码类</li>
+<li>color 颜色类</li>
+<li>company 公司类：公司名、公司email、公司名前缀等</li>
+<li>credit_card 银行卡类：卡号、有效期、类型等</li>
+<li>currency 货币</li>
+<li>date_time 时间日期类：日期、年、月等</li>
+<li>file 文件类：文件名、文件类型、文件扩展名等</li>
+<li>internet 互联网类</li>
+<li>job 工作</li>
+<li>lorem 乱数假文</li>
+<li>misc 杂项类</li>
+<li>phone_number 手机号码类：手机号、运营商号段</li>
+<li>python python数据</li>
+<li>profile 人物描述信息：姓名、性别、地址、公司等</li>
+<li>ssn 社会安全码(身份证号码)</li>
+<li>user_agent 用户代理</li>
+</ul>
+<h3 id="address-地址">address 地址</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>country()  <span style="color:#75715e"># 国家</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;奥地利&#39;</span> 
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>city()  <span style="color:#75715e"># 城市</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;郑州市&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>city_suffix()  <span style="color:#75715e"># 城市的后缀,中文是：市或县</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;市&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>address()  <span style="color:#75715e"># 地址</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;河北省巢湖县怀柔南宁路f座 169812&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>street_address()  <span style="color:#75715e"># 街道</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;邯郸路W座&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>street_name()  <span style="color:#75715e"># 街道名</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;合肥路&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>postcode()  <span style="color:#75715e"># 邮编</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;314548&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>latitude()  <span style="color:#75715e"># 维度</span>
+</span></span><span style="display:flex;"><span>Decimal(<span style="color:#e6db74">&#39;68.0228435&#39;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>longitude()  <span style="color:#75715e"># 经度</span>
+</span></span><span style="display:flex;"><span>Decimal(<span style="color:#e6db74">&#39;155.964341&#39;</span>)
+</span></span></code></pre></div><h3 id="person-人物">person 人物</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>name() <span style="color:#75715e"># 姓名</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;单玉珍&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>last_name() <span style="color:#75715e"># 姓</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;潘&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>first_name() <span style="color:#75715e"># 名</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;琴&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>name_male() <span style="color:#75715e"># 男性姓名</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;官平&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>last_name_male() <span style="color:#75715e"># 男性姓</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;安&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>first_name_male() <span style="color:#75715e"># 男性名</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;文&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>name_female() <span style="color:#75715e"># 女性姓名</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;许颖&#39;</span>
+</span></span></code></pre></div><h3 id="barcode-条码">barcode 条码</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>ean8()  <span style="color:#75715e"># 8位条码</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;12771363&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>ean13()  <span style="color:#75715e"># 13位条码</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;9133134950963&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>ean(length<span style="color:#f92672">=</span><span style="color:#ae81ff">8</span>)  <span style="color:#75715e"># 自定义位数条码,只能选8或者13</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;20417161&#39;</span>
+</span></span></code></pre></div><h3 id="color-颜色">color 颜色</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;</span> fake<span style="color:#f92672">.</span>hex_color() <span style="color:#75715e"># 16进制表示的颜色</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;#671f6d&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>rgb_css_color() <span style="color:#75715e"># css用的rgb色</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;rgb(237,74,237)&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>rgb_color()  <span style="color:#75715e"># 表示rgb色的字符串</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;208,102,218&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>color_name() <span style="color:#75715e"># 颜色名字</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Brown&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>safe_hex_color()  <span style="color:#75715e">#安全16进制色</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;#ee4400&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>safe_color_name() <span style="color:#75715e"># 安全颜色名字</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;maroon&#39;</span>
+</span></span></code></pre></div><h3 id="company-公司">company 公司</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>company() <span style="color:#75715e"># 公司名</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;时空盒数字科技有限公司&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>company_suffix() <span style="color:#75715e"># 公司名后缀</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;科技有限公司&#39;</span>
+</span></span></code></pre></div><h3 id="credit_card-银行信用卡">credit_card 银行信用卡</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>credit_card_number(card_type<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>) <span style="color:#75715e"># 卡号</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;375325478746231&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>credit_card_provider(card_type<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>) <span style="color:#75715e"># 卡的提供者</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;VISA 13 digit&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>credit_card_security_code(card_type<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>)<span style="color:#75715e"># 卡的安全密码</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;450&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>credit_card_expire() <span style="color:#75715e"># 卡的有效期</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;04/22&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>credit_card_full(card_type<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>) <span style="color:#75715e"># 完整卡信息</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Maestro</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">秀芳 商</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">502001016117 04/27</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">CVV: 144</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#39;</span>
+</span></span></code></pre></div><h3 id="currency-货币">currency 货币</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>currency_code()  <span style="color:#75715e"># 货币代码</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;HNL&#39;</span>
+</span></span></code></pre></div><h3 id="date_time-时间日期">date_time 时间日期</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>date_time(tzinfo<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>) <span style="color:#75715e"># 随机日期时间</span>
+</span></span><span style="display:flex;"><span>datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">2001</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">18</span>, <span style="color:#ae81ff">17</span>, <span style="color:#ae81ff">57</span>, <span style="color:#ae81ff">44</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>iso8601(tzinfo<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>) <span style="color:#75715e"># 以iso8601标准输出的日期</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;1973-11-16T22:58:37&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>date_time_this_month(before_now<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, after_now<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>, tzinfo<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>) <span style="color:#75715e"># 本月的某个日期</span>
+</span></span><span style="display:flex;"><span>datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">2017</span>, <span style="color:#ae81ff">11</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">14</span>, <span style="color:#ae81ff">33</span>, <span style="color:#ae81ff">48</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>date_time_this_year(before_now<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, after_now<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>, tzinfo<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>) <span style="color:#75715e"># 本年的某个日期</span>
+</span></span><span style="display:flex;"><span>datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">2017</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">13</span>, <span style="color:#ae81ff">55</span>, <span style="color:#ae81ff">31</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>date_time_this_decade(before_now<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, after_now<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>, tzinfo<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>)  <span style="color:#75715e"># 本年代内的一个日期</span>
+</span></span><span style="display:flex;"><span>datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">2010</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">26</span>, <span style="color:#ae81ff">6</span>, <span style="color:#ae81ff">33</span>, <span style="color:#ae81ff">23</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>date_time_this_century(before_now<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, after_now<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>, tzinfo<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>)  <span style="color:#75715e"># 本世纪一个日期</span>
+</span></span><span style="display:flex;"><span>datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">2015</span>, <span style="color:#ae81ff">7</span>, <span style="color:#ae81ff">21</span>, <span style="color:#ae81ff">19</span>, <span style="color:#ae81ff">27</span>, <span style="color:#ae81ff">53</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>date_time_between(start_date<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;-30y&#34;</span>, end_date<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;now&#34;</span>, tzinfo<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>)  <span style="color:#75715e"># 两个时间间的一个随机时间</span>
+</span></span><span style="display:flex;"><span>datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">2005</span>, <span style="color:#ae81ff">12</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">17</span>, <span style="color:#ae81ff">17</span>, <span style="color:#ae81ff">15</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>timezone() <span style="color:#75715e"># 时区</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;America/Guatemala&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>time(pattern<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;%H:%M:%S&#34;</span>) <span style="color:#75715e"># 时间（可自定义格式）</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;11:21:52&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>am_pm() <span style="color:#75715e"># 随机上午下午</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;PM&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>month() <span style="color:#75715e"># 随机月份</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;02&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>month_name() <span style="color:#75715e"># 随机月份名字</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;August&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>year() <span style="color:#75715e"># 随机年</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;1974&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>day_of_week() <span style="color:#75715e"># 随机星期几</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Sunday&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>day_of_month() <span style="color:#75715e"># 随机月中某一天</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;02&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>time_delta() <span style="color:#75715e"># 随机时间延迟</span>
+</span></span><span style="display:flex;"><span>datetime<span style="color:#f92672">.</span>timedelta(<span style="color:#ae81ff">13371</span>, <span style="color:#ae81ff">27637</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>date_object()  <span style="color:#75715e"># 随机日期对象</span>
+</span></span><span style="display:flex;"><span>datetime<span style="color:#f92672">.</span>date(<span style="color:#ae81ff">1983</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">26</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>time_object() <span style="color:#75715e"># 随机时间对象</span>
+</span></span><span style="display:flex;"><span>datetime<span style="color:#f92672">.</span>time(<span style="color:#ae81ff">17</span>, <span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">56</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>unix_time() <span style="color:#75715e"># 随机unix时间（时间戳）</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">1223246848</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>date(pattern<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;%Y-%m-</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">&#34;</span>) <span style="color:#75715e"># 随机日期（可自定义格式）</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;1984-04-20&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>date_time_ad(tzinfo<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>)  <span style="color:#75715e"># 公元后随机日期</span>
+</span></span><span style="display:flex;"><span>datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">341</span>, <span style="color:#ae81ff">9</span>, <span style="color:#ae81ff">11</span>, <span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">6</span>, <span style="color:#ae81ff">9</span>)
+</span></span></code></pre></div><h3 id="file-文件">file 文件</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>file_name(category<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;image&#34;</span>, extension<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;png&#34;</span>) <span style="color:#75715e"># 文件名（指定文件类型和后缀名）</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;增加.png&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>file_name() <span style="color:#75715e"># 随机生成各类型文件</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;提供.pdf&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>file_extension(category<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>) <span style="color:#75715e"># 文件后缀</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;txt&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>mime_type(category<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>) <span style="color:#75715e"># mime-type</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;image/png&#39;</span>
+</span></span></code></pre></div><h3 id="internet-互联网">internet 互联网</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>ipv4(network<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)  <span style="color:#75715e"># ipv4地址</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;104.225.105.10&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>ipv6(network<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)  <span style="color:#75715e"># ipv6地址</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;dea6:ca11:39d0:b49f:fff1:82f1:bf88:698b&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>uri_path(deep<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>) <span style="color:#75715e"># uri路径</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;search/categories&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>uri_extension() <span style="color:#75715e"># uri扩展名</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;.htm&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>uri() <span style="color:#75715e"># uri</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;https://www.wei.com/terms/&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>url() <span style="color:#75715e"># url</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;http://zheng.org/&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>image_url(width<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, height<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>)  <span style="color:#75715e"># 图片url</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;https://www.lorempixel.com/700/990&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>domain_word() <span style="color:#75715e"># 域名主体</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;hu&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>domain_name() <span style="color:#75715e"># 域名</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;hu.cn&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>tld() <span style="color:#75715e"># 域名后缀</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;com&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>user_name() <span style="color:#75715e"># 用户名</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;xia13&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>user_agent() <span style="color:#75715e"># UA</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Opera/8.33.(Windows NT 5.1; an-ES) Presto/2.9.171 Version/10.00&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>mac_address() <span style="color:#75715e"># MAC地址</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;d6:38:cc:2a:76:b2&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>safe_email() <span style="color:#75715e"># 安全邮箱</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;mingli@example.net&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>free_email() <span style="color:#75715e"># 免费邮箱</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;tao44@gmail.com&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>company_email()  <span style="color:#75715e"># 公司邮箱</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;jingzhong@wang.cn&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>email() <span style="color:#75715e"># 邮箱</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;changjun@hao.com&#39;</span>
+</span></span></code></pre></div><h3 id="job-工作">job 工作</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>job()<span style="color:#75715e">#工作职位</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Dealer&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>job() 
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Musician&#39;</span>
+</span></span></code></pre></div><h3 id="lorem-乱数假文">lorem 乱数假文</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>text(max_nb_chars<span style="color:#f92672">=</span><span style="color:#ae81ff">200</span>) <span style="color:#75715e"># 随机生成一篇文章</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;语言无法应用为什一点国内.要求完成如何世界电脑发布作品.经济不同教育个人科技全国.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">在线学生发布信息上海状态.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">联系一次通过其实介绍世界.增加也是使用成功那个.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">商品免费管理公司.留言自己这种内容.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">次数内容知道这样女人感觉.操作他的生产出现如何报告文章只有.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">个人文化中心不能发布最新.质量一下提高.感觉最大工具表示最后计划.这是还有次数结果其实特别.&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>word() <span style="color:#75715e"># 随机单词</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;能力&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>words(nb<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>)  <span style="color:#75715e"># 随机生成几个字</span>
+</span></span><span style="display:flex;"><span>[<span style="color:#e6db74">&#39;国家&#39;</span>, <span style="color:#e6db74">&#39;经营&#39;</span>, <span style="color:#e6db74">&#39;结果&#39;</span>]
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>sentence(nb_words<span style="color:#f92672">=</span><span style="color:#ae81ff">6</span>, variable_nb_words<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)  <span style="color:#75715e"># 随机生成一个句子</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;重要更多我们作品地方增加.&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>sentences(nb<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>) <span style="color:#75715e"># 随机生成几个句子</span>
+</span></span><span style="display:flex;"><span>[<span style="color:#e6db74">&#39;制作上海学生.&#39;</span>, <span style="color:#e6db74">&#39;方式汽车一样技术帮助欢迎.&#39;</span>, <span style="color:#e6db74">&#39;说明一种深圳经营电话帖子.&#39;</span>]
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>paragraph(nb_sentences<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>, variable_nb_sentences<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)  <span style="color:#75715e"># 随机生成一段文字(字符串)</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;非常环境位置有限发展首页行业.情况对于出现部门这种觉得.产品以后因为虽然由于日本不同.&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>paragraphs(nb<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>)  <span style="color:#75715e"># 随机生成成几段文字(列表)</span>
+</span></span><span style="display:flex;"><span>[<span style="color:#e6db74">&#39;就是发布要求有关这里国际.美国设备深圳经营.首页也是支持报告.&#39;</span>, <span style="color:#e6db74">&#39;决定可是只有发现开始一直.最后有些项目正在深圳关系决定.下载注册图片更多进行他的那些.&#39;</span>, <span style="color:#e6db74">&#39;必须他们发生数据准备联系.同时这样内容学校精华.&#39;</span>]
+</span></span></code></pre></div><h3 id="misc-杂项">misc 杂项</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>binary(length<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>)  <span style="color:#75715e"># 随机二进制字符串(可指定长度)</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;U</span><span style="color:#ae81ff">\xa9</span><span style="color:#e6db74">@</span><span style="color:#ae81ff">\x1e\x96\xe7\xca\x82\x14</span><span style="color:#e6db74">f&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>language_code()   <span style="color:#75715e"># 随机语言代码</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;tg&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>md5(raw_output<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)  <span style="color:#75715e"># 随机md5，16进制字符串</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;cc4feebe419791332bbcff5e0fdf084a&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>sha1(raw_output<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>) <span style="color:#75715e"># 随机sha1，16进制字符串</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;8ac0e9980f880860b6e45ae6fd257cc847b7ae8d&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>sha256(raw_output<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)   <span style="color:#75715e"># 随机sha256，16进制字符串</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;033151f173f4a389e38e7df2363d89741f752c474e7bdfa2ee0a794bf0b505b5&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>boolean(chance_of_getting_true<span style="color:#f92672">=</span><span style="color:#ae81ff">50</span>) <span style="color:#75715e"># 随机真假值(得到True的几率是50%)</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">False</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>null_boolean() <span style="color:#75715e"># 随机真假值和null</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>null_boolean()
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>password(length<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>, special_chars<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, digits<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, upper_case<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, lower_case<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>) 
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 随机密码（可指定密码策略）</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;F%722TJg_U&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>locale() <span style="color:#75715e"># 随机本地代码</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;hy_AM&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>uuid4() <span style="color:#75715e"># 随机uuid</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;a50d17e7-bc4f-37a3-27b3-04a24fdd0055&#39;</span>
+</span></span></code></pre></div><h3 id="phone_number-电话号码">phone_number 电话号码</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>phone_number() <span style="color:#75715e"># 手机号码</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;13334603608&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>phonenumber_prefix() <span style="color:#75715e"># 运营商号段，手机号码前三位</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">158</span>
+</span></span></code></pre></div><h3 id="python数据">python数据</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>pyint()  <span style="color:#75715e"># 随机int</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">7775</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>pyfloat(left_digits<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, right_digits<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, positive<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)  <span style="color:#75715e"># 浮点数</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">-</span><span style="color:#ae81ff">84901.5586333</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>pydecimal(left_digits<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, right_digits<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, positive<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)  <span style="color:#75715e"># 随机高精度数</span>
+</span></span><span style="display:flex;"><span>Decimal(<span style="color:#e6db74">&#39;-12273687068527.0&#39;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>pystr(min_chars<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, max_chars<span style="color:#f92672">=</span><span style="color:#ae81ff">20</span>)  <span style="color:#75715e"># 随机字符串（可指定长度）</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;cblutNKFIyegfcHPrjzx&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>pybool()  <span style="color:#75715e"># 随机bool值</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>pyiterable(nb_elements<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>, variable_nb_elements<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)  <span style="color:#75715e"># 随机iterable</span>
+</span></span><span style="display:flex;"><span>[<span style="color:#e6db74">&#39;ODfeVvcbAjPDBGwzljQw&#39;</span>, <span style="color:#e6db74">&#39;https://www.tan.cn/list/category/homepage.php&#39;</span>, <span style="color:#e6db74">&#39;YQlrsFkBieyKYaXlCljJ&#39;</span>, Decimal(<span style="color:#e6db74">&#39;42778240911787.2&#39;</span>), Decimal(<span style="color:#e6db74">&#39;957411812.6383&#39;</span>), <span style="color:#e6db74">&#39;TGbqZufoiUXLQTZDrVcP&#39;</span>, <span style="color:#e6db74">&#39;http://yan.com/posts/tags/search/terms.php&#39;</span>, <span style="color:#ae81ff">3.680492634254</span>, <span style="color:#e6db74">&#39;min57@hotmail.com&#39;</span>, datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">2001</span>, <span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">16</span>, <span style="color:#ae81ff">6</span>, <span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">49</span>), <span style="color:#e6db74">&#39;xMMOjlETIgKGqVGTrChG&#39;</span>, <span style="color:#e6db74">&#39;yong83@xu.cn&#39;</span>]
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>pylist(nb_elements<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>, variable_nb_elements<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span> )  <span style="color:#75715e"># 随机生成一个list</span>
+</span></span><span style="display:flex;"><span>[<span style="color:#e6db74">&#39;KXQMXAkcEMSLfnIZkgJb&#39;</span>, <span style="color:#e6db74">&#39;BtowiRsuIqyyULnSYYdr&#39;</span>, datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">2011</span>, <span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">14</span>, <span style="color:#ae81ff">44</span>, <span style="color:#ae81ff">2</span>), datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">2008</span>, <span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">38</span>, <span style="color:#ae81ff">38</span>), <span style="color:#e6db74">&#39;juan47@hotmail.com&#39;</span>, <span style="color:#e6db74">&#39;QEsdUpEqHLpThyWCjkNx&#39;</span>, Decimal(<span style="color:#e6db74">&#39;-801375867.9&#39;</span>), <span style="color:#e6db74">&#39;ucDyeZnHAXfZtkwdVUbR&#39;</span>, <span style="color:#ae81ff">4707</span>, datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">1974</span>, <span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">7</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">54</span>, <span style="color:#ae81ff">29</span>)]
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>pydict(nb_elements<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>, variable_nb_elements<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)   <span style="color:#75715e"># 随机字典</span>
+</span></span><span style="display:flex;"><span>{<span style="color:#e6db74">&#39;其中&#39;</span>: <span style="color:#ae81ff">9047</span>, <span style="color:#e6db74">&#39;一直&#39;</span>: <span style="color:#e6db74">&#39;AUiUjuqccIdVAWSqzDbW&#39;</span>, <span style="color:#e6db74">&#39;选择&#39;</span>: <span style="color:#e6db74">&#39;ddong@hotmail.com&#39;</span>, <span style="color:#e6db74">&#39;开发&#39;</span>: datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">1972</span>, <span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">20</span>, <span style="color:#ae81ff">14</span>, <span style="color:#ae81ff">14</span>, <span style="color:#ae81ff">9</span>), <span style="color:#e6db74">&#39;电影&#39;</span>: <span style="color:#e6db74">&#39;KYmolBhkjSRxloXXFUUT&#39;</span>, <span style="color:#e6db74">&#39;文化&#39;</span>: <span style="color:#ae81ff">2681</span>, <span style="color:#e6db74">&#39;这里&#39;</span>: <span style="color:#e6db74">&#39;uyang@yahoo.com&#39;</span>, <span style="color:#e6db74">&#39;不会&#39;</span>: <span style="color:#e6db74">&#39;ZPkwuxWsrJSHMNuFiWEx&#39;</span>, <span style="color:#e6db74">&#39;社会&#39;</span>: <span style="color:#e6db74">&#39;CiujeaZMZSuyYwuKzEdN&#39;</span>}
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>pyset(nb_elements<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>, variable_nb_elements<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)  <span style="color:#75715e"># 随机set</span>
+</span></span><span style="display:flex;"><span>{<span style="color:#e6db74">&#39;bhe@hotmail.com&#39;</span>, <span style="color:#e6db74">&#39;http://fu.cn/list/home.htm&#39;</span>, <span style="color:#e6db74">&#39;MlJluVirRkofBnKNtphM&#39;</span>, <span style="color:#ae81ff">296</span>, <span style="color:#e6db74">&#39;ghoUSHkuEGmCzlJFKyHZ&#39;</span>, datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">2008</span>, <span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">55</span>, <span style="color:#ae81ff">4</span>), <span style="color:#e6db74">&#39;AgbynHjdvwYpUkbMsfqr&#39;</span>, <span style="color:#ae81ff">8751</span>, <span style="color:#ae81ff">9649</span>, <span style="color:#e6db74">&#39;tangguiying@hotmail.com&#39;</span>, Decimal(<span style="color:#e6db74">&#39;5727570036.91&#39;</span>), <span style="color:#e6db74">&#39;HmDkExndcQIOaTtsSpsc&#39;</span>, <span style="color:#e6db74">&#39;hjQlLLXuHVVzENEwoHJK&#39;</span>}
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>pytuple(nb_elements<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>, variable_nb_elements<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)   <span style="color:#75715e"># 随机tuple</span>
+</span></span><span style="display:flex;"><span>(<span style="color:#e6db74">&#39;http://www.cai.com/index/&#39;</span>, datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">1973</span>, <span style="color:#ae81ff">7</span>, <span style="color:#ae81ff">28</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">12</span>, <span style="color:#ae81ff">23</span>), <span style="color:#e6db74">&#39;khltJQMYJvIDRMYodviZ&#39;</span>, <span style="color:#e6db74">&#39;uJezUsEqiHaiFxwOPWvl&#39;</span>, <span style="color:#e6db74">&#39;qojwZHyytBSQQavkDaTu&#39;</span>, <span style="color:#e6db74">&#39;AHUCHYuVJTHnoSEuQDSY&#39;</span>, <span style="color:#ae81ff">1012</span>, <span style="color:#e6db74">&#39;uEYVuzeTlgVhrnCATfKw&#39;</span>, <span style="color:#e6db74">&#39;https://www.zhou.com/categories/tags/main/&#39;</span>, <span style="color:#e6db74">&#39;LbLSFZPeATtzHvbmYhGr&#39;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>pystruct()  <span style="color:#75715e"># 随机生成3个有10个元素的python数据结构</span>
+</span></span><span style="display:flex;"><span>([datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">1996</span>, <span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">26</span>, <span style="color:#ae81ff">7</span>, <span style="color:#ae81ff">35</span>, <span style="color:#ae81ff">26</span>), datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">1998</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">28</span>, <span style="color:#ae81ff">17</span>, <span style="color:#ae81ff">20</span>, <span style="color:#ae81ff">8</span>), <span style="color:#e6db74">&#39;qianming@hotmail.com&#39;</span>, <span style="color:#e6db74">&#39;yEWMrpTqtAHfbxqldGrb&#39;</span>, <span style="color:#e6db74">&#39;YgKYOnrjuthOrOXhlYIl&#39;</span>, datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">1994</span>, <span style="color:#ae81ff">12</span>, <span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">55</span>, <span style="color:#ae81ff">30</span>), Decimal(<span style="color:#e6db74">&#39;-6865068.3&#39;</span>), <span style="color:#e6db74">&#39;SYHFHiFvJlRVPcCKumUM&#39;</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">8619.4354</span>, <span style="color:#e6db74">&#39;kwGipwcASeALLeKdaWBi&#39;</span>], {<span style="color:#e6db74">&#39;同时&#39;</span>: <span style="color:#e6db74">&#39;BvtYdkNTHwZNMiIIRwKd&#39;</span>, <span style="color:#e6db74">&#39;空间&#39;</span>: <span style="color:#ae81ff">310959668662.457</span>, <span style="color:#e6db74">&#39;特别&#39;</span>: <span style="color:#e6db74">&#39;PZQDBuuQWkcdryMloyKS&#39;</span>, <span style="color:#e6db74">&#39;音乐&#39;</span>: Decimal(<span style="color:#e6db74">&#39;-7219015925.0&#39;</span>), <span style="color:#e6db74">&#39;项目&#39;</span>: <span style="color:#e6db74">&#39;https://www.zhou.cn/main.php&#39;</span>, <span style="color:#e6db74">&#39;回复&#39;</span>: <span style="color:#ae81ff">30.408750841</span>, <span style="color:#e6db74">&#39;显示&#39;</span>: <span style="color:#e6db74">&#39;etZMrsjXJgZpDfZWhpoS&#39;</span>, <span style="color:#e6db74">&#39;大小&#39;</span>: <span style="color:#ae81ff">7472</span>, <span style="color:#e6db74">&#39;类型&#39;</span>: <span style="color:#e6db74">&#39;OsjpxgLqnTcdVOlHoMoP&#39;</span>, <span style="color:#e6db74">&#39;什么&#39;</span>: <span style="color:#e6db74">&#39;http://www.xia.com/posts/app/index/&#39;</span>}, {<span style="color:#e6db74">&#39;朋友&#39;</span>: {<span style="color:#ae81ff">0</span>: <span style="color:#f92672">-</span><span style="color:#ae81ff">415025.243093017</span>, <span style="color:#ae81ff">1</span>: [<span style="color:#ae81ff">1799</span>, <span style="color:#ae81ff">585</span>, <span style="color:#e6db74">&#39;shu@hotmail.com&#39;</span>], <span style="color:#ae81ff">2</span>: {<span style="color:#ae81ff">0</span>: <span style="color:#ae81ff">9980</span>, <span style="color:#ae81ff">1</span>: <span style="color:#e6db74">&#39;qnOnFTzGnsjvXGybBnMF&#39;</span>, <span style="color:#ae81ff">2</span>: [<span style="color:#e6db74">&#39;http://zheng.cn/list/search/tag/faq.html&#39;</span>, Decimal(<span style="color:#e6db74">&#39;964285276661463.0&#39;</span>)]}}, <span style="color:#e6db74">&#39;发生&#39;</span>: {<span style="color:#ae81ff">1</span>: <span style="color:#f92672">-</span><span style="color:#ae81ff">5339010.6134</span>, <span style="color:#ae81ff">2</span>: [datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">1987</span>, <span style="color:#ae81ff">6</span>, <span style="color:#ae81ff">23</span>, <span style="color:#ae81ff">15</span>, <span style="color:#ae81ff">21</span>, <span style="color:#ae81ff">45</span>), <span style="color:#e6db74">&#39;SvSpvKqTXlJvdQhHScwM&#39;</span>, <span style="color:#e6db74">&#39;PZjKOYzZzoNVsHLRcARQ&#39;</span>], <span style="color:#ae81ff">3</span>: {<span style="color:#ae81ff">1</span>: <span style="color:#e6db74">&#39;https://www.yan.cn/register/&#39;</span>, <span style="color:#ae81ff">2</span>: <span style="color:#ae81ff">2191</span>, <span style="color:#ae81ff">3</span>: [<span style="color:#e6db74">&#39;HMHKQuLRBQaaAypRbtHU&#39;</span>, datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">2014</span>, <span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">24</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">32</span>, <span style="color:#ae81ff">36</span>)]}}, <span style="color:#e6db74">&#39;我的&#39;</span>: {<span style="color:#ae81ff">2</span>: <span style="color:#e6db74">&#39;linxia@yahoo.com&#39;</span>, <span style="color:#ae81ff">3</span>: [<span style="color:#e6db74">&#39;http://gu.com/about.php&#39;</span>, <span style="color:#e6db74">&#39;DhzpWYkgLCobGSHDLXzI&#39;</span>, <span style="color:#ae81ff">1420</span>], <span style="color:#ae81ff">4</span>: {<span style="color:#ae81ff">2</span>: datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">1986</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">22</span>, <span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">50</span>, <span style="color:#ae81ff">12</span>), <span style="color:#ae81ff">3</span>: <span style="color:#e6db74">&#39;rRHwQQzkpAMBQxwVITBa&#39;</span>, <span style="color:#ae81ff">4</span>: [datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">1984</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">6</span>, <span style="color:#ae81ff">11</span>, <span style="color:#ae81ff">52</span>, <span style="color:#ae81ff">18</span>), <span style="color:#f92672">-</span><span style="color:#ae81ff">73821572962388.7</span>]}}, <span style="color:#e6db74">&#39;全部&#39;</span>: {<span style="color:#ae81ff">3</span>: <span style="color:#e6db74">&#39;uMQeeBXYNGhrHnAerdjp&#39;</span>, <span style="color:#ae81ff">4</span>: [<span style="color:#ae81ff">323329.56403</span>, <span style="color:#e6db74">&#39;kFvqXFhhtQPNtrOjKtxa&#39;</span>, <span style="color:#e6db74">&#39;http://peng.cn/&#39;</span>], <span style="color:#ae81ff">5</span>: {<span style="color:#ae81ff">3</span>: <span style="color:#e6db74">&#39;lcaoeisYIAOsuRjbOXia&#39;</span>, <span style="color:#ae81ff">4</span>: Decimal(<span style="color:#e6db74">&#39;-902407032449085.0&#39;</span>), <span style="color:#ae81ff">5</span>: [<span style="color:#ae81ff">2296</span>, <span style="color:#e6db74">&#39;uyuWgnsONzLluXqXdASM&#39;</span>]}}, <span style="color:#e6db74">&#39;大小&#39;</span>: {<span style="color:#ae81ff">4</span>: <span style="color:#e6db74">&#39;min63@hotmail.com&#39;</span>, <span style="color:#ae81ff">5</span>: [datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">1991</span>, <span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">22</span>, <span style="color:#ae81ff">19</span>, <span style="color:#ae81ff">21</span>, <span style="color:#ae81ff">48</span>), <span style="color:#e6db74">&#39;cDYEScdIokWuvGhRkWqs&#39;</span>, <span style="color:#e6db74">&#39;XeDJojWyywFvzmWYaokO&#39;</span>], <span style="color:#ae81ff">6</span>: {<span style="color:#ae81ff">4</span>: Decimal(<span style="color:#e6db74">&#39;-4167029.2915827&#39;</span>), <span style="color:#ae81ff">5</span>: <span style="color:#ae81ff">4030</span>, <span style="color:#ae81ff">6</span>: [<span style="color:#ae81ff">6372</span>, <span style="color:#e6db74">&#39;xfRXXEFGsNQpeIGmbaHU&#39;</span>]}}, <span style="color:#e6db74">&#39;语言&#39;</span>: {<span style="color:#ae81ff">5</span>: <span style="color:#e6db74">&#39;https://www.guo.cn/&#39;</span>, <span style="color:#ae81ff">6</span>: [<span style="color:#ae81ff">6498</span>, datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">1981</span>, <span style="color:#ae81ff">12</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">18</span>, <span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">29</span>), <span style="color:#ae81ff">42598100345.61</span>], <span style="color:#ae81ff">7</span>: {<span style="color:#ae81ff">5</span>: <span style="color:#e6db74">&#39;http://zheng.cn/&#39;</span>, <span style="color:#ae81ff">6</span>: <span style="color:#f92672">-</span><span style="color:#ae81ff">229316.268238</span>, <span style="color:#ae81ff">7</span>: [<span style="color:#e6db74">&#39;https://www.qiao.cn/home/&#39;</span>, <span style="color:#e6db74">&#39;GtaEXeVxjRnnkggjEguv&#39;</span>]}}, <span style="color:#e6db74">&#39;表示&#39;</span>: {<span style="color:#ae81ff">6</span>: <span style="color:#e6db74">&#39;xcBvcGUWxdMhDqgzmhSd&#39;</span>, <span style="color:#ae81ff">7</span>: [<span style="color:#e6db74">&#39;kwDaFhyTKqHajGSaNOMf&#39;</span>, <span style="color:#ae81ff">8561</span>, <span style="color:#ae81ff">5456</span>], <span style="color:#ae81ff">8</span>: {<span style="color:#ae81ff">6</span>: <span style="color:#e6db74">&#39;https://zhou.cn/tags/tag/faq.html&#39;</span>, <span style="color:#ae81ff">7</span>: <span style="color:#e6db74">&#39;IGayAZtTQVlSOasQwgug&#39;</span>, <span style="color:#ae81ff">8</span>: [<span style="color:#e6db74">&#39;iCjwBzHfmPSLqAgmIOle&#39;</span>, <span style="color:#ae81ff">70511766106574.5</span>]}}, <span style="color:#e6db74">&#39;电子&#39;</span>: {<span style="color:#ae81ff">7</span>: <span style="color:#e6db74">&#39;http://www.lu.org/tags/posts/terms/&#39;</span>, <span style="color:#ae81ff">8</span>: [datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">1978</span>, <span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">11</span>, <span style="color:#ae81ff">12</span>, <span style="color:#ae81ff">16</span>, <span style="color:#ae81ff">35</span>), <span style="color:#e6db74">&#39;https://song.cn/main/categories/homepage.html&#39;</span>, <span style="color:#e6db74">&#39;https://long.com/register.html&#39;</span>], <span style="color:#ae81ff">9</span>: {<span style="color:#ae81ff">7</span>: <span style="color:#e6db74">&#39;nFJNhyMYBvfTxrYwYPUQ&#39;</span>, <span style="color:#ae81ff">8</span>: <span style="color:#f92672">-</span><span style="color:#ae81ff">2252757903.0</span>, <span style="color:#ae81ff">9</span>: [<span style="color:#e6db74">&#39;GuJnhMEgXoMAivrgGZie&#39;</span>, datetime<span style="color:#f92672">.</span>datetime(<span style="color:#ae81ff">2014</span>, <span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">29</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">17</span>, <span style="color:#ae81ff">50</span>)]}}, <span style="color:#e6db74">&#39;的人&#39;</span>: {<span style="color:#ae81ff">8</span>: <span style="color:#e6db74">&#39;WgHePwYSPgSiPllXpLlJ&#39;</span>, <span style="color:#ae81ff">9</span>: [<span style="color:#ae81ff">1782</span>, <span style="color:#e6db74">&#39;fSepbXwpvhiBphzDTDNC&#39;</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">9117731.63459416</span>], <span style="color:#ae81ff">10</span>: {<span style="color:#ae81ff">8</span>: <span style="color:#ae81ff">5602</span>, <span style="color:#ae81ff">9</span>: <span style="color:#ae81ff">3664</span>, <span style="color:#ae81ff">10</span>: [<span style="color:#e6db74">&#39;http://www.mao.com/search/tag/main/&#39;</span>, Decimal(<span style="color:#e6db74">&#39;5579.7377&#39;</span>)]}}, <span style="color:#e6db74">&#39;不过&#39;</span>: {<span style="color:#ae81ff">9</span>: <span style="color:#e6db74">&#39;rOfkDPTHvzKbfvQHbPNm&#39;</span>, <span style="color:#ae81ff">10</span>: [<span style="color:#ae81ff">314.397</span>, <span style="color:#e6db74">&#39;StqeLyXkIDKHfExSjggk&#39;</span>, <span style="color:#e6db74">&#39;xiuyingkang@gao.cn&#39;</span>], <span style="color:#ae81ff">11</span>: {<span style="color:#ae81ff">9</span>: <span style="color:#e6db74">&#39;BLKNdcccamYzBwRcMxlx&#39;</span>, <span style="color:#ae81ff">10</span>: <span style="color:#e6db74">&#39;yongduan@gong.org&#39;</span>, <span style="color:#ae81ff">11</span>: [<span style="color:#e6db74">&#39;ZocoQHdbhaNloWALnzwt&#39;</span>, <span style="color:#e6db74">&#39;eWVvvHurAlZZRxlYHZXi&#39;</span>]}}})
+</span></span></code></pre></div><h3 id="profile-人物描述信息">profile 人物描述信息</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>profile(fields<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, sex<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>)  <span style="color:#75715e"># 人物描述信息：姓名、性别、地址、公司等</span>
+</span></span><span style="display:flex;"><span>{<span style="color:#e6db74">&#39;job&#39;</span>: <span style="color:#e6db74">&#39;Licensed conveyancer&#39;</span>, <span style="color:#e6db74">&#39;company&#39;</span>: <span style="color:#e6db74">&#39;万迅电脑信息有限公司&#39;</span>, <span style="color:#e6db74">&#39;ssn&#39;</span>: <span style="color:#e6db74">&#39;370684199902182726&#39;</span>, <span style="color:#e6db74">&#39;residence&#39;</span>: <span style="color:#e6db74">&#39;福建省小红市南长广州街K座 406448&#39;</span>, <span style="color:#e6db74">&#39;current_location&#39;</span>: (Decimal(<span style="color:#e6db74">&#39;18.050895&#39;</span>), Decimal(<span style="color:#e6db74">&#39;-0.877117&#39;</span>)), <span style="color:#e6db74">&#39;blood_group&#39;</span>: <span style="color:#e6db74">&#39;0-&#39;</span>, <span style="color:#e6db74">&#39;website&#39;</span>: [<span style="color:#e6db74">&#39;https://www.yi.org/&#39;</span>, <span style="color:#e6db74">&#39;https://www.hu.com/&#39;</span>, <span style="color:#e6db74">&#39;https://www.yin.cn/&#39;</span>], <span style="color:#e6db74">&#39;username&#39;</span>: <span style="color:#e6db74">&#39;minghuang&#39;</span>, <span style="color:#e6db74">&#39;name&#39;</span>: <span style="color:#e6db74">&#39;后英&#39;</span>, <span style="color:#e6db74">&#39;sex&#39;</span>: <span style="color:#e6db74">&#39;F&#39;</span>, <span style="color:#e6db74">&#39;address&#39;</span>: <span style="color:#e6db74">&#39;安徽省秀荣市璧山嘉禾路T座 954960&#39;</span>, <span style="color:#e6db74">&#39;mail&#39;</span>: <span style="color:#e6db74">&#39;czhong@hotmail.com&#39;</span>, <span style="color:#e6db74">&#39;birthdate&#39;</span>: <span style="color:#e6db74">&#39;1975-03-09&#39;</span>}
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> s <span style="color:#f92672">=</span> fake<span style="color:#f92672">.</span>simple_profile(sex<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;m&#34;</span>) <span style="color:#75715e"># 人物精简信息</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#66d9ef">for</span> i,v <span style="color:#f92672">in</span> s<span style="color:#f92672">.</span>items():
+</span></span><span style="display:flex;"><span><span style="color:#f92672">...</span>     print(i,v)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>username chao85
+</span></span><span style="display:flex;"><span>name 邴宇
+</span></span><span style="display:flex;"><span>sex M
+</span></span><span style="display:flex;"><span>address 陕西省东市朝阳廖街Y座 <span style="color:#ae81ff">757661</span>
+</span></span><span style="display:flex;"><span>mail xiazhang<span style="color:#a6e22e">@gmail.com</span>
+</span></span><span style="display:flex;"><span>birthdate <span style="color:#ae81ff">1996</span><span style="color:#f92672">-</span><span style="color:#ae81ff">09</span><span style="color:#f92672">-</span><span style="color:#ae81ff">20</span>
+</span></span></code></pre></div><h3 id="ssn-社会安全码身份证">ssn 社会安全码(身份证)</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>ssn() <span style="color:#75715e"># 随机生成身份证号(18位)</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;140100196612297997&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> len(fake<span style="color:#f92672">.</span>ssn())
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">18</span>
+</span></span></code></pre></div><h3 id="user_agent-用户代理">user_agent 用户代理</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>user_agent() <span style="color:#75715e"># 伪造UA</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/5361 (KHTML, like Gecko) Chrome/15.0.812.0 Safari/5361&#39;</span>
+</span></span></code></pre></div><h3 id="平台信息伪造">平台信息伪造</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>linux_platform_token()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;X11; Linux i686&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>linux_processor()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;i686&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>windows_platform_token()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Windows CE&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>mac_platform_token()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Macintosh; Intel Mac OS X 10_7_4&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>mac_processor()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;PPC&#39;</span>
+</span></span></code></pre></div><h3 id="浏览器伪造">浏览器伪造</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>internet_explorer() <span style="color:#75715e"># IE浏览器</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Mozilla/5.0 (compatible; MSIE 5.0; Windows NT 6.1; Trident/4.0)&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>opera() <span style="color:#75715e"># opera浏览器</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Opera/9.37.(Windows 95; doi-IN) Presto/2.9.178 Version/10.00&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>firefox() <span style="color:#75715e"># firefox浏览器</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Mozilla/5.0 (Windows NT 5.0; te-IN; rv:1.9.2.20) Gecko/2015-09-28 13:29:05 Firefox/12.0&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>safari() <span style="color:#75715e"># safari浏览器</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Mozilla/5.0 (Windows; U; Windows NT 4.0) AppleWebKit/533.37.4 (KHTML, like Gecko) Version/5.0 Safari/533.37.4&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>chrome() <span style="color:#75715e"># chrome浏览器</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Mozilla/5.0 (Windows 98; Win 9x 4.90) AppleWebKit/5361 (KHTML, like Gecko) Chrome/14.0.866.0 Safari/5361&#39;</span>
+</span></span></code></pre></div><h2 id="自定义扩展">自定义扩展</h2>
+<p>Faker 已经提供了足够丰富的信息生成，包括名字、手机号、邮箱地址、邮编等等。尽管如此，可能还是没有办法满足你的需求。这时，可以利用自定义扩展，引用外部的 provider，自定义你要的功能。</p>
+<p>Faker 对象可以通过 <code>add_provider</code> 方法将自定义的 Provider 添加到对象中,自定义的 Provider 需要继承自 BaseProvider。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> faker <span style="color:#f92672">import</span> Faker
+</span></span><span style="display:flex;"><span>fake <span style="color:#f92672">=</span> Faker()
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># first, import a similar Provider or use the default one</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> faker.providers <span style="color:#f92672">import</span> BaseProvider
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># create new provider class</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MyProvider</span>(BaseProvider):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">foo</span>(self):
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#39;bar&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># then add new provider to faker instance</span>
+</span></span><span style="display:flex;"><span>fake<span style="color:#f92672">.</span>add_provider(MyProvider)
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># now you can use:</span>
+</span></span><span style="display:flex;"><span>print(fake<span style="color:#f92672">.</span>foo())
+</span></span></code></pre></div><p>结果显示：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>bar
+</span></span></code></pre></div><h2 id="随机控制">随机控制</h2>
+<p><code>Faker</code> 随机生成由 <code>random.Random</code> 驱动。其中，<code>.random</code> 属性返回 <code>random.Random</code> 对象。通过对该对象的操作，可以实现自定义的行为。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> faker <span style="color:#f92672">import</span> Faker
+</span></span><span style="display:flex;"><span>fake <span style="color:#f92672">=</span> Faker()
+</span></span><span style="display:flex;"><span>fake<span style="color:#f92672">.</span>random
+</span></span><span style="display:flex;"><span>fake<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>getstate()
+</span></span></code></pre></div><p>那么，可以实现什么自定义呢？举个例子，我们可以设置 <code>seed</code>，通过给定的 <code>seed</code> 可以控制每次生成的内容都是一样的。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#f92672">from</span> faker <span style="color:#f92672">import</span> Faker
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake <span style="color:#f92672">=</span> Faker()
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>seed(<span style="color:#ae81ff">4321</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>name()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Ryan Gallagher&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>address()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;7631 Johnson Village Suite 690</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">Adamsbury, NC 50008&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>seed(<span style="color:#ae81ff">4321</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>name()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;Ryan Gallagher&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> fake<span style="color:#f92672">.</span>address()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;7631 Johnson Village Suite 690</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">Adamsbury, NC 50008&#39;</span>
+</span></span></code></pre></div><p>不同的两次运行，只要seed一样，生成出来的信息就是一样的。</p>
+<p>注意：<code>fake.random.seed(4321)</code> 可以写成 <code>fake.seed(4321)</code> 。</p>
+<h2 id="命令行生成">命令行生成</h2>
+<p>有时想在shell或者其他程序中生成一些伪数据，是不是一定要写一个Python脚本呢？别急——Faker提供了一个命令行工具，估计可以应对大部分场景了：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">$</span> faker address
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">968</span> Bahringer Garden Apt<span style="color:#f92672">.</span> <span style="color:#ae81ff">722</span>Kristinaland, NJ <span style="color:#ae81ff">09890</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">$</span> python3 <span style="color:#f92672">-</span>m faker address
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">432</span> Marvin Wells Apt<span style="color:#f92672">.</span> <span style="color:#ae81ff">593</span>\nWest Eric, DC <span style="color:#ae81ff">45650</span><span style="color:#f92672">-</span><span style="color:#ae81ff">8420</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">$</span> faker <span style="color:#f92672">-</span>l de_DE address
+</span></span><span style="display:flex;"><span>Samira<span style="color:#f92672">-</span>Niemeier<span style="color:#f92672">-</span>Allee <span style="color:#ae81ff">5694812</span> Biedenkopf
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">$</span> faker profile
+</span></span><span style="display:flex;"><span>{<span style="color:#e6db74">&#39;job&#39;</span>: <span style="color:#e6db74">&#39;Designer, blown glass/stained glass&#39;</span>, <span style="color:#e6db74">&#39;company&#39;</span>: <span style="color:#e6db74">&#39;Dennis-Bowers&#39;</span>, <span style="color:#e6db74">&#39;ssn&#39;</span>: <span style="color:#e6db74">&#39;034-28-9965&#39;</span>, <span style="color:#e6db74">&#39;residence&#39;</span>: <span style="color:#e6db74">&#39;34796 Jeremiah Station Apt. 782</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">West Timothy, TX 24139-6974&#39;</span>, <span style="color:#e6db74">&#39;current_location&#39;</span>: (Decimal(<span style="color:#e6db74">&#39;-47.425017&#39;</span>), Decimal(<span style="color:#e6db74">&#39;-42.743615&#39;</span>)), <span style="color:#e6db74">&#39;blood_group&#39;</span>: <span style="color:#e6db74">&#39;0+&#39;</span>, <span style="color:#e6db74">&#39;website&#39;</span>: [<span style="color:#e6db74">&#39;https://www.gardner.biz/&#39;</span>, <span style="color:#e6db74">&#39;http://glover-ellison.info/&#39;</span>, <span style="color:#e6db74">&#39;http://www.harrison.biz/&#39;</span>], <span style="color:#e6db74">&#39;username&#39;</span>: <span style="color:#e6db74">&#39;patrick33&#39;</span>, <span style="color:#e6db74">&#39;name&#39;</span>: <span style="color:#e6db74">&#39;Alexandra Montgomery&#39;</span>, <span style="color:#e6db74">&#39;sex&#39;</span>: <span style="color:#e6db74">&#39;F&#39;</span>, <span style="color:#e6db74">&#39;address&#39;</span>: <span style="color:#e6db74">&#39;2314 Collier Stream Suite 093</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">Mcintyreside, UT 19553&#39;</span>, <span style="color:#e6db74">&#39;mail&#39;</span>: <span style="color:#e6db74">&#39;gomezterri@hotmail.com&#39;</span>, <span style="color:#e6db74">&#39;birthdate&#39;</span>: <span style="color:#e6db74">&#39;2005-01-30&#39;</span>}
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">$</span> faker profile ssn,name
+</span></span><span style="display:flex;"><span>{<span style="color:#e6db74">&#39;ssn&#39;</span>: <span style="color:#e6db74">&#39;344-68-7420&#39;</span>, <span style="color:#e6db74">&#39;name&#39;</span>: <span style="color:#e6db74">&#39;Veronica Brennan&#39;</span>}
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">$</span> faker <span style="color:#f92672">-</span>r<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">-</span>s<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;;&#34;</span> name
+</span></span><span style="display:flex;"><span>Willam Kertzmann;
+</span></span><span style="display:flex;"><span>Josiah Maggio;
+</span></span><span style="display:flex;"><span>Gayla Schmitt;
+</span></span></code></pre></div><p>faker 命令帮助：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>faker [<span style="color:#f92672">-</span>h] [<span style="color:#f92672">--</span>version] [<span style="color:#f92672">-</span>o output]
+</span></span><span style="display:flex;"><span>      [<span style="color:#f92672">-</span>l {bg_BG,cs_CZ,<span style="color:#f92672">...</span>,zh_CN,zh_TW}]
+</span></span><span style="display:flex;"><span>      [<span style="color:#f92672">-</span>r REPEAT] [<span style="color:#f92672">-</span>s SEP]
+</span></span><span style="display:flex;"><span>      [<span style="color:#f92672">-</span>i {module<span style="color:#f92672">.</span>containing<span style="color:#f92672">.</span>custom_provider othermodule<span style="color:#f92672">.</span>containing<span style="color:#f92672">.</span>custom_provider}]
+</span></span><span style="display:flex;"><span>      [fake] [fake argument [fake argument <span style="color:#f92672">...</span>]]
+</span></span></code></pre></div><p>选项说明：</p>
+<ul>
+<li><code>faker</code> ： 在shell中，<code>faker</code> 命令也可以用 <code>python -m faker</code> 来代替</li>
+<li><code>-h</code>，<code>--help</code> ： 帮助信息</li>
+<li><code>--version</code> ：显示版本</li>
+<li><code>-o FILENAM</code> ：输出结果到文件中</li>
+<li><code>-l {bg_BG,cs_CZ,...,zh_CN,zh_TW}</code> ：指定本地化，<code>zh_CN</code> 表示中文</li>
+<li><code>-r REPEAT</code> ：指定生成多少条相同类型的数据</li>
+<li><code>-s SEP</code> ：在每个输出后边添加指定的分隔符</li>
+<li><code>-i {my.custom_provider other.custom_provider}</code> ：自定义扩展，<code>prividers</code>列表。注意，这里要指定包含你 <code>provider</code> 类的模块的路径，而不是程序本身。</li>
+<li><code>fake</code> ：指定方法名称，如：<code>name</code> , <code>address</code> , <code>text</code> 等</li>
+<li><code>[fake argument ...]</code> ：为方法指定参数。如上例，为 <code>profile</code> 方法指定 <code>ssn</code> 和 <code>name</code> 参数，只输出这两个类型的内容。</li>
+</ul>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90/">数据分析</a>
+        
+            <a href="/tags/python/">Python</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/matplotlib%E4%B8%ADpyplot%E9%A2%9C%E8%89%B2%E6%98%A0%E5%B0%84%E5%8F%82%E6%95%B0%E6%95%B4%E7%90%86/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">matplotlib中pyplot颜色映射参数整理</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E7%94%A820%E8%A1%8C%E4%BB%A3%E7%A0%81%E7%88%AC%E5%8F%96%E5%8D%95%E4%B8%AA%E5%9B%BE%E7%89%87%E6%88%96%E8%80%85%E8%A7%86%E9%A2%91/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">用20行代码爬取单个图片或者视频</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E8%A7%A3%E5%86%B3%E4%BD%BF%E7%94%A8pip%E5%AE%89%E8%A3%85%E7%AC%AC%E4%B8%89%E6%96%B9%E5%8C%85%E5%87%BA%E7%8E%B0%E6%8B%92%E7%BB%9D%E8%AE%BF%E9%97%AE%E7%9A%84%E9%94%99%E8%AF%AF/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">解决使用pip安装第三方包出现‘拒绝访问’的错误</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E6%9A%82%E6%97%B6%E8%A7%A3%E5%86%B3pycharm%E5%87%BA%E7%8E%B0runtime-error-r6034%E7%9A%84%E6%8A%A5%E9%94%99/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">暂时解决Pycharm出现Runtime Error R6034的报错</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

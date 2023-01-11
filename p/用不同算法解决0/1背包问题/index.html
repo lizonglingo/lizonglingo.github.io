@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='0/1背包问题是算法中很经典的问题，具体内容题目内容不再赘述，需要请自行搜索.. 蛮力法 思想 蛮力法的基本思想就是遍历 时间复杂度 Ω(2^n) 代码'>
+<title>用不同算法解决0/1背包问题</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/%E7%94%A8%E4%B8%8D%E5%90%8C%E7%AE%97%E6%B3%95%E8%A7%A3%E5%86%B30/1%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='用不同算法解决0/1背包问题'>
+<meta property='og:description' content='0/1背包问题是算法中很经典的问题，具体内容题目内容不再赘述，需要请自行搜索.. 蛮力法 思想 蛮力法的基本思想就是遍历 时间复杂度 Ω(2^n) 代码'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/%E7%94%A8%E4%B8%8D%E5%90%8C%E7%AE%97%E6%B3%95%E8%A7%A3%E5%86%B30/1%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='算法' /><meta property='article:published_time' content='2019-11-21T14:34:04&#43;08:00'/><meta property='article:modified_time' content='2019-11-21T14:34:04&#43;08:00'/>
+<meta name="twitter:title" content="用不同算法解决0/1背包问题">
+<meta name="twitter:description" content="0/1背包问题是算法中很经典的问题，具体内容题目内容不再赘述，需要请自行搜索.. 蛮力法 思想 蛮力法的基本思想就是遍历 时间复杂度 Ω(2^n) 代码">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#蛮力法">蛮力法</a></li>
+    <li><a href="#回溯法">回溯法</a></li>
+    <li><a href="#分支限界法">分支限界法</a></li>
+    <li><a href="#动态规划">动态规划</a></li>
+    <li><a href="#贪心法">贪心法</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E7%AE%97%E6%B3%95/" >
+                算法
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/%E7%94%A8%E4%B8%8D%E5%90%8C%E7%AE%97%E6%B3%95%E8%A7%A3%E5%86%B30/1%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98/">用不同算法解决0/1背包问题</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Nov 21, 2019</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 11 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>0/1背包问题是算法中很经典的问题，具体内容题目内容不再赘述，需要请自行搜索..</p>
+</blockquote>
+<h2 id="蛮力法">蛮力法</h2>
+<ul>
+<li>
+<p>思想</p>
+<p>蛮力法的基本思想就是<strong>遍历</strong></p>
+</li>
+<li>
+<p>时间复杂度</p>
+<p>Ω(2^n)</p>
+</li>
+<li>
+<p>代码</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#75715e">// 伪代码如下
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#960050;background-color:#1e0010">输入：重量</span>{w1,w2,w3,...,wn} <span style="color:#960050;background-color:#1e0010">价值</span>{v1,v2,v3,...,vn} <span style="color:#960050;background-color:#1e0010">容量</span>C
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">输出：装入背包物品的编号和最大价值</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">1.</span> maxValue<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span><span style="color:#960050;background-color:#1e0010">；结果子集</span>S<span style="color:#f92672">=</span>{}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">2.</span> <span style="color:#960050;background-color:#1e0010">对集合</span>{<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,...,n}<span style="color:#960050;background-color:#1e0010">每一个子集</span>T<span style="color:#960050;background-color:#1e0010">，都有：</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ae81ff">2.1</span> <span style="color:#960050;background-color:#1e0010">初始化背包价值</span>value<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span><span style="color:#960050;background-color:#1e0010">，背包重量</span>weight<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ae81ff">2.2</span> <span style="color:#960050;background-color:#1e0010">对每个子集里的每个元素</span>j
+</span></span><span style="display:flex;"><span>    	<span style="color:#ae81ff">2.2.1</span> <span style="color:#66d9ef">if</span> weight<span style="color:#f92672">+</span>wj <span style="color:#f92672">&lt;=</span> C then weight<span style="color:#f92672">+=</span>wj value<span style="color:#f92672">+=</span>vj
+</span></span><span style="display:flex;"><span>    	<span style="color:#ae81ff">2.2.2</span> <span style="color:#66d9ef">else</span> <span style="color:#960050;background-color:#1e0010">子集元素还没选完就超重，转</span><span style="color:#ae81ff">2</span><span style="color:#960050;background-color:#1e0010">进行下一个子集</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ae81ff">2.3</span> <span style="color:#960050;background-color:#1e0010">进行到此处某个子集中的元素全部放入背包</span>
+</span></span><span style="display:flex;"><span>    	<span style="color:#ae81ff">2.3.1</span> <span style="color:#66d9ef">if</span> value <span style="color:#f92672">&gt;</span> maxValue then maxValue<span style="color:#f92672">&lt;-</span>value S<span style="color:#f92672">&lt;-</span>T
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">3.</span> <span style="color:#960050;background-color:#1e0010">输出</span>S<span style="color:#960050;background-color:#1e0010">中的元素和</span>maxValue<span style="color:#960050;background-color:#1e0010">，结束</span>
+</span></span></code></pre></div></li>
+</ul>
+<h2 id="回溯法">回溯法</h2>
+<ul>
+<li>
+<p>思想</p>
+<p><strong>解空间树</strong> + 使用<strong>限定条件</strong>进行<strong>剪枝</strong></p>
+<p>在状态空间树的任意一个部分解结点处应该有以下两个判定函数：</p>
+<p>1）当前部分解的总重量小于背包容量</p>
+<p>2）当前问题状态下继续向前搜索搜索可以找到比目前已知解的总价值更大的解</p>
+</li>
+<li>
+<p>时间复杂度</p>
+<p>本质是蛮力法，时间通常也为<strong>指数阶</strong></p>
+</li>
+<li>
+<p>代码</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#75715e">// 伪代码如下
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#960050;background-color:#1e0010">输入：重量</span>W<span style="color:#f92672">=</span>{w0,w1,w2,...,wn} <span style="color:#960050;background-color:#1e0010">价值</span>V<span style="color:#f92672">=</span>{v0,v1,v2,...,vn} <span style="color:#960050;background-color:#1e0010">容量</span>C
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">输出：装入背包物品的编号和最大价值</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">1.</span> maxValue<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span><span style="color:#960050;background-color:#1e0010">；结果子集</span>S<span style="color:#f92672">=</span>{}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">2.</span> <span style="color:#960050;background-color:#1e0010">将背包的物品按照单位价值降序排序，相应的改变集合</span>W<span style="color:#960050;background-color:#1e0010">和</span>V
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">3.</span> <span style="color:#960050;background-color:#1e0010">解空间树的层数</span>layer<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span><span style="color:#960050;background-color:#1e0010">，当前重量</span>cw<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span><span style="color:#960050;background-color:#1e0010">，当前价值</span>cv<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span><span style="color:#960050;background-color:#1e0010">，当前所选物品集合</span>cs<span style="color:#f92672">=</span>{}<span style="color:#960050;background-color:#1e0010">，进行如下的递归</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#ae81ff">3.1</span> <span style="color:#66d9ef">if</span> layer<span style="color:#f92672">==</span>n <span style="color:#960050;background-color:#1e0010">到达叶子结点</span>
+</span></span><span style="display:flex;"><span>    	<span style="color:#ae81ff">3.1.1</span> <span style="color:#66d9ef">if</span> cv <span style="color:#f92672">&gt;</span> maxValue then maxValue<span style="color:#f92672">=</span>cv S<span style="color:#f92672">=</span>cs
+</span></span><span style="display:flex;"><span>    <span style="color:#ae81ff">3.2</span> <span style="color:#960050;background-color:#1e0010">没有到达叶子结点，</span><span style="color:#66d9ef">for</span> j<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span> to <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>    	<span style="color:#ae81ff">3.2.1</span> <span style="color:#960050;background-color:#1e0010">判断在此节点处是否满足这两个条件：</span>
+</span></span><span style="display:flex;"><span>    		<span style="color:#ae81ff">1</span><span style="color:#960050;background-color:#1e0010">）装入第</span>layer<span style="color:#960050;background-color:#1e0010">个物品后不超重</span> 
+</span></span><span style="display:flex;"><span>    		<span style="color:#ae81ff">2</span><span style="color:#960050;background-color:#1e0010">）此节点处期望最大值大于</span>maxValue
+</span></span><span style="display:flex;"><span>    		<span style="color:#960050;background-color:#1e0010">如果两个不同时满足，剪枝</span>	
+</span></span><span style="display:flex;"><span>    		<span style="color:#960050;background-color:#1e0010">如果同时满足：根据</span>j<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span><span style="color:#960050;background-color:#1e0010">或</span>j<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span><span style="color:#960050;background-color:#1e0010">更新</span>cv,cw,cs
+</span></span><span style="display:flex;"><span>    	<span style="color:#ae81ff">3.2.2</span> <span style="color:#960050;background-color:#1e0010">进行下一层</span> layer<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span><span style="color:#960050;background-color:#1e0010">，</span>cv<span style="color:#960050;background-color:#1e0010">，</span>cw<span style="color:#960050;background-color:#1e0010">，</span>cs<span style="color:#960050;background-color:#1e0010">递归</span>
+</span></span><span style="display:flex;"><span>    	<span style="color:#ae81ff">3.2.3</span> <span style="color:#960050;background-color:#1e0010">回滚</span>cv,cw,cs<span style="color:#960050;background-color:#1e0010">到递归前的值</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">4.</span> <span style="color:#960050;background-color:#1e0010">输出</span>S<span style="color:#960050;background-color:#1e0010">中的元素和</span>maxValue<span style="color:#960050;background-color:#1e0010">，结束</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 核心代码
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 计算剩余物品都装下时的最大价值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span> Bound_sv(<span style="color:#66d9ef">int</span> layer, <span style="color:#66d9ef">int</span> cv) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> layer;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> sv <span style="color:#f92672">=</span> cv;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> (i; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>        sv <span style="color:#f92672">+=</span> goods[i].value;		<span style="color:#75715e">// 剩余物品都装下时的最大价值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> sv;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 计算期望最大价值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">double</span> <span style="color:#a6e22e">Bound</span>(<span style="color:#66d9ef">int</span> layer,<span style="color:#66d9ef">int</span> cv,<span style="color:#66d9ef">int</span> cw){
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> layer;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">double</span> sv <span style="color:#f92672">=</span> <span style="color:#66d9ef">double</span>(cv);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> cr <span style="color:#f92672">=</span> capacity <span style="color:#f92672">-</span> cw;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span> (i<span style="color:#f92672">&lt;</span>set_number <span style="color:#f92672">&amp;&amp;</span> goods[i].weight <span style="color:#f92672">&lt;=</span> cr)
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        cr <span style="color:#f92672">-=</span> goods[i].weight;
+</span></span><span style="display:flex;"><span>        sv <span style="color:#f92672">=</span> sv <span style="color:#f92672">+</span> goods[i].value;
+</span></span><span style="display:flex;"><span>        i<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (i <span style="color:#f92672">&lt;</span> set_number)
+</span></span><span style="display:flex;"><span>        sv <span style="color:#f92672">=</span> sv <span style="color:#f92672">+</span> goods[i].ave_value <span style="color:#f92672">*</span> cr;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> sv;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Using back track method to get max value
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">BackTrack</span>(<span style="color:#66d9ef">int</span> layer, <span style="color:#66d9ef">int</span> current_value, <span style="color:#66d9ef">int</span> current_weight) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// layer代表回溯层数，其余参数分别代表当前价值以及当前重量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">//double expect_sumValue = 0;		// 记录期望价值总和
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (layer <span style="color:#f92672">==</span> set_number) {		<span style="color:#75715e">// if layer bigger than number, over
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 注意这个地方，不用大于 ！！！
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (current_value <span style="color:#f92672">&gt;</span> maxValue) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            maxValue <span style="color:#f92672">=</span> current_value;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>                max_set[i] <span style="color:#f92672">=</span> current_set[i];
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> j <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; j <span style="color:#f92672">&lt;=</span> <span style="color:#ae81ff">1</span>; j<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            current_set[layer] <span style="color:#f92672">=</span> j;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">/************************剪枝**************************/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (
+</span></span><span style="display:flex;"><span>                current_weight <span style="color:#f92672">+</span> current_set[layer] <span style="color:#f92672">*</span> goods[layer].weight <span style="color:#f92672">&lt;=</span> capacity
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">&amp;&amp;</span> Bound_sv(layer,current_value) <span style="color:#f92672">&gt;=</span> maxValue <span style="color:#f92672">&amp;&amp;</span> Bound(layer,current_value,current_weight) <span style="color:#f92672">&gt;</span> maxValue
+</span></span><span style="display:flex;"><span>            )
+</span></span><span style="display:flex;"><span>            {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 更新当前背包物品的总重量，目前背包物品的总价值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                current_weight <span style="color:#f92672">+=</span> (goods[layer].weight <span style="color:#f92672">*</span> current_set[layer]);
+</span></span><span style="display:flex;"><span>                current_value <span style="color:#f92672">+=</span> (goods[layer].value <span style="color:#f92672">*</span> current_set[layer]);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 继续进行子树的递归
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                BackTrack(layer <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>, current_value, current_weight);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 递归出来后回滚数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                current_weight <span style="color:#f92672">-=</span> (goods[layer].weight <span style="color:#f92672">*</span> current_set[layer]);
+</span></span><span style="display:flex;"><span>                current_value <span style="color:#f92672">-=</span> (goods[layer].value <span style="color:#f92672">*</span> current_set[layer]);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+</ul>
+<h2 id="分支限界法">分支限界法</h2>
+<ul>
+<li>
+<p>思想</p>
+<p><strong>广度优先策略</strong>搜索解空间树，对待处理的根节点根据<strong>限界函数</strong>估算目标函数的可能取值，选择目标函数<strong>极大或者极小</strong>的结点<strong>优先进行广度搜索</strong>，不断<strong>调整搜索方向</strong>，尽可能早的找到最优解。</p>
+</li>
+<li>
+<p>时间复杂度</p>
+<p>本质还是<strong>蛮力法</strong>，最坏情况下时间复杂度还是指数阶</p>
+</li>
+<li>
+<p>代码</p>
+</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#75715e">// 伪代码如下
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#960050;background-color:#1e0010">输入：</span>n<span style="color:#960050;background-color:#1e0010">个物品的重量</span>w[n]<span style="color:#960050;background-color:#1e0010">，价值</span>v[n]<span style="color:#960050;background-color:#1e0010">，背包容量</span>W
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">输出：背包获得的最大价值和装入背包的物品</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">1.</span> <span style="color:#960050;background-color:#1e0010">根据界限函数计算目标函数的上界</span>up<span style="color:#960050;background-color:#1e0010">，使用贪心法计算目标函数的下界</span>down
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">2.</span> <span style="color:#960050;background-color:#1e0010">计算根节点的目标函数值并且加入</span>PT<span style="color:#960050;background-color:#1e0010">表</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">3.</span> <span style="color:#960050;background-color:#1e0010">循环直到某个叶子节点的目标函数值在表</span>PT<span style="color:#960050;background-color:#1e0010">中去取极大值</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ae81ff">3.1</span> i<span style="color:#f92672">=</span>PT<span style="color:#960050;background-color:#1e0010">表中具有最大值的结点</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ae81ff">3.2</span> <span style="color:#960050;background-color:#1e0010">对结点</span>i<span style="color:#960050;background-color:#1e0010">的每个孩子结点</span>x<span style="color:#960050;background-color:#1e0010">执行下述操作：</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#ae81ff">3.2.1</span> <span style="color:#960050;background-color:#1e0010">如果孩子</span>x<span style="color:#960050;background-color:#1e0010">结点不满足约束条件，则丢弃该节点</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#ae81ff">3.2.2</span> <span style="color:#960050;background-color:#1e0010">否则，估算结点</span>x<span style="color:#960050;background-color:#1e0010">的目标函数的取值</span>lb<span style="color:#960050;background-color:#1e0010">，将其加入表</span>PT<span style="color:#960050;background-color:#1e0010">中</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">4.</span> <span style="color:#960050;background-color:#1e0010">将叶子节点对应的最优解输出，回溯得到最优解的各个分量</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> tree_node_id <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;		<span style="color:#75715e">// 解空间树结点id 1开始
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> lower_bound <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;		<span style="color:#75715e">// 目标函数的下界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 贪心法求背包容量的下界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">greed</span>() {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> temp[MAX] <span style="color:#f92672">=</span> { <span style="color:#ae81ff">0</span> };		<span style="color:#75715e">// 定义临时数组，用来表示货物向量，并初始化为0
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> cap <span style="color:#f92672">=</span> capacity;			<span style="color:#75715e">// 暂存背包容量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> w <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;					<span style="color:#75715e">// 当前背包容量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> updown <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;				<span style="color:#75715e">// 下界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 对背包物品按照单位价值进行排序
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    sort_set();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 求解
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 如果超重，跳出
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> ((w<span style="color:#f92672">+</span>goods[i].weight) <span style="color:#f92672">&gt;</span> cap) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">continue</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        temp[i] <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>        w <span style="color:#f92672">+=</span> goods[i].weight;
+</span></span><span style="display:flex;"><span>        updown <span style="color:#f92672">+=</span> (temp[i] <span style="color:#f92672">*</span> goods[i].value);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;解的下界是：&#34;</span> <span style="color:#f92672">&lt;&lt;</span> updown <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> updown;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 限界函数求上界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">limit</span>(ND <span style="color:#f92672">&amp;</span>n)				        <span style="color:#75715e">//计算分枝结点的上界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 下一个要选的物品就是第layer层物品
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> w <span style="color:#f92672">=</span> n.current_weight;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">double</span> v <span style="color:#f92672">=</span> n.current_value;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> n.layer;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span> (i <span style="color:#f92672">&lt;</span> set_number <span style="color:#f92672">&amp;&amp;</span> w <span style="color:#f92672">+</span> goods[i].weight <span style="color:#f92672">&lt;=</span> capacity) {
+</span></span><span style="display:flex;"><span>        w <span style="color:#f92672">+=</span> goods[i].weight;
+</span></span><span style="display:flex;"><span>        v <span style="color:#f92672">+=</span> goods[i].value;
+</span></span><span style="display:flex;"><span>        i<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (i <span style="color:#f92672">&lt;</span> set_number) {  <span style="color:#75715e">// 装部分物品
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        n.ub <span style="color:#f92672">=</span> v <span style="color:#f92672">+</span> (capacity <span style="color:#f92672">-</span> w)<span style="color:#f92672">*</span>goods[i].ave_value;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        n.ub <span style="color:#f92672">=</span> v;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 优先队列进队操作
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">EnQueue</span>(ND n, priority_queue<span style="color:#f92672">&lt;</span>ND<span style="color:#f92672">&gt;</span> <span style="color:#f92672">&amp;</span>q) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (n.layer <span style="color:#f92672">==</span> set_number) {		<span style="color:#75715e">// 已经到达叶子结点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (n.current_value <span style="color:#f92672">&gt;</span> maxValue) {		<span style="color:#75715e">// 更新maxValue
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            maxValue <span style="color:#f92672">=</span> n.current_value;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>                max_set[i] <span style="color:#f92672">=</span> n.cset[i];
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>        q.push(n);			<span style="color:#75715e">// 非叶子结点进队
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 分支限界法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">branchAndbound</span>() {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 首先使用贪心法求解此goods集合的目标值下界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    lower_bound <span style="color:#f92672">=</span> greed();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    priority_queue<span style="color:#f92672">&lt;</span>ND<span style="color:#f92672">&gt;</span> q;		<span style="color:#75715e">// 优先队列
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    ND n0, n1, n2;				<span style="color:#75715e">// 先定义根结点，左孩子结点，右孩子结点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*初始化根节点*/</span>
+</span></span><span style="display:flex;"><span>    n0.id <span style="color:#f92672">=</span> tree_node_id<span style="color:#f92672">++</span>;		
+</span></span><span style="display:flex;"><span>    n0.layer <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>    n0.current_value <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>    n0.current_weight <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>        n0.cset[i] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    limit(n0);					<span style="color:#75715e">// 求根结点上界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    q.push(n0);					<span style="color:#75715e">// 根结点进队
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span> (<span style="color:#f92672">!</span>q.empty())			<span style="color:#75715e">// 队不空循环
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    {
+</span></span><span style="display:flex;"><span>        n0 <span style="color:#f92672">=</span> q.top();				<span style="color:#75715e">// 取队头
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        q.pop();				<span style="color:#75715e">// 出队
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (n0.current_weight <span style="color:#f92672">+</span> goods[n0.layer].weight <span style="color:#f92672">&lt;=</span> capacity <span style="color:#f92672">&amp;&amp;</span> n0.ub <span style="color:#f92672">&gt;=</span> lower_bound) {	<span style="color:#75715e">// 超重剪枝 小于最小期望重量剪枝
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 设置左孩子结点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            n1.id <span style="color:#f92672">=</span> tree_node_id<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>            n1.layer <span style="color:#f92672">=</span> n0.layer <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>            n1.current_weight <span style="color:#f92672">=</span> n0.current_weight <span style="color:#f92672">+</span> goods[n0.layer].weight;
+</span></span><span style="display:flex;"><span>            n1.current_value <span style="color:#f92672">=</span> n0.current_value <span style="color:#f92672">+</span> goods[n0.layer].value;
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">/*复制解向量*/</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>                n1.cset[i] <span style="color:#f92672">=</span> n0.cset[i];
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            n1.cset[n1.layer<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;			<span style="color:#75715e">// 更新解向量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            limit(n1);						<span style="color:#75715e">// 求限界函数上界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            EnQueue(n1, q);					<span style="color:#75715e">// 左孩子进队
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 设置右孩子结点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        n2.id <span style="color:#f92672">=</span> tree_node_id<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>        n2.layer <span style="color:#f92672">=</span> n0.layer <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>        n2.current_value <span style="color:#f92672">=</span> n0.current_value;
+</span></span><span style="display:flex;"><span>        n2.current_weight <span style="color:#f92672">=</span> n0.current_weight;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 复制解向量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>            n2.cset[i] <span style="color:#f92672">=</span> n0.cset[i];
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        n2.cset[n2.layer<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;		 <span style="color:#75715e">// 更新解向量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        limit(n2);					<span style="color:#75715e">// 求界限函数上界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (n2.ub <span style="color:#f92672">&gt;</span> maxValue <span style="color:#f92672">&amp;&amp;</span> n2.ub <span style="color:#f92672">&gt;=</span> lower_bound) {		<span style="color:#75715e">// 剪枝，期望最大值小于已有最大值就剪枝  小于最小期望重量剪枝
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            EnQueue(n2, q);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="动态规划">动态规划</h2>
+<ul>
+<li>
+<p>思想</p>
+<p>处理<strong>多阶段决策最优化问题</strong>，多阶段决策过程满足<strong>最优性原理</strong></p>
+<p>1）划分子问题</p>
+<p>2）确定动态规划函数</p>
+<p>3）填表</p>
+</li>
+</ul>
+<h2 id="贪心法">贪心法</h2>
+<p><strong>对于0/1背包来说，贪心法在一些时候是无法求得最优解的，所以不要万不得已还是不要选择贪心法了</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">分别用、蛮力法、回溯法和分支限界法 实现0/1背包问题的求解
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">*/</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 蛮力法求解0/1背包
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;iostream&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;time.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;algorithm&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;queue&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;sys/timeb.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;math.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">using</span> <span style="color:#66d9ef">namespace</span> std;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#define MAX 100000
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Good is the struct of good which has three elememt
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Good</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> value <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> weight <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">double</span> ave_value <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}GD;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 定义按照单位重量降序排序的规则
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">sort_rule</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">bool</span> <span style="color:#a6e22e">operator</span>()(<span style="color:#66d9ef">const</span> GD <span style="color:#f92672">&amp;</span>good1, <span style="color:#66d9ef">const</span> GD <span style="color:#f92672">&amp;</span>good2) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> good1.ave_value <span style="color:#f92672">&gt;</span> good2.ave_value;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 定义用于分支限界法的树结点结构体
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">typedef struct Node {
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	int current_weight = 0;				// 到达此结点时背包所有物品的总重量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	int current_value = 0;				// 到达此结点时背包所有物品的总价值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	double result_of_Obj_func = 0;		// 此结点的目标函数的值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	// bool biggest = true;				// 是否是此时的最大结点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">}ND;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">*/</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Node</span> { <span style="color:#75715e">// 分支限界法树结点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> id;								<span style="color:#75715e">// 结点编号
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> layer;							<span style="color:#75715e">// 当前结点所在树的层数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> current_weight <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;				<span style="color:#75715e">// 当前结点的总重量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">int</span> current_value <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;				<span style="color:#75715e">// 当前结点的总价值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">double</span> ub <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;						<span style="color:#75715e">// 当前结点的限界函数值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> cset[MAX] <span style="color:#f92672">=</span> { <span style="color:#ae81ff">0</span> };				<span style="color:#75715e">// 当前背包的解向量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">bool</span> <span style="color:#66d9ef">operator</span><span style="color:#f92672">&lt;</span>(<span style="color:#66d9ef">const</span> Node<span style="color:#f92672">&amp;</span> nd) <span style="color:#66d9ef">const</span> {		<span style="color:#75715e">// 定义优先队列出队规则，限界函数值越大越先出队
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> ub <span style="color:#f92672">&lt;</span> nd.ub;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}ND;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 公用 -&gt; 获取时间函数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">long</span> <span style="color:#66d9ef">long</span> <span style="color:#a6e22e">getSystemTime</span>() {
+</span></span><span style="display:flex;"><span>	timeb t;
+</span></span><span style="display:flex;"><span>	ftime(<span style="color:#f92672">&amp;</span>t);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> t.time <span style="color:#f92672">*</span> <span style="color:#ae81ff">1000</span> <span style="color:#f92672">+</span> t.millitm;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Bag</span> {		<span style="color:#75715e">// 基类，用作蛮力法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">protected</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">int</span> set_number;					<span style="color:#75715e">// 集合元素个数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">int</span> capacity;					<span style="color:#75715e">// 背包容量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">int</span> maxValue <span style="color:#f92672">=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;					<span style="color:#75715e">// 最大重量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 定义时间变量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">long</span> <span style="color:#66d9ef">long</span> t1;
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">long</span> <span style="color:#66d9ef">long</span> t2;
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">long</span> <span style="color:#66d9ef">long</span> sum_time <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		GD goods[MAX];
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">int</span> max_set[MAX] <span style="color:#f92672">=</span> { <span style="color:#ae81ff">0</span> };		<span style="color:#75715e">// max_set为标志数组
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">int</span> current_set[MAX] <span style="color:#f92672">=</span> { <span style="color:#ae81ff">0</span> };	<span style="color:#75715e">// define current_set to save current set
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 初始化重量集合
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">set_weights</span>(<span style="color:#66d9ef">int</span> N) {
+</span></span><span style="display:flex;"><span>			
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">int</span> sum_w <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> N; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>				goods[i].weight <span style="color:#f92672">=</span> (rand() <span style="color:#f92672">%</span> <span style="color:#ae81ff">10</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>				sum_w <span style="color:#f92672">+=</span> goods[i].weight;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			capacity <span style="color:#f92672">=</span> sum_w <span style="color:#f92672">/</span> <span style="color:#ae81ff">2</span>;
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 初始化价值集合
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">set_values</span>(<span style="color:#66d9ef">int</span> N) {
+</span></span><span style="display:flex;"><span>			
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> N; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>				<span style="color:#75715e">//values[i] = (rand() % 5 + 1) * 10 + ((rand() % 10) + 1);		// 产生10-60之间的数值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				goods[i].value <span style="color:#f92672">=</span> (rand() <span style="color:#f92672">%</span> <span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">*</span> <span style="color:#ae81ff">10</span> <span style="color:#f92672">+</span> ((rand() <span style="color:#f92672">%</span> <span style="color:#ae81ff">11</span>));
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 初始化集合
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">initialize_set</span>(<span style="color:#66d9ef">int</span> N) {
+</span></span><span style="display:flex;"><span>			set_weights(N);
+</span></span><span style="display:flex;"><span>			set_values(N);
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 打印重量和价值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">print_wv</span>(<span style="color:#66d9ef">int</span> N) {
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;物品重量集合为：{ &#34;</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> N; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>				<span style="color:#75715e">//cout &lt;&lt; weights[i] &lt;&lt; &#34; &#34;;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				cout <span style="color:#f92672">&lt;&lt;</span> goods[i].weight <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; &#34;</span>;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;}&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;物品价值集合为：{ &#34;</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> N; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>				<span style="color:#75715e">//cout &lt;&lt; values[i] &lt;&lt; &#34; &#34;;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				cout <span style="color:#f92672">&lt;&lt;</span> goods[i].value <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; &#34;</span>;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;}&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;背包容量为：&#34;</span> <span style="color:#f92672">&lt;&lt;</span> capacity <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">print_set</span>() {		<span style="color:#75715e">// 打印集合
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">// 输出最大重量以及对应的元素序号
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">// 如果输出 0 / 1 表示的子集情况例如 {0 1 0 1 1 0 0} 就修改本函数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;背包能装的最大价值为：&#34;</span> <span style="color:#f92672">&lt;&lt;</span> maxValue <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;包含的物品有：{ &#34;</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>				<span style="color:#75715e">// 输出序号 or 向量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				<span style="color:#66d9ef">if</span> (max_set[i])
+</span></span><span style="display:flex;"><span>				{
+</span></span><span style="display:flex;"><span>					cout <span style="color:#f92672">&lt;&lt;</span> i <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; &#34;</span>;
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;}&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">brute_force</span>(<span style="color:#66d9ef">int</span> layer, <span style="color:#66d9ef">int</span> current_value, <span style="color:#66d9ef">int</span> current_weight) {
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// layer代表回溯层数，其余参数分别代表当前价值以及当前重量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> (layer <span style="color:#f92672">==</span> set_number) {		<span style="color:#75715e">// if layer bigger than number, over
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				<span style="color:#75715e">// 注意这个地方，不用大于 ！！！
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">if</span> (current_value <span style="color:#f92672">&gt;</span> maxValue <span style="color:#f92672">&amp;&amp;</span> current_weight <span style="color:#f92672">&lt;=</span> capacity) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					maxValue <span style="color:#f92672">=</span> current_value;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>						max_set[i] <span style="color:#f92672">=</span> current_set[i];
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					}
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>			{
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> j <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>; j <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">0</span>; j<span style="color:#f92672">--</span>) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					current_set[layer] <span style="color:#f92672">=</span> j;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					current_weight <span style="color:#f92672">+=</span> (goods[layer].weight <span style="color:#f92672">*</span> current_set[layer]);
+</span></span><span style="display:flex;"><span>					current_value <span style="color:#f92672">+=</span> (goods[layer].value <span style="color:#f92672">*</span> current_set[layer]);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#75715e">// 继续进行子树的递归
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>					brute_force(layer <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>, current_value, current_weight);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#75715e">// 递归出来后回滚数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>					current_weight <span style="color:#f92672">-=</span> (goods[layer].weight <span style="color:#f92672">*</span> current_set[layer]);
+</span></span><span style="display:flex;"><span>					current_value <span style="color:#f92672">-=</span> (goods[layer].value <span style="color:#f92672">*</span> current_set[layer]);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		Bag(<span style="color:#66d9ef">int</span> N) {
+</span></span><span style="display:flex;"><span>			maxValue <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;			<span style="color:#75715e">// 最大价值初始化为0
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			set_number <span style="color:#f92672">=</span> N;			<span style="color:#75715e">// 初始化元素个数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			initialize_set(N);		<span style="color:#75715e">// 初始化集合
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			print_wv(N);			<span style="color:#75715e">// 打印信息
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 求解最大价值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">get_maxValue</span>(<span style="color:#66d9ef">int</span> layer, <span style="color:#66d9ef">int</span> cv, <span style="color:#66d9ef">int</span> cw) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 蛮力法求解
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			t1 <span style="color:#f92672">=</span> getSystemTime();		<span style="color:#75715e">// 开始计时
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			brute_force(layer, cv, cw);
+</span></span><span style="display:flex;"><span>			t2 <span style="color:#f92672">=</span> getSystemTime();		<span style="color:#75715e">// 结束计时
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">//打印时间
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			sum_time <span style="color:#f92672">=</span> t2 <span style="color:#f92672">-</span> t1;
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;蛮力法求解规模为 &#34;</span> <span style="color:#f92672">&lt;&lt;</span> set_number <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; 的0/1背包所需要的时间为：&#34;</span> <span style="color:#f92672">&lt;&lt;</span> sum_time <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;ms.&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 打印结果
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			print_set();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 根据货物单位价值进行排序
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">sort_set</span>() {		<span style="color:#75715e">// 计算权值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>				goods[i].ave_value <span style="color:#f92672">=</span> <span style="color:#66d9ef">double</span>(goods[i].value) <span style="color:#f92672">/</span> <span style="color:#66d9ef">double</span>(goods[i].weight);
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 根据权值排序
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			sort(goods, goods <span style="color:#f92672">+</span> <span style="color:#66d9ef">sizeof</span>(goods) <span style="color:#f92672">/</span> <span style="color:#66d9ef">sizeof</span>(GD), sort_rule());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 打印根据权值排序后的内容
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;根据单位价值排序后的物品重量以及对应的价值为：&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;weight -&gt; { &#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>				cout <span style="color:#f92672">&lt;&lt;</span> goods[i].weight <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; &#34;</span>;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;}&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;value -&gt; { &#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>)
+</span></span><span style="display:flex;"><span>			{
+</span></span><span style="display:flex;"><span>				cout <span style="color:#f92672">&lt;&lt;</span> goods[i].value <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; &#34;</span>;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;}&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>};				<span style="color:#75715e">// 蛮力法，作为基类
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Bag_with_backtrack</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">public</span> Bag {		<span style="color:#75715e">// 继承 Bag 的保护以及公用成员
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">protected</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">int</span> current_set[MAX] <span style="color:#f92672">=</span> { <span style="color:#ae81ff">0</span> };		<span style="color:#75715e">// define current_set to save current set
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">Bound_sv</span>(<span style="color:#66d9ef">int</span> layer, <span style="color:#66d9ef">int</span> cv) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> layer;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">int</span> sv <span style="color:#f92672">=</span> cv;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">for</span> (i; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>				sv <span style="color:#f92672">+=</span> goods[i].value;		<span style="color:#75715e">// 剩余物品都装下时的最大价值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> sv;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">double</span> <span style="color:#a6e22e">Bound</span>(<span style="color:#66d9ef">int</span> layer,<span style="color:#66d9ef">int</span> cv,<span style="color:#66d9ef">int</span> cw){
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> layer;
+</span></span><span style="display:flex;"><span>			
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">double</span> sv <span style="color:#f92672">=</span> <span style="color:#66d9ef">double</span>(cv);
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">int</span> cr <span style="color:#f92672">=</span> capacity <span style="color:#f92672">-</span> cw;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">while</span> (i<span style="color:#f92672">&lt;</span>set_number <span style="color:#f92672">&amp;&amp;</span> goods[i].weight <span style="color:#f92672">&lt;=</span> cr)
+</span></span><span style="display:flex;"><span>			{
+</span></span><span style="display:flex;"><span>				cr <span style="color:#f92672">-=</span> goods[i].weight;
+</span></span><span style="display:flex;"><span>				sv <span style="color:#f92672">=</span> sv <span style="color:#f92672">+</span> goods[i].value;
+</span></span><span style="display:flex;"><span>				i<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> (i <span style="color:#f92672">&lt;</span> set_number)
+</span></span><span style="display:flex;"><span>				sv <span style="color:#f92672">=</span> sv <span style="color:#f92672">+</span> goods[i].ave_value <span style="color:#f92672">*</span> cr;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> sv;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// Using back track method to get max value
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">BackTrack</span>(<span style="color:#66d9ef">int</span> layer, <span style="color:#66d9ef">int</span> current_value, <span style="color:#66d9ef">int</span> current_weight) {
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// layer代表回溯层数，其余参数分别代表当前价值以及当前重量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			<span style="color:#75715e">//double expect_sumValue = 0;		// 记录期望价值总和
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> (layer <span style="color:#f92672">==</span> set_number) {		<span style="color:#75715e">// if layer bigger than number, over
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				<span style="color:#75715e">// 注意这个地方，不用大于 ！！！
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">if</span> (current_value <span style="color:#f92672">&gt;</span> maxValue) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					maxValue <span style="color:#f92672">=</span> current_value;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>						max_set[i] <span style="color:#f92672">=</span> current_set[i];
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					}
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>			{
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> j <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; j <span style="color:#f92672">&lt;=</span> <span style="color:#ae81ff">1</span>; j<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					current_set[layer] <span style="color:#f92672">=</span> j;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#75715e">/************************剪枝**************************/</span>
+</span></span><span style="display:flex;"><span>					
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					<span style="color:#66d9ef">if</span> (
+</span></span><span style="display:flex;"><span>						current_weight <span style="color:#f92672">+</span> current_set[layer] <span style="color:#f92672">*</span> goods[layer].weight <span style="color:#f92672">&lt;=</span> capacity
+</span></span><span style="display:flex;"><span>						<span style="color:#f92672">&amp;&amp;</span> Bound_sv(layer,current_value) <span style="color:#f92672">&gt;=</span> maxValue <span style="color:#f92672">&amp;&amp;</span> Bound(layer,current_value,current_weight) <span style="color:#f92672">&gt;</span> maxValue
+</span></span><span style="display:flex;"><span>						)
+</span></span><span style="display:flex;"><span>					{
+</span></span><span style="display:flex;"><span>						<span style="color:#75715e">// 更新当前背包物品的总重量，目前背包物品的总价值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>						current_weight <span style="color:#f92672">+=</span> (goods[layer].weight <span style="color:#f92672">*</span> current_set[layer]);
+</span></span><span style="display:flex;"><span>						current_value <span style="color:#f92672">+=</span> (goods[layer].value <span style="color:#f92672">*</span> current_set[layer]);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>						<span style="color:#75715e">// 继续进行子树的递归
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>						BackTrack(layer <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>, current_value, current_weight);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>						<span style="color:#75715e">// 递归出来后回滚数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>						current_weight <span style="color:#f92672">-=</span> (goods[layer].weight <span style="color:#f92672">*</span> current_set[layer]);
+</span></span><span style="display:flex;"><span>						current_value <span style="color:#f92672">-=</span> (goods[layer].value <span style="color:#f92672">*</span> current_set[layer]);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>					}
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		Bag_with_backtrack(<span style="color:#66d9ef">int</span> N) <span style="color:#f92672">:</span>Bag(N) {
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;回溯法对象实例化...&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">get_maxValue_by_backTrack</span>(<span style="color:#66d9ef">int</span> layer, <span style="color:#66d9ef">int</span> current_value, <span style="color:#66d9ef">int</span> current_weight) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 按照单位价值进行排序
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			t1 <span style="color:#f92672">=</span> getSystemTime(); <span style="color:#75715e">// 开始计时
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			sort_set();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 使用回溯法进行求解
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			BackTrack(layer, current_value, current_weight);
+</span></span><span style="display:flex;"><span>			t2 <span style="color:#f92672">=</span> getSystemTime();	<span style="color:#75715e">// 结束计时
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 打印时间
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			sum_time <span style="color:#f92672">=</span> t2 <span style="color:#f92672">-</span> t1;
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;回溯法求解规模为 &#34;</span> <span style="color:#f92672">&lt;&lt;</span> set_number <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; 的0/1背包问题所需要的时间为：&#34;</span> <span style="color:#f92672">&lt;&lt;</span> sum_time <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;ms.&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 打印集合
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			print_set();
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>};		<span style="color:#75715e">// 回溯法，继承基类Bag
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Bag_with_branchAndbound</span> <span style="color:#f92672">:</span><span style="color:#66d9ef">public</span> Bag {		<span style="color:#75715e">// 从 Bag 类中派生
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">protected</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">int</span> tree_node_id <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;		<span style="color:#75715e">// 解空间树结点id 1开始
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">int</span> lower_bound <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;		<span style="color:#75715e">// 目标函数的下界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 贪心法求背包容量的下界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">greed</span>() {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">int</span> temp[MAX] <span style="color:#f92672">=</span> { <span style="color:#ae81ff">0</span> };		<span style="color:#75715e">// 定义临时数组，用来表示货物向量，并初始化为0
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			<span style="color:#66d9ef">int</span> cap <span style="color:#f92672">=</span> capacity;			<span style="color:#75715e">// 暂存背包容量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			<span style="color:#66d9ef">int</span> w <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;					<span style="color:#75715e">// 当前背包容量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			<span style="color:#66d9ef">int</span> updown <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;				<span style="color:#75715e">// 下界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 对背包物品按照单位价值进行排序
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			sort_set();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 求解
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>				<span style="color:#75715e">// 如果超重，跳出
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				<span style="color:#66d9ef">if</span> ((w<span style="color:#f92672">+</span>goods[i].weight) <span style="color:#f92672">&gt;</span> cap) {
+</span></span><span style="display:flex;"><span>					<span style="color:#66d9ef">continue</span>;
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>				temp[i] <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>				w <span style="color:#f92672">+=</span> goods[i].weight;
+</span></span><span style="display:flex;"><span>				updown <span style="color:#f92672">+=</span> (temp[i] <span style="color:#f92672">*</span> goods[i].value);
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;解的下界是：&#34;</span> <span style="color:#f92672">&lt;&lt;</span> updown <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> updown;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 限界函数求上界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">limit</span>(ND <span style="color:#f92672">&amp;</span>n)				        <span style="color:#75715e">//计算分枝结点的上界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		{
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 下一个要选的物品就是第layer层物品
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			<span style="color:#66d9ef">int</span> w <span style="color:#f92672">=</span> n.current_weight;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">double</span> v <span style="color:#f92672">=</span> n.current_value;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> n.layer;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">while</span> (i <span style="color:#f92672">&lt;</span> set_number <span style="color:#f92672">&amp;&amp;</span> w <span style="color:#f92672">+</span> goods[i].weight <span style="color:#f92672">&lt;=</span> capacity) {
+</span></span><span style="display:flex;"><span>				w <span style="color:#f92672">+=</span> goods[i].weight;
+</span></span><span style="display:flex;"><span>				v <span style="color:#f92672">+=</span> goods[i].value;
+</span></span><span style="display:flex;"><span>				i<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> (i <span style="color:#f92672">&lt;</span> set_number) {  <span style="color:#75715e">// 装部分物品
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				n.ub <span style="color:#f92672">=</span> v <span style="color:#f92672">+</span> (capacity <span style="color:#f92672">-</span> w)<span style="color:#f92672">*</span>goods[i].ave_value;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>			{
+</span></span><span style="display:flex;"><span>				n.ub <span style="color:#f92672">=</span> v;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 优先队列进队操作
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">EnQueue</span>(ND n, priority_queue<span style="color:#f92672">&lt;</span>ND<span style="color:#f92672">&gt;</span> <span style="color:#f92672">&amp;</span>q) {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> (n.layer <span style="color:#f92672">==</span> set_number) {		<span style="color:#75715e">// 已经到达叶子结点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">if</span> (n.current_value <span style="color:#f92672">&gt;</span> maxValue) {		<span style="color:#75715e">// 更新maxValue
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>					maxValue <span style="color:#f92672">=</span> n.current_value;
+</span></span><span style="display:flex;"><span>					<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>						max_set[i] <span style="color:#f92672">=</span> n.cset[i];
+</span></span><span style="display:flex;"><span>					}
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>				q.push(n);			<span style="color:#75715e">// 非叶子结点进队
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 分支限界法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">branchAndbound</span>() {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 首先使用贪心法求解此goods集合的目标值下界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			lower_bound <span style="color:#f92672">=</span> greed();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			priority_queue<span style="color:#f92672">&lt;</span>ND<span style="color:#f92672">&gt;</span> q;		<span style="color:#75715e">// 优先队列
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			ND n0, n1, n2;				<span style="color:#75715e">// 先定义根结点，左孩子结点，右孩子结点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">/*初始化根节点*/</span>
+</span></span><span style="display:flex;"><span>			n0.id <span style="color:#f92672">=</span> tree_node_id<span style="color:#f92672">++</span>;		
+</span></span><span style="display:flex;"><span>			n0.layer <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>			n0.current_value <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>			n0.current_weight <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>				n0.cset[i] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			limit(n0);					<span style="color:#75715e">// 求根结点上界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			q.push(n0);					<span style="color:#75715e">// 根结点进队
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">while</span> (<span style="color:#f92672">!</span>q.empty())			<span style="color:#75715e">// 队不空循环
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			{
+</span></span><span style="display:flex;"><span>				n0 <span style="color:#f92672">=</span> q.top();				<span style="color:#75715e">// 取队头
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				q.pop();				<span style="color:#75715e">// 出队
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				<span style="color:#66d9ef">if</span> (n0.current_weight <span style="color:#f92672">+</span> goods[n0.layer].weight <span style="color:#f92672">&lt;=</span> capacity <span style="color:#f92672">&amp;&amp;</span> n0.ub <span style="color:#f92672">&gt;=</span> lower_bound) {	<span style="color:#75715e">// 超重剪枝 小于最小期望重量剪枝
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>					<span style="color:#75715e">// 设置左孩子结点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>					n1.id <span style="color:#f92672">=</span> tree_node_id<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>					n1.layer <span style="color:#f92672">=</span> n0.layer <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>					n1.current_weight <span style="color:#f92672">=</span> n0.current_weight <span style="color:#f92672">+</span> goods[n0.layer].weight;
+</span></span><span style="display:flex;"><span>					n1.current_value <span style="color:#f92672">=</span> n0.current_value <span style="color:#f92672">+</span> goods[n0.layer].value;
+</span></span><span style="display:flex;"><span>					<span style="color:#75715e">/*复制解向量*/</span>
+</span></span><span style="display:flex;"><span>					<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>						n1.cset[i] <span style="color:#f92672">=</span> n0.cset[i];
+</span></span><span style="display:flex;"><span>					}
+</span></span><span style="display:flex;"><span>					n1.cset[n1.layer<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;			<span style="color:#75715e">// 更新解向量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>					limit(n1);						<span style="color:#75715e">// 求限界函数上界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>					EnQueue(n1, q);					<span style="color:#75715e">// 左孩子进队
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>				<span style="color:#75715e">// 设置右孩子结点
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				n2.id <span style="color:#f92672">=</span> tree_node_id<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>				n2.layer <span style="color:#f92672">=</span> n0.layer <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>				n2.current_value <span style="color:#f92672">=</span> n0.current_value;
+</span></span><span style="display:flex;"><span>				n2.current_weight <span style="color:#f92672">=</span> n0.current_weight;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>				<span style="color:#75715e">// 复制解向量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				<span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> set_number; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>					n2.cset[i] <span style="color:#f92672">=</span> n0.cset[i];
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>				
+</span></span><span style="display:flex;"><span>				n2.cset[n2.layer<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;		 <span style="color:#75715e">// 更新解向量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				limit(n2);					<span style="color:#75715e">// 求界限函数上界
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>				
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">if</span> (n2.ub <span style="color:#f92672">&gt;</span> maxValue <span style="color:#f92672">&amp;&amp;</span> n2.ub <span style="color:#f92672">&gt;=</span> lower_bound) {		<span style="color:#75715e">// 剪枝，期望最大值小于已有最大值就剪枝  小于最小期望重量剪枝
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>					EnQueue(n2, q);
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		Bag_with_branchAndbound(<span style="color:#66d9ef">int</span> N) <span style="color:#f92672">:</span>Bag(N) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;分支限界法对象实例化...&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">get_maxValue_by_branchAndbound</span>() {
+</span></span><span style="display:flex;"><span>			
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 分支限界法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			t1 <span style="color:#f92672">=</span> getSystemTime();		<span style="color:#75715e">// 开始计时
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			branchAndbound();
+</span></span><span style="display:flex;"><span>			t2 <span style="color:#f92672">=</span> getSystemTime();		<span style="color:#75715e">// 结束计时
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 计算并打印时间
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			sum_time <span style="color:#f92672">=</span> t2 <span style="color:#f92672">-</span> t1;
+</span></span><span style="display:flex;"><span>			cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;使用分支限界法求解问题规模为&#34;</span> <span style="color:#f92672">&lt;&lt;</span> set_number <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34; 的0/1背包问题所需要的时间为：&#34;</span> <span style="color:#f92672">&lt;&lt;</span> sum_time <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;ms.&#34;</span> <span style="color:#f92672">&lt;&lt;</span> endl;
+</span></span><span style="display:flex;"><span>			
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 打印集合
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			print_set();
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>};		<span style="color:#75715e">// 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	srand((<span style="color:#66d9ef">unsigned</span>)time(NULL));
+</span></span><span style="display:flex;"><span>	
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/*************蛮力法************/</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">//for (int i = 0; i &lt; 40; i++) {
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//	Bag bag = Bag(i);
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//	bag.get_maxValue(0, 0, 0);
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//}
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	
+</span></span><span style="display:flex;"><span>	
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/************回溯法*************/</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">//int n = 1;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//for (int i = 512; i &lt; 2000; i+=100) {
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//	n *= 2;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//Bag_with_backtrack bag = Bag_with_backtrack(4);
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//bag.get_maxValue_by_backTrack(0, 0, 0);
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//}
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	
+</span></span><span style="display:flex;"><span>	
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/************分支限界法*************/</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">//Bag_with_branchAndbound bag = Bag_with_branchAndbound(5);
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//bag.get_maxValue_by_branchAndbound();
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">//for (int n = 1; n &lt;= 5000; n*=2) {
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		Bag_with_branchAndbound bag <span style="color:#f92672">=</span> Bag_with_branchAndbound(<span style="color:#ae81ff">4</span>);
+</span></span><span style="display:flex;"><span>		bag.get_maxValue_by_branchAndbound();
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">//}
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div>
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

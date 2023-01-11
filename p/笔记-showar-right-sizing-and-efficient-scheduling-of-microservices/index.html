@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='摘要 提出微服务的面临的一个挑战是为每个微服务找到最佳的分配资源和服务实例的数量。达到保证性能的同时最大限度的提高资源利用率这样一个目标。本文'>
+<title>笔记 &gt; SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/%E7%AC%94%E8%AE%B0-showar-right-sizing-and-efficient-scheduling-of-microservices/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='笔记 &gt; SHOWAR: Right-Sizing And Efficient Scheduling of Microservices'>
+<meta property='og:description' content='摘要 提出微服务的面临的一个挑战是为每个微服务找到最佳的分配资源和服务实例的数量。达到保证性能的同时最大限度的提高资源利用率这样一个目标。本文'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/%E7%AC%94%E8%AE%B0-showar-right-sizing-and-efficient-scheduling-of-microservices/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='云原生' /><meta property='article:tag' content='微服务' /><meta property='article:tag' content='Kubernetes' /><meta property='article:tag' content='笔记' /><meta property='article:published_time' content='2021-12-20T14:51:34&#43;08:00'/><meta property='article:modified_time' content='2021-12-20T14:51:34&#43;08:00'/>
+<meta name="twitter:title" content="笔记 &gt; SHOWAR: Right-Sizing And Efficient Scheduling of Microservices">
+<meta name="twitter:description" content="摘要 提出微服务的面临的一个挑战是为每个微服务找到最佳的分配资源和服务实例的数量。达到保证性能的同时最大限度的提高资源利用率这样一个目标。本文">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#摘要">摘要</a></li>
+    <li><a href="#intro">Intro</a></li>
+    <li><a href="#贡献">贡献</a></li>
+    <li><a href="#前置知识">前置知识</a></li>
+    <li><a href="#showar">SHOWAR</a>
+      <ul>
+        <li><a href="#系统架构">系统架构</a></li>
+        <li><a href="#系统实现">系统实现</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/" >
+                云原生
+            </a>
+        
+            <a href="/categories/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" >
+                微服务
+            </a>
+        
+            <a href="/categories/kubernetes/" >
+                Kubernetes
+            </a>
+        
+            <a href="/categories/%E7%AC%94%E8%AE%B0/" >
+                笔记
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/%E7%AC%94%E8%AE%B0-showar-right-sizing-and-efficient-scheduling-of-microservices/">笔记 &gt; SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Dec 20, 2021</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 7 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="摘要">摘要</h2>
+<p>提出微服务的面临的一个挑战是为每个微服务找到最佳的分配资源和服务实例的数量。达到保证性能的同时最大限度的提高资源利用率这样一个目标。本文的SHOWAR是一个通过确定服务实例数量（横向扩展）以及每个服务实例的资源如CPU和内存（纵向扩展）来配置资源的框架。</p>
+<p>对于纵向扩展，SHOWAR通过历史资源中的经验方差来寻找最佳资源分配量，保证性能同时减少不必要的资源浪费；对于横向扩展，使用控制理论的基本思想以及内核级性能指标来实施。</p>
+<p>在确定微服务的现有状态后，SHOWAR使用调度程序生成亲和性规则来弥合最佳资源分配和调度之间的差距，实现资源分配和性能提高。</p>
+<p>实验表明，SHOWAR与现有的最先进的自动缩放和调度系统相比，资源分配提高了22%，同时降低了99%的端到端请求延迟20%。</p>
+<h2 id="intro">Intro</h2>
+<p>本文的SHOWAR是一个用于微服务横向和纵向自动扩展的微服务管理系统，用于Kubernetes编排的微服务系统。</p>
+<p>对于纵向缩放，SHOWAR 依赖<strong>历史资源使用情况的差异</strong>，找到每个微服务的最佳资源大小，保持良好的性能的同时提高资源利用率。</p>
+<p>对于横向自动缩放，SHOWAR 使用来自 <strong>Linux 内核线程调度程序队列的指标</strong>（特别是 eBPF 运行时延迟）作为其自动缩放信号，以做出更准确和有意义的自动缩放决策。为了实现这个目标，SHOAWR使用了控制理论的基本思想，基于来自<strong>微服务运行时</strong>的信号控制每个微服务的副本数量。</p>
+<p>该团队设计了一个比例积分微分proportional–integral–derivative (PID) 控制器作为有状态自动缩放器，它使用历史自动缩放操作和当前运行时测量来做出下一个水平自动缩放决策并保持微服务“稳定”。此外，SHOWAR考虑不同微服务之间的依赖关系，优先考虑被依赖的微服务，以防止不必要的自动缩放操作和低资源利用率。</p>
+<p>除了使用自动缩放器来确定微服务的资源外，SHOWAR还旨在桥接微服务的最佳资源分配和高效调度，<strong>在达成最佳资源分配和高效调度之间取得最佳平衡</strong>。一旦确定了微服务的最佳大小，SHOWAR就会协助集群调度程序调度微服务以获得更好的端到端性能。为了防止资源争用和管理噪声邻居对微服务性能的影响，SHOWAR使用不同微服务之间历史资源使用情况的估计相关性来为Kubernetes调度程序生成规则。例如，这些规则可能会建议调度程序共同定位（调度亲和性）与某种资源类型具有负相关性的微服务，或者以其他方式分发它们（调度反亲和性）。</p>
+<p>文章通过在AWS公共云上的虚拟机集群部署各种交互式微服务应用程序来评估SHOWAR。将SHOWAR的性能与两种最先进的自动缩放系统进行了比较：Google Autopilot和Kubernetes 默认的自动缩放器。使用实际生产工作负载，结果表明，SHOWAR在有效资源分配和端到端请求延迟的尾部分布方面优于这些参照。SHOWAR 平均将资源分配提高了22%，这可以直接转化为集群相关成本的总节省22%，同时将99%的端到端用户请求延迟降低20%。</p>
+<h2 id="贡献">贡献</h2>
+<ul>
+<li>提出一种自动化的纵向扩容和横向扩容框架，达到保证服务性能的前提下提高资源利用率的目标</li>
+<li>提出调度亲和性和反亲和规则，通过生成调度亲和性和反亲和性规则来帮助调度程序更好地放置微服务并提高微服务性能，弥合了适当调整微服务规模以提高资源效率和高效微服务调度之间的差距</li>
+<li>通过实验证明SHOWAR的良好表现</li>
+</ul>
+<h2 id="前置知识">前置知识</h2>
+<p><img src="https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211220134037.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>这一个比较典型的微服务架构示意图，微服务之间的依赖关系错综复杂。<strong>其中一些微服务依赖于其他微服务，SHOWAR使用此依赖关系图信息来做出更好的自动缩放决策</strong>。</p>
+<p>除了 CPU 和内存使用数据外，SHOWAR还使用扩展的伯克利数据包过滤 ( Berkeley Packet Filtering - eBPF) [6] 指标数据进行水平自动缩放决策。<strong>eBPF 是最新的Linux内核技术，它支持在内核级别运行安全且低开销的程序，以从内核级别的事件（例如 CPU 调度程序决策事件、内存分配事件和内核网络堆栈中的数据包事件）中收集准确的指标</strong>。它已被广泛用于微服务可观察性，用于性能改进、分析和跟踪、负载平衡、网络监控和安全等广泛目的。</p>
+<h2 id="showar">SHOWAR</h2>
+<h3 id="系统架构">系统架构</h3>
+<p><img src="https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211220141140.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>SHOWAR使用每个节点上的相应代理来收集资源使用日志以及 eBPF 指标，然后聚合到时间序列数据库中。</p>
+<p>SHOWAR使用收集到的指标通过分别与Kubernetes API服务器及其调度程序通信来做出自动缩放决策以及调度亲和性和反亲和性规则。</p>
+<h3 id="系统实现">系统实现</h3>
+<p>SHOWAR 作为服务部署在控制器节点并与kubernetes API服务器及其调度程序交互以进行自动缩放操作以及为微服务应用生成的亲和性和反亲和性规则。</p>
+<ul>
+<li>
+<p>监控代理Monitoring Agents</p>
+<p>监控和日志数据是任何应用程序部署最重要的部分。监控数据用于可观察性、健康检查和自动缩放。本文使用最先进的监控和指标收集工具Prometheus从节点和容器收集不同的指标。Prometheus在集群中的每个节点上启动一个监控代理来收集容器指标，例如 CPU 使用率、内存使用率、网络带宽使用率等。代理被配置为每秒收集和报告指标（一秒是Prometheus 代理可以收集指标的最短时间。为了获得尽可能多的数据点，我们每秒钟收集一次数据）。Prometheus 带有一个时间序列数据库，代理存储收集的指标。此外，提供查询语言来查询其他模块使用的时间序列数据库以利用收集的指标。</p>
+<p>除Prometheus外，文章还开发了一个eBPF程序，该程序作为监控代理部署在集群中的每个节点上，以收集横向自动缩放器使用的 𝑟𝑢𝑛𝑞 𝑙𝑎𝑡𝑒𝑛𝑐𝑦 指标。该指标是每个pod中的CPU线程在获取CPU之前所经历的延迟直方图。程序每1秒收集一张𝑟𝑢𝑛𝑞 𝑙𝑎𝑡𝑒𝑛𝑐𝑖𝑒𝑠的直方图并存储在Prometheus时间序列数据库中。</p>
+</li>
+<li>
+<p>纵向缩放器The Vertical Autoscaler</p>
+<p>这一个简单的循环，每分钟进行一轮。在前 5 分钟的窗口内为每种资源类型 𝑟（CPU 和内存）计算 𝑠𝑟 =𝜇𝑟 +3∗𝜎𝑟，如果 𝑠 的值变化超过 15%，它会更新服务的资源需求为𝑠。</p>
+<p>触发缩放器的另一个条件是微服务报告 OOM 错误时。在应用微服务的新资源需求之前，纵向自动缩放器通过共享通道向横向自动缩放器发送消息，不让其进行任何横向自动缩放操作，因为纵向自动缩放操作的优先级高于水平自动缩放。</p>
+<p>如果该微服务的 CPU 数量超过一个 CPU 内核（即 𝑠𝐶𝑃𝑈 &gt;1000𝑚），纵向自动缩放器也不会对微服务进行自动缩放操作，在这种情况下，它会通过另一个共享通道发送消息到横向自动缩放器触发横向自动缩放操作。</p>
+</li>
+<li>
+<p>横向缩放器The Horizontal Autoscaler</p>
+<p>横向自动缩放器的核心是一个 PID 控制器，旨在保持每个微服务稳定。对于给定的目标 𝑟𝑢𝑛𝑞 𝑙𝑎𝑡𝑒𝑛𝑐𝑦，它对该微服务执行水平自动缩放操作，使其始终具有𝑟𝑢𝑛𝑞𝑟𝑢𝑛𝑞𝑙控制器每 1 分钟做出决定，eBPF 程序收集 60 个度量直方图实例（每秒 1 个）。对于每个直方图，选择第 95 个百分位数，控制器使用这 60 个数据点的平均值作为其当前观察（也称为测量）来执行其控制操作。每个水平扩展操作添加或删除至少 1 个或可配置百分比（默认为 10%）的微服务当前副本数，分别用于扩展和缩减。PID 控制参数的初始值取为 𝑘𝑃 =𝑘𝐼 =𝑘𝐷 =1/3（每个参数约束为 ∈ [0,10]）。这些参数的增量变化是 10%（我们通过实验发现 10% 的性能非常好）。控制器输出的波动是进行此类更改的基础，使用之前的 𝑁 = 10 个样本进行测量。此外，控制器的“速度”被测量为达到区间 [target(1 −𝛼),target(1 + 𝛼)] 所需的迭代次数，因为 𝛼 =10%。</p>
+</li>
+<li>
+<p>亲和规则生成器The Affinity Rule Generator</p>
+<p>SHOWAR的亲和性规则生成器每 5 分钟使用一次 CPU、内存和网络利用率，这是一个由 300 个数据点组成的向量（每个数据点是微服务副本的平均值）来计算每个数据点之间不同资源类型的相关系数。消除弱相关或无相关实例，[−0.8,+0.8] 中的任何值都将被丢弃。其他强负相关和强正相关微服务用于生成亲和性和反亲和性规则。资源使用模式会随着工作负载的变化（也称为工作负载转移）而变化，因此如果在随后的 5 分钟时间窗口内强烈的负相关或正相关变化超过 20%（可配置），SHOWAR 将撤销关联（或anti-affinity）规则。</p>
+</li>
+<li>
+<p>SHOWAR的开销</p>
+<p>SHOWAR是作为Kubernetes的控制器构建的，它对于自动缩放器和其他类型的控制器具有高度可插拔性。SHOWAR使用常用的 Kubernetes监控代理（如Prometheus）和一个自定义eBPF指标监控代理。因此，与默认的Kubernetes自动缩放器相比，SHOWAR 不会引入任何额外的开销。此外，自动缩放器被调度在控制器节点上，并且不与调度在工作节点上的应用程序 Pod 共享资源。</p>
+</li>
+</ul>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">云原生</a>
+        
+            <a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/">微服务</a>
+        
+            <a href="/tags/kubernetes/">Kubernetes</a>
+        
+            <a href="/tags/%E7%AC%94%E8%AE%B0/">笔记</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/%E7%AC%94%E8%AE%B0-service-level-fault-injection-testing/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">笔记 &gt; Service-Level Fault Injection Testing</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%BD%91%E5%85%B3--kong/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">微服务网关--kong</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E5%90%AF%E5%8A%A8k8s%E7%9A%84%E4%B8%BB%E8%8A%82%E7%82%B9k8s%E5%AE%9E%E8%B7%B5-1/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">启动k8s的主节点(k8s实践-1)</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E4%BB%8Edocker%E8%A6%86%E7%9B%96%E7%BD%91%E7%BB%9C%E5%BC%95%E5%87%BA%E5%A4%A7%E4%BA%8C%E5%B1%82%E7%BD%91%E7%BB%9C/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">从Docker覆盖网络引出大二层网络</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E4%BD%BF%E7%94%A8docker-swarm%E7%AE%A1%E7%90%86%E6%9C%8D%E5%8A%A1%E9%9B%86%E7%BE%A4/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">使用Docker Swarm管理服务集群</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='Fabric2.X中，fabric-samples将作为Fabric1.X中的first-network的替代。也就是说，在2.X版本及以后'>
+<title>Fabric2.X_fabric-samples_test-network解读</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/fabric2.x_fabric-samples_test-network%E8%A7%A3%E8%AF%BB/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='Fabric2.X_fabric-samples_test-network解读'>
+<meta property='og:description' content='Fabric2.X中，fabric-samples将作为Fabric1.X中的first-network的替代。也就是说，在2.X版本及以后'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/fabric2.x_fabric-samples_test-network%E8%A7%A3%E8%AF%BB/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='区块链' /><meta property='article:published_time' content='2021-01-21T20:41:47&#43;08:00'/><meta property='article:modified_time' content='2021-01-21T20:41:47&#43;08:00'/>
+<meta name="twitter:title" content="Fabric2.X_fabric-samples_test-network解读">
+<meta name="twitter:description" content="Fabric2.X中，fabric-samples将作为Fabric1.X中的first-network的替代。也就是说，在2.X版本及以后">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#目录结构">目录结构</a></li>
+    <li><a href="#networksh">network.sh</a></li>
+    <li><a href="#启动test-network">启动test-network</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E5%8C%BA%E5%9D%97%E9%93%BE/" >
+                区块链
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/fabric2.x_fabric-samples_test-network%E8%A7%A3%E8%AF%BB/">Fabric2.X_fabric-samples_test-network解读</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jan 21, 2021</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 9 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>Fabric2.X中，<code>fabric-samples</code>将作为Fabric1.X中的<code>first-network</code>的替代。也就是说，在2.X版本及以后，使用<code>fabric-samples</code>作为fabric的测试网络了。</p>
+</blockquote>
+<p>在配置好基本环境之后，来看一下它为我们提供了哪些内容。</p>
+<h2 id="目录结构">目录结构</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lizonglin-virtual-machine:/home/lizonglin/GoWork/src/github.com/fabric/scripts/fabric-samples# ll
+</span></span><span style="display:flex;"><span>total <span style="color:#ae81ff">100</span>
+</span></span><span style="display:flex;"><span>drwxr-xr-x <span style="color:#ae81ff">15</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 ./
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">3</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:17 ../
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">2</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 10月  <span style="color:#ae81ff">1</span> 03:52 bin/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">8</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 chaincode/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">3</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 chaincode-docker-devmode/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">4</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 ci/
+</span></span><span style="display:flex;"><span>-rw-r--r--  <span style="color:#ae81ff">1</span> lizonglin lizonglin   <span style="color:#ae81ff">597</span> 1月  <span style="color:#ae81ff">17</span> 18:50 CODE_OF_CONDUCT.md
+</span></span><span style="display:flex;"><span>-rw-r--r--  <span style="color:#ae81ff">1</span> lizonglin lizonglin   <span style="color:#ae81ff">109</span> 1月  <span style="color:#ae81ff">17</span> 18:50 CODEOWNERS
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">3</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 commercial-paper/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">2</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 10月  <span style="color:#ae81ff">1</span> 02:41 config/
+</span></span><span style="display:flex;"><span>-rw-r--r--  <span style="color:#ae81ff">1</span> lizonglin lizonglin   <span style="color:#ae81ff">935</span> 1月  <span style="color:#ae81ff">17</span> 18:50 CONTRIBUTING.md
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">5</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 fabcar/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">6</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 11:24 first-network/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">8</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 .git/
+</span></span><span style="display:flex;"><span>-rw-r--r--  <span style="color:#ae81ff">1</span> lizonglin lizonglin   <span style="color:#ae81ff">189</span> 1月  <span style="color:#ae81ff">21</span> 10:55 .gitignore
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">4</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 high-throughput/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">4</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 interest_rate_swaps/
+</span></span><span style="display:flex;"><span>-rw-r--r--  <span style="color:#ae81ff">1</span> lizonglin lizonglin <span style="color:#ae81ff">11358</span> 1月  <span style="color:#ae81ff">17</span> 18:50 LICENSE
+</span></span><span style="display:flex;"><span>-rw-r--r--  <span style="color:#ae81ff">1</span> lizonglin lizonglin  <span style="color:#ae81ff">1644</span> 1月  <span style="color:#ae81ff">21</span> 10:55 MAINTAINERS.md
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">2</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 off_chain_data/
+</span></span><span style="display:flex;"><span>-rw-r--r--  <span style="color:#ae81ff">1</span> lizonglin lizonglin  <span style="color:#ae81ff">1694</span> 1月  <span style="color:#ae81ff">21</span> 10:55 README.md
+</span></span><span style="display:flex;"><span>-rw-r--r--  <span style="color:#ae81ff">1</span> lizonglin lizonglin  <span style="color:#ae81ff">1035</span> 1月  <span style="color:#ae81ff">17</span> 18:50 SECURITY.md
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">8</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 18:52 test-network/
+</span></span></code></pre></div><p>fabric-samples的目录结构如下，可以看到还是暂时为我们保留了first-network，但是新版的启动网络脚本则是在test-network中。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lizonglin-virtual-machine:/home/lizonglin/GoWork/src/github.com/fabric/scripts/fabric-samples/test-network# ll
+</span></span><span style="display:flex;"><span>total <span style="color:#ae81ff">68</span>
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">8</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 18:52 ./
+</span></span><span style="display:flex;"><span>drwxr-xr-x <span style="color:#ae81ff">15</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 ../
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">4</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 addOrg3/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">2</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 configtx/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">2</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 docker/
+</span></span><span style="display:flex;"><span>-rw-r--r--  <span style="color:#ae81ff">1</span> lizonglin lizonglin    <span style="color:#ae81ff">69</span> 1月  <span style="color:#ae81ff">17</span> 18:50 .env
+</span></span><span style="display:flex;"><span>-rw-r--r--  <span style="color:#ae81ff">1</span> lizonglin lizonglin   <span style="color:#ae81ff">349</span> 1月  <span style="color:#ae81ff">21</span> 10:55 .gitignore
+</span></span><span style="display:flex;"><span>-rwxr-xr-x  <span style="color:#ae81ff">1</span> lizonglin lizonglin <span style="color:#ae81ff">20570</span> 1月  <span style="color:#ae81ff">21</span> 10:55 network.sh*
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">4</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 20:05 organizations/
+</span></span><span style="display:flex;"><span>-rw-r--r--  <span style="color:#ae81ff">1</span> lizonglin lizonglin   <span style="color:#ae81ff">788</span> 1月  <span style="color:#ae81ff">21</span> 10:55 README.md
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">3</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 10:55 scripts/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  <span style="color:#ae81ff">2</span> lizonglin lizonglin  <span style="color:#ae81ff">4096</span> 1月  <span style="color:#ae81ff">21</span> 20:05 system-genesis-block/
+</span></span></code></pre></div><h2 id="networksh">network.sh</h2>
+<p>其中，network.sh*即启动脚本，在新的脚本中，为我们进行了大量的配置工作，使得新版本的脚本很长，省略一些不必要的内容：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e">#!/bin/bash
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#75715e"># 首先是一些说明：</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 两个组织，每个组织一个peer节点</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 一个使用Raft单节点的排序服务</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># This script brings up a Hyperledger Fabric network for testing smart contracts</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># and applications. The test network consists of two organizations with one</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># peer each, and a single node Raft ordering service. Users can also use this</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># script to create a channel deploy a chaincode on the channel</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># prepending $PWD/../bin to PATH to ensure we are picking up the correct binaries</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># this may be commented out to resolve installed version of tools if desired</span>
+</span></span><span style="display:flex;"><span>export PATH<span style="color:#f92672">=</span><span style="color:#e6db74">${</span>PWD<span style="color:#e6db74">}</span>/../bin:<span style="color:#e6db74">${</span>PWD<span style="color:#e6db74">}</span>:$PATH
+</span></span><span style="display:flex;"><span>export FABRIC_CFG_PATH<span style="color:#f92672">=</span><span style="color:#e6db74">${</span>PWD<span style="color:#e6db74">}</span>/configtx
+</span></span><span style="display:flex;"><span>export VERBOSE<span style="color:#f92672">=</span>false
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Print the usage message</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> printHelp<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;Usage: &#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;  network.sh &lt;Mode&gt; [Flags]&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;    &lt;Mode&gt;&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;      - &#39;up&#39; - bring up fabric orderer and peer nodes. No channel is created&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;      - &#39;up createChannel&#39; - bring up fabric network with one channel&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;      - &#39;createChannel&#39; - create and join a channel after the network is created&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;      - &#39;deployCC&#39; - deploy the fabcar chaincode on the channel&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;      - &#39;down&#39; - clear the network with docker-compose down&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;      - &#39;restart&#39; - restart the network&#34;</span>
+</span></span><span style="display:flex;"><span>  echo
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;    Flags:&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;    -ca &lt;use CAs&gt; -  create Certificate Authorities to generate the crypto material&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;    -c &lt;channel name&gt; - channel name to use (defaults to \&#34;mychannel\&#34;)&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;    -s &lt;dbtype&gt; - the database backend to use: goleveldb (default) or couchdb&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;    -r &lt;max retry&gt; - CLI times out after certain number of attempts (defaults to 5)&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;    -d &lt;delay&gt; - delay duration in seconds (defaults to 3)&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;    -l &lt;language&gt; - the programming language of the chaincode to deploy: go (default), java, javascript, typescript&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;    -v &lt;version&gt;  - chaincode version. Must be a round number, 1, 2, 3, etc&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;    -i &lt;imagetag&gt; - the tag to be used to launch the network (defaults to \&#34;latest\&#34;)&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;    -verbose - verbose mode&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;  network.sh -h (print this message)&#34;</span>
+</span></span><span style="display:flex;"><span>  echo
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34; Possible Mode and flags&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;  network.sh up -ca -c -r -d -s -i -verbose&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;  network.sh up createChannel -ca -c -r -d -s -i -verbose&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;  network.sh createChannel -c -r -d -verbose&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;  network.sh deployCC -l -v -r -d -verbose&#34;</span>
+</span></span><span style="display:flex;"><span>  echo
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34; Taking all defaults:&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;	network.sh up&#34;</span>
+</span></span><span style="display:flex;"><span>  echo
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34; Examples:&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;  network.sh up createChannel -ca -c mychannel -s couchdb -i 2.0.0&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;  network.sh createChannel -c channelName&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;  network.sh deployCC -l javascript&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 清理docker容器</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Obtain CONTAINER_IDS and remove them</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># TODO Might want to make this optional - could clear other containers</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># This function is called when you bring a network down</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> clearContainers<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>  CONTAINER_IDS<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>docker ps -a | awk <span style="color:#e6db74">&#39;($2 ~ /dev-peer.*/) {print $1}&#39;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> -z <span style="color:#e6db74">&#34;</span>$CONTAINER_IDS<span style="color:#e6db74">&#34;</span> -o <span style="color:#e6db74">&#34;</span>$CONTAINER_IDS<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34; &#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;---- No containers available for deletion ----&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>    docker rm -f $CONTAINER_IDS
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 删除docker镜像</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Delete any images that were generated as a part of this setup</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># specifically the following images are often left behind:</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># This function is called when you bring the network down</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> removeUnwantedImages<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>  DOCKER_IMAGE_IDS<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>docker images | awk <span style="color:#e6db74">&#39;($1 ~ /dev-peer.*/) {print $3}&#39;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> -z <span style="color:#e6db74">&#34;</span>$DOCKER_IMAGE_IDS<span style="color:#e6db74">&#34;</span> -o <span style="color:#e6db74">&#34;</span>$DOCKER_IMAGE_IDS<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34; &#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;---- No images available for deletion ----&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>    docker rmi -f $DOCKER_IMAGE_IDS
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Versions of fabric known not to work with the test network</span>
+</span></span><span style="display:flex;"><span>BLACKLISTED_VERSIONS<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;^1\.0\. ^1\.1\. ^1\.2\. ^1\.3\. ^1\.4\.&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 这里检查一下现有的二进制文件以及镜像是否可用，免得后续出现问题</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Do some basic sanity checking to make sure that the appropriate versions of fabric</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># binaries/images are available. In the future, additional checking for the presence</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># of go or other items could be added.</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> checkPrereqs<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">## Check if your have cloned the peer binaries and configuration files.</span>
+</span></span><span style="display:flex;"><span>  peer version &gt; /dev/null 2&gt;&amp;<span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[[</span> $? -ne <span style="color:#ae81ff">0</span> <span style="color:#f92672">||</span> ! -d <span style="color:#e6db74">&#34;../config&#34;</span> <span style="color:#f92672">]]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;ERROR! Peer binary and configuration files not found..&#34;</span>
+</span></span><span style="display:flex;"><span>    echo
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;Follow the instructions in the Fabric docs to install the Fabric Binaries:&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;https://hyperledger-fabric.readthedocs.io/en/latest/install.html&#34;</span>
+</span></span><span style="display:flex;"><span>    exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># 检查docker镜像以及二进制文件是否匹配</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># use the fabric tools container to see if the samples and binaries match your</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># docker images</span>
+</span></span><span style="display:flex;"><span>  LOCAL_VERSION<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>peer version | sed -ne <span style="color:#e6db74">&#39;s/ Version: //p&#39;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>  DOCKER_IMAGE_VERSION<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>docker run --rm hyperledger/fabric-tools:$IMAGETAG peer version | sed -ne <span style="color:#e6db74">&#39;s/ Version: //p&#39;</span> | head -1<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;LOCAL_VERSION=</span>$LOCAL_VERSION<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;DOCKER_IMAGE_VERSION=</span>$DOCKER_IMAGE_VERSION<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span>$LOCAL_VERSION<span style="color:#e6db74">&#34;</span> !<span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;</span>$DOCKER_IMAGE_VERSION<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;=================== WARNING ===================&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;  Local fabric binaries and docker images are  &#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;  out of  sync. This may cause problems.       &#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;===============================================&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">for</span> UNSUPPORTED_VERSION in $BLACKLISTED_VERSIONS; <span style="color:#66d9ef">do</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;</span>$LOCAL_VERSION<span style="color:#e6db74">&#34;</span> | grep -q $UNSUPPORTED_VERSION
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> $? -eq <span style="color:#ae81ff">0</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>      echo <span style="color:#e6db74">&#34;ERROR! Local Fabric binary version of </span>$LOCAL_VERSION<span style="color:#e6db74"> does not match the versions supported by the test network.&#34;</span>
+</span></span><span style="display:flex;"><span>      exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;</span>$DOCKER_IMAGE_VERSION<span style="color:#e6db74">&#34;</span> | grep -q $UNSUPPORTED_VERSION
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> $? -eq <span style="color:#ae81ff">0</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>      echo <span style="color:#e6db74">&#34;ERROR! Fabric Docker image version of </span>$DOCKER_IMAGE_VERSION<span style="color:#e6db74"> does not match the versions supported by the test network.&#34;</span>
+</span></span><span style="display:flex;"><span>      exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">done</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 下面简单介绍了cryptogen这个工具以及CA</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Before you can bring up a network, each organization needs to generate the crypto</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># material that will define that organization on the network. Because Hyperledger</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Fabric is a permissioned blockchain, each node and user on the network needs to</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># use certificates and keys to sign and verify its actions. In addition, each user</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># needs to belong to an organization that is recognized as a member of the network.</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># You can use the Cryptogen tool or Fabric CAs to generate the organization crypto</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># material.</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># By default, the sample network uses cryptogen. Cryptogen is a tool that is</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># meant for development and testing that can quicky create the certificates and keys</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># that can be consumed by a Fabric network. The cryptogen tool consumes a series</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># of configuration files for each organization in the &#34;organizations/cryptogen&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># directory. Cryptogen uses the files to generate the crypto  material for each</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># org in the &#34;organizations&#34; directory.</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># You can also Fabric CAs to generate the crypto material. CAs sign the certificates</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># and keys that they generate to create a valid root of trust for each organization.</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># The script uses Docker Compose to bring up three CAs, one for each peer organization</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># and the ordering organization. The configuration file for creating the Fabric CA</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># servers are in the &#34;organizations/fabric-ca&#34; directory. Within the same diectory,</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># the &#34;registerEnroll.sh&#34; script uses the Fabric CA client to create the identites,</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># certificates, and MSP folders that are needed to create the test network in the</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># &#34;organizations/ordererOrganizations&#34; directory.</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Create Organziation crypto material using cryptogen or CAs</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> createOrgs<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> -d <span style="color:#e6db74">&#34;organizations/peerOrganizations&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    rm -Rf organizations/peerOrganizations <span style="color:#f92672">&amp;&amp;</span> rm -Rf organizations/ordererOrganizations
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># Create crypto material using cryptogen</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span>$CRYPTO<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;cryptogen&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    which cryptogen
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span>$?<span style="color:#e6db74">&#34;</span> -ne <span style="color:#ae81ff">0</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>      echo <span style="color:#e6db74">&#34;cryptogen tool not found. exiting&#34;</span>
+</span></span><span style="display:flex;"><span>      exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>    echo
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##### Generate certificates using cryptogen tool #########&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>    echo
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;############ Create Org1 Identities ######################&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    set -x
+</span></span><span style="display:flex;"><span>    cryptogen generate --config<span style="color:#f92672">=</span>./organizations/cryptogen/crypto-config-org1.yaml --output<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;organizations&#34;</span>
+</span></span><span style="display:flex;"><span>    res<span style="color:#f92672">=</span>$?
+</span></span><span style="display:flex;"><span>    set +x
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> $res -ne <span style="color:#ae81ff">0</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>      echo <span style="color:#e6db74">&#34;Failed to generate certificates...&#34;</span>
+</span></span><span style="display:flex;"><span>      exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;############ Create Org2 Identities ######################&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    set -x
+</span></span><span style="display:flex;"><span>    cryptogen generate --config<span style="color:#f92672">=</span>./organizations/cryptogen/crypto-config-org2.yaml --output<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;organizations&#34;</span>
+</span></span><span style="display:flex;"><span>    res<span style="color:#f92672">=</span>$?
+</span></span><span style="display:flex;"><span>    set +x
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> $res -ne <span style="color:#ae81ff">0</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>      echo <span style="color:#e6db74">&#34;Failed to generate certificates...&#34;</span>
+</span></span><span style="display:flex;"><span>      exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;############ Create Orderer Org Identities ###############&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    set -x
+</span></span><span style="display:flex;"><span>    cryptogen generate --config<span style="color:#f92672">=</span>./organizations/cryptogen/crypto-config-orderer.yaml --output<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;organizations&#34;</span>
+</span></span><span style="display:flex;"><span>    res<span style="color:#f92672">=</span>$?
+</span></span><span style="display:flex;"><span>    set +x
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> $res -ne <span style="color:#ae81ff">0</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>      echo <span style="color:#e6db74">&#34;Failed to generate certificates...&#34;</span>
+</span></span><span style="display:flex;"><span>      exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># Create crypto material using Fabric CAs</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span>$CRYPTO<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;Certificate Authorities&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    fabric-ca-client version &gt; /dev/null 2&gt;&amp;<span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> $? -ne <span style="color:#ae81ff">0</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>      echo <span style="color:#e6db74">&#34;Fabric CA client not found locally, downloading...&#34;</span>
+</span></span><span style="display:flex;"><span>      cd ..
+</span></span><span style="display:flex;"><span>      curl -s -L <span style="color:#e6db74">&#34;https://github.com/hyperledger/fabric-ca/releases/download/v1.4.4/hyperledger-fabric-ca-</span><span style="color:#e6db74">${</span>OS_ARCH<span style="color:#e6db74">}</span><span style="color:#e6db74">-1.4.4.tar.gz&#34;</span> | tar xz <span style="color:#f92672">||</span> rc<span style="color:#f92672">=</span>$?
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> -n <span style="color:#e6db74">&#34;</span>$rc<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>        echo <span style="color:#e6db74">&#34;==&gt; There was an error downloading the binary file.&#34;</span>
+</span></span><span style="display:flex;"><span>        echo <span style="color:#e6db74">&#34;fabric-ca-client binary is not available to download&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>        echo <span style="color:#e6db74">&#34;==&gt; Done.&#34;</span>
+</span></span><span style="display:flex;"><span>      cd test-network
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    echo
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##### Generate certificates using Fabric CA&#39;s ############&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    IMAGE_TAG<span style="color:#f92672">=</span>$IMAGETAG docker-compose -f $COMPOSE_FILE_CA up -d 2&gt;&amp;<span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    . organizations/fabric-ca/registerEnroll.sh
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    sleep <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;############ Create Org1 Identities ######################&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    createOrg1
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;############ Create Org2 Identities ######################&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    createOrg2
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;############ Create Orderer Org Identities ###############&#34;</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;##########################################################&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    createOrderer
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  echo
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;Generate CCP files for Org1 and Org2&#34;</span>
+</span></span><span style="display:flex;"><span>  ./organizations/ccp-generate.sh
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 使用cryptogen（cryptogen用于配置网络中的证书、组织等）配置完网络组织后</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 这里使用configtxgen配置创世区块、channel以及锚节点</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 有一个&#34;configtx.yaml&#34;文件帮助配置网络中的组织创世区块，组织成员等内容</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 创建每个channel的MSP</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Once you create the organization crypto material, you need to create the</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># genesis block of the orderer system channel. This block is required to bring</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># up any orderer nodes and create any application channels.</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># The configtxgen tool is used to create the genesis block. Configtxgen consumes a</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># &#34;configtx.yaml&#34; file that contains the definitions for the sample network. The</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># genesis block is defiend using the &#34;TwoOrgsOrdererGenesis&#34; profile at the bottom</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># of the file. This profile defines a sample consortium, &#34;SampleConsortium&#34;,</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># consisting of our two Peer Orgs. This consortium defines which organizations are</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># recognized as members of the network. The peer and ordering organizations are defined</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># in the &#34;Profiles&#34; section at the top of the file. As part of each organization</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># profile, the file points to a the location of the MSP directory for each member.</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># This MSP is used to create the channel MSP that defines the root of trust for</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># each organization. In essense, the channel MSP allows the nodes and users to be</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># recognized as network members. The file also specifies the anchor peers for each</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># peer org. In future steps, this same file is used to create the channel creation</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># transaction and the anchor peer updates.</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># If you receive the following warning, it can be safely ignored:</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># [bccsp] GetDefault -&gt; WARN 001 Before using BCCSP, please call InitFactories(). Falling back to bootBCCSP.</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># You can ignore the logs regarding intermediate certs, we are not using them in</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># this crypto implementation.</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Generate orderer system channel genesis block.</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> createConsortium<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  which configtxgen
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span>$?<span style="color:#e6db74">&#34;</span> -ne <span style="color:#ae81ff">0</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;configtxgen tool not found. exiting&#34;</span>
+</span></span><span style="display:flex;"><span>    exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;#########  Generating Orderer Genesis block ##############&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># Note: For some unknown reason (at least for now) the block file can&#39;t be</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># named orderer.genesis.block or the orderer will fail to launch!</span>
+</span></span><span style="display:flex;"><span>  set -x
+</span></span><span style="display:flex;"><span>  configtxgen -profile TwoOrgsOrdererGenesis -channelID system-channel -outputBlock ./system-genesis-block/genesis.block
+</span></span><span style="display:flex;"><span>  res<span style="color:#f92672">=</span>$?
+</span></span><span style="display:flex;"><span>  set +x
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> $res -ne <span style="color:#ae81ff">0</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;Failed to generate orderer genesis block...&#34;</span>
+</span></span><span style="display:flex;"><span>    exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 之后，启动peer节点和排序服务，创建相应的docker实体</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># After we create the org crypto material and the system channel genesis block,</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># we can now bring up the peers and orderering service. By default, the base</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># file for creating the network is &#34;docker-compose-test-net.yaml&#34; in the ``docker``</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># folder. This file defines the environment variables and file mounts that</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># point the crypto material and genesis block that were created in earlier.</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Bring up the peer and orderer nodes using docker compose.</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> networkUp<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  checkPrereqs
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># generate artifacts if they don&#39;t exist</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> ! -d <span style="color:#e6db74">&#34;organizations/peerOrganizations&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    createOrgs
+</span></span><span style="display:flex;"><span>    createConsortium
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  COMPOSE_FILES<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;-f </span><span style="color:#e6db74">${</span>COMPOSE_FILE_BASE<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>DATABASE<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;couchdb&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    COMPOSE_FILES<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>COMPOSE_FILES<span style="color:#e6db74">}</span><span style="color:#e6db74"> -f </span><span style="color:#e6db74">${</span>COMPOSE_FILE_COUCH<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  IMAGE_TAG<span style="color:#f92672">=</span>$IMAGETAG docker-compose <span style="color:#e6db74">${</span>COMPOSE_FILES<span style="color:#e6db74">}</span> up -d 2&gt;&amp;<span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  docker ps -a
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> $? -ne <span style="color:#ae81ff">0</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;ERROR !!!! Unable to start network&#34;</span>
+</span></span><span style="display:flex;"><span>    exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 将peer加入通道</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## call the script to join create the channel and join the peers of org1 and org2</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> createChannel<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## Bring up the network if it is not arleady up.</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> ! -d <span style="color:#e6db74">&#34;organizations/peerOrganizations&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;Bringing up network&#34;</span>
+</span></span><span style="display:flex;"><span>    networkUp
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># now run the script that creates a channel. This script uses configtxgen once</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># more to create the channel creation transaction and the anchor peer updates.</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># configtx.yaml is mounted in the cli container, which allows us to use it to</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># create the channel artifacts</span>
+</span></span><span style="display:flex;"><span> scripts/createChannel.sh $CHANNEL_NAME $CLI_DELAY $MAX_RETRY $VERBOSE
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> $? -ne <span style="color:#ae81ff">0</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;Error !!! Create channel failed&#34;</span>
+</span></span><span style="display:flex;"><span>    exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 实例化链码</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## Call the script to isntall and instantiate a chaincode on the channel</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> deployCC<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  scripts/deployCC.sh $CHANNEL_NAME $CC_SRC_LANGUAGE $VERSION $CLI_DELAY $MAX_RETRY $VERBOSE
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> $? -ne <span style="color:#ae81ff">0</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;ERROR !!! Deploying chaincode failed&#34;</span>
+</span></span><span style="display:flex;"><span>    exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  exit <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 关闭网络</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Tear down running network</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> networkDown<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># stop org3 containers also in addition to org1 and org2, in case we were running sample to add org3</span>
+</span></span><span style="display:flex;"><span>  docker-compose -f $COMPOSE_FILE_BASE -f $COMPOSE_FILE_COUCH -f $COMPOSE_FILE_CA down --volumes --remove-orphans
+</span></span><span style="display:flex;"><span>  docker-compose -f $COMPOSE_FILE_COUCH_ORG3 -f $COMPOSE_FILE_ORG3 down --volumes --remove-orphans
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># Don&#39;t remove the generated artifacts -- note, the ledgers are always removed</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span>$MODE<span style="color:#e6db74">&#34;</span> !<span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;restart&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Bring down the network, deleting the volumes</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">#Cleanup the chaincode containers</span>
+</span></span><span style="display:flex;"><span>    clearContainers
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">#Cleanup images</span>
+</span></span><span style="display:flex;"><span>    removeUnwantedImages
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># remove orderer block and other channel configuration transactions and certs</span>
+</span></span><span style="display:flex;"><span>    rm -rf system-genesis-block/*.block organizations/peerOrganizations organizations/ordererOrganizations
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">## remove fabric ca artifacts</span>
+</span></span><span style="display:flex;"><span>    rm -rf organizations/fabric-ca/org1/msp organizations/fabric-ca/org1/tls-cert.pem organizations/fabric-ca/org1/ca-cert.pem organizations/fabric-ca/org1/IssuerPublicKey organizations/fabric-ca/org1/IssuerRevocationPublicKey organizations/fabric-ca/org1/fabric-ca-server.db
+</span></span><span style="display:flex;"><span>    rm -rf organizations/fabric-ca/org2/msp organizations/fabric-ca/org2/tls-cert.pem organizations/fabric-ca/org2/ca-cert.pem organizations/fabric-ca/org2/IssuerPublicKey organizations/fabric-ca/org2/IssuerRevocationPublicKey organizations/fabric-ca/org2/fabric-ca-server.db
+</span></span><span style="display:flex;"><span>    rm -rf organizations/fabric-ca/ordererOrg/msp organizations/fabric-ca/ordererOrg/tls-cert.pem organizations/fabric-ca/ordererOrg/ca-cert.pem organizations/fabric-ca/ordererOrg/IssuerPublicKey organizations/fabric-ca/ordererOrg/IssuerRevocationPublicKey organizations/fabric-ca/ordererOrg/fabric-ca-server.db
+</span></span><span style="display:flex;"><span>    rm -rf addOrg3/fabric-ca/org3/msp addOrg3/fabric-ca/org3/tls-cert.pem addOrg3/fabric-ca/org3/ca-cert.pem addOrg3/fabric-ca/org3/IssuerPublicKey addOrg3/fabric-ca/org3/IssuerRevocationPublicKey addOrg3/fabric-ca/org3/fabric-ca-server.db
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># remove channel and script artifacts</span>
+</span></span><span style="display:flex;"><span>    rm -rf channel-artifacts log.txt fabcar.tar.gz fabcar
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Obtain the OS and Architecture string that will be used to select the correct</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># native binaries for your platform, e.g., darwin-amd64 or linux-amd64</span>
+</span></span><span style="display:flex;"><span>OS_ARCH<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>echo <span style="color:#e6db74">&#34;</span><span style="color:#66d9ef">$(</span>uname -s | tr <span style="color:#e6db74">&#39;[:upper:]&#39;</span> <span style="color:#e6db74">&#39;[:lower:]&#39;</span> | sed <span style="color:#e6db74">&#39;s/mingw64_nt.*/windows/&#39;</span><span style="color:#66d9ef">)</span><span style="color:#e6db74">-</span><span style="color:#66d9ef">$(</span>uname -m | sed <span style="color:#e6db74">&#39;s/x86_64/amd64/g&#39;</span><span style="color:#66d9ef">)</span><span style="color:#e6db74">&#34;</span> | awk <span style="color:#e6db74">&#39;{print tolower($0)}&#39;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Using crpto vs CA. default is cryptogen</span>
+</span></span><span style="display:flex;"><span>CRYPTO<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;cryptogen&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># timeout duration - the duration the CLI should wait for a response from</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># another container before giving up</span>
+</span></span><span style="display:flex;"><span>MAX_RETRY<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># default for delay between commands</span>
+</span></span><span style="display:flex;"><span>CLI_DELAY<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># channel name defaults to &#34;mychannel&#34;</span>
+</span></span><span style="display:flex;"><span>CHANNEL_NAME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;mychannel&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># use this as the default docker-compose yaml definition</span>
+</span></span><span style="display:flex;"><span>COMPOSE_FILE_BASE<span style="color:#f92672">=</span>docker/docker-compose-test-net.yaml
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># docker-compose.yaml file if you are using couchdb</span>
+</span></span><span style="display:flex;"><span>COMPOSE_FILE_COUCH<span style="color:#f92672">=</span>docker/docker-compose-couch.yaml
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># certificate authorities compose file</span>
+</span></span><span style="display:flex;"><span>COMPOSE_FILE_CA<span style="color:#f92672">=</span>docker/docker-compose-ca.yaml
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># use this as the docker compose couch file for org3</span>
+</span></span><span style="display:flex;"><span>COMPOSE_FILE_COUCH_ORG3<span style="color:#f92672">=</span>addOrg3/docker/docker-compose-couch-org3.yaml
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># use this as the default docker-compose yaml definition for org3</span>
+</span></span><span style="display:flex;"><span>COMPOSE_FILE_ORG3<span style="color:#f92672">=</span>addOrg3/docker/docker-compose-org3.yaml
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># use golang as the default language for chaincode</span>
+</span></span><span style="display:flex;"><span>CC_SRC_LANGUAGE<span style="color:#f92672">=</span>golang
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Chaincode version</span>
+</span></span><span style="display:flex;"><span>VERSION<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># default image tag</span>
+</span></span><span style="display:flex;"><span>IMAGETAG<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;latest&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># default database</span>
+</span></span><span style="display:flex;"><span>DATABASE<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;leveldb&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Parse commandline args</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">## Parse mode</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">[[</span> $# -lt <span style="color:#ae81ff">1</span> <span style="color:#f92672">]]</span> ; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  printHelp
+</span></span><span style="display:flex;"><span>  exit <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>  MODE<span style="color:#f92672">=</span>$1
+</span></span><span style="display:flex;"><span>  shift
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># parse a createChannel subcommand if used</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">[[</span> $# -ge <span style="color:#ae81ff">1</span> <span style="color:#f92672">]]</span> ; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  key<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$1<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> <span style="color:#f92672">[[</span> <span style="color:#e6db74">&#34;</span>$key<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;createChannel&#34;</span> <span style="color:#f92672">]]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>      export MODE<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;createChannel&#34;</span>
+</span></span><span style="display:flex;"><span>      shift
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># parse flags</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">while</span> <span style="color:#f92672">[[</span> $# -ge <span style="color:#ae81ff">1</span> <span style="color:#f92672">]]</span> ; <span style="color:#66d9ef">do</span>
+</span></span><span style="display:flex;"><span>  key<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$1<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">case</span> $key in
+</span></span><span style="display:flex;"><span>  -h <span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    printHelp
+</span></span><span style="display:flex;"><span>    exit <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>    ;;
+</span></span><span style="display:flex;"><span>  -c <span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    CHANNEL_NAME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$2<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    shift
+</span></span><span style="display:flex;"><span>    ;;
+</span></span><span style="display:flex;"><span>  -ca <span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    CRYPTO<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Certificate Authorities&#34;</span>
+</span></span><span style="display:flex;"><span>    ;;
+</span></span><span style="display:flex;"><span>  -r <span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    MAX_RETRY<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$2<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    shift
+</span></span><span style="display:flex;"><span>    ;;
+</span></span><span style="display:flex;"><span>  -d <span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    CLI_DELAY<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$2<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    shift
+</span></span><span style="display:flex;"><span>    ;;
+</span></span><span style="display:flex;"><span>  -s <span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    DATABASE<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$2<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    shift
+</span></span><span style="display:flex;"><span>    ;;
+</span></span><span style="display:flex;"><span>  -l <span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    CC_SRC_LANGUAGE<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$2<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    shift
+</span></span><span style="display:flex;"><span>    ;;
+</span></span><span style="display:flex;"><span>  -v <span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    VERSION<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$2<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    shift
+</span></span><span style="display:flex;"><span>    ;;
+</span></span><span style="display:flex;"><span>  -i <span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    IMAGETAG<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$2<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    shift
+</span></span><span style="display:flex;"><span>    ;;
+</span></span><span style="display:flex;"><span>  -verbose <span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    VERBOSE<span style="color:#f92672">=</span>true
+</span></span><span style="display:flex;"><span>    shift
+</span></span><span style="display:flex;"><span>    ;;
+</span></span><span style="display:flex;"><span>  * <span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    echo
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;Unknown flag: </span>$key<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    echo
+</span></span><span style="display:flex;"><span>    printHelp
+</span></span><span style="display:flex;"><span>    exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>    ;;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">esac</span>
+</span></span><span style="display:flex;"><span>  shift
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">done</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Are we generating crypto material with this command?</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> ! -d <span style="color:#e6db74">&#34;organizations/peerOrganizations&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  CRYPTO_MODE<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;with crypto from &#39;</span><span style="color:#e6db74">${</span>CRYPTO<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>  CRYPTO_MODE<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Determine mode of operation and printing out what we asked for</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span>$MODE<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;up&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;Starting nodes with CLI timeout of &#39;</span><span style="color:#e6db74">${</span>MAX_RETRY<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39; tries and CLI delay of &#39;</span><span style="color:#e6db74">${</span>CLI_DELAY<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39; seconds and using database &#39;</span><span style="color:#e6db74">${</span>DATABASE<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39; </span><span style="color:#e6db74">${</span>CRYPTO_MODE<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>  echo
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">elif</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span>$MODE<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;createChannel&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;Creating channel &#39;</span><span style="color:#e6db74">${</span>CHANNEL_NAME<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;.&#34;</span>
+</span></span><span style="display:flex;"><span>  echo
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;If network is not up, starting nodes with CLI timeout of &#39;</span><span style="color:#e6db74">${</span>MAX_RETRY<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39; tries and CLI delay of &#39;</span><span style="color:#e6db74">${</span>CLI_DELAY<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39; seconds and using database &#39;</span><span style="color:#e6db74">${</span>DATABASE<span style="color:#e6db74">}</span><span style="color:#e6db74"> </span><span style="color:#e6db74">${</span>CRYPTO_MODE<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>  echo
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">elif</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span>$MODE<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;down&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;Stopping network&#34;</span>
+</span></span><span style="display:flex;"><span>  echo
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">elif</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span>$MODE<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;restart&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;Restarting network&#34;</span>
+</span></span><span style="display:flex;"><span>  echo
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">elif</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span>$MODE<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;deployCC&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;deploying chaincode on channel &#39;</span><span style="color:#e6db74">${</span>CHANNEL_NAME<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;&#34;</span>
+</span></span><span style="display:flex;"><span>  echo
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>  printHelp
+</span></span><span style="display:flex;"><span>  exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>MODE<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;up&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  networkUp
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">elif</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>MODE<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;createChannel&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  createChannel
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">elif</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>MODE<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;deployCC&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  deployCC
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">elif</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>MODE<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;down&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  networkDown
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">elif</span> <span style="color:#f92672">[</span> <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>MODE<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;restart&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  networkDown
+</span></span><span style="display:flex;"><span>  networkUp
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">else</span>
+</span></span><span style="display:flex;"><span>  printHelp
+</span></span><span style="display:flex;"><span>  exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fi</span>
+</span></span></code></pre></div><h2 id="启动test-network">启动test-network</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@lizonglin-virtual-machine:/home/lizonglin/GoWork/src/github.com/fabric/scripts/fabric-samples/test-network# ./network.sh up
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 可以看到，默认使用leveldb</span>
+</span></span><span style="display:flex;"><span>Starting nodes with CLI timeout of <span style="color:#e6db74">&#39;5&#39;</span> tries and CLI delay of <span style="color:#e6db74">&#39;3&#39;</span> seconds and using database <span style="color:#e6db74">&#39;leveldb&#39;</span> with crypto from <span style="color:#e6db74">&#39;cryptogen&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>LOCAL_VERSION<span style="color:#f92672">=</span>2.2.1
+</span></span><span style="display:flex;"><span>DOCKER_IMAGE_VERSION<span style="color:#f92672">=</span>2.2.1
+</span></span><span style="display:flex;"><span>/home/lizonglin/GoWork/src/github.com/fabric/scripts/fabric-samples/test-network/../bin/cryptogen
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 首先使用cryptogen创建证书</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">##########################################################</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">##### Generate certificates using cryptogen tool #########</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">##########################################################</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 组织1</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">##########################################################</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">############ Create Org1 Identities ######################</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">##########################################################</span>
+</span></span><span style="display:flex;"><span>+ cryptogen generate --config<span style="color:#f92672">=</span>./organizations/cryptogen/crypto-config-org1.yaml --output<span style="color:#f92672">=</span>organizations
+</span></span><span style="display:flex;"><span>org1.example.com
+</span></span><span style="display:flex;"><span>+ res<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>+ set +x
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 组织2</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">##########################################################</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">############ Create Org2 Identities ######################</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">##########################################################</span>
+</span></span><span style="display:flex;"><span>+ cryptogen generate --config<span style="color:#f92672">=</span>./organizations/cryptogen/crypto-config-org2.yaml --output<span style="color:#f92672">=</span>organizations
+</span></span><span style="display:flex;"><span>org2.example.com
+</span></span><span style="display:flex;"><span>+ res<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>+ set +x
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 排序服务</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">##########################################################</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">############ Create Orderer Org Identities ###############</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">##########################################################</span>
+</span></span><span style="display:flex;"><span>+ cryptogen generate --config<span style="color:#f92672">=</span>./organizations/cryptogen/crypto-config-orderer.yaml --output<span style="color:#f92672">=</span>organizations
+</span></span><span style="display:flex;"><span>+ res<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>+ set +x
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Generate CCP files <span style="color:#66d9ef">for</span> Org1 and Org2
+</span></span><span style="display:flex;"><span>/home/lizonglin/GoWork/src/github.com/fabric/scripts/fabric-samples/test-network/../bin/configtxgen
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 排序节点的创世区块</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#########  Generating Orderer Genesis block ##############</span>
+</span></span><span style="display:flex;"><span>+ configtxgen -profile TwoOrgsOrdererGenesis -channelID system-channel -outputBlock ./system-genesis-block/genesis.block
+</span></span><span style="display:flex;"><span>2021-01-21 18:53:34.963 CST <span style="color:#f92672">[</span>common.tools.configtxgen<span style="color:#f92672">]</span> main -&gt; INFO <span style="color:#ae81ff">001</span> Loading configuration
+</span></span><span style="display:flex;"><span>2021-01-21 18:53:35.017 CST <span style="color:#f92672">[</span>common.tools.configtxgen.localconfig<span style="color:#f92672">]</span> completeInitialization -&gt; INFO <span style="color:#ae81ff">002</span> orderer type: etcdraft
+</span></span><span style="display:flex;"><span>2021-01-21 18:53:35.017 CST <span style="color:#f92672">[</span>common.tools.configtxgen.localconfig<span style="color:#f92672">]</span> completeInitialization -&gt; INFO <span style="color:#ae81ff">003</span> Orderer.EtcdRaft.Options unset, setting to tick_interval:<span style="color:#e6db74">&#34;500ms&#34;</span> election_tick:10 heartbeat_tick:1 max_inflight_blocks:5 snapshot_interval_size:16777216 
+</span></span><span style="display:flex;"><span>2021-01-21 18:53:35.017 CST <span style="color:#f92672">[</span>common.tools.configtxgen.localconfig<span style="color:#f92672">]</span> Load -&gt; INFO <span style="color:#ae81ff">004</span> Loaded configuration: /home/lizonglin/GoWork/src/github.com/fabric/scripts/fabric-samples/test-network/configtx/configtx.yaml
+</span></span><span style="display:flex;"><span>2021-01-21 18:53:35.019 CST <span style="color:#f92672">[</span>common.tools.configtxgen<span style="color:#f92672">]</span> doOutputBlock -&gt; INFO <span style="color:#ae81ff">005</span> Generating genesis block
+</span></span><span style="display:flex;"><span>2021-01-21 18:53:35.020 CST <span style="color:#f92672">[</span>common.tools.configtxgen<span style="color:#f92672">]</span> doOutputBlock -&gt; INFO <span style="color:#ae81ff">006</span> Writing genesis block
+</span></span><span style="display:flex;"><span>+ res<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>+ set +x
+</span></span><span style="display:flex;"><span>Creating network <span style="color:#e6db74">&#34;net_test&#34;</span> with the default driver
+</span></span><span style="display:flex;"><span>Creating volume <span style="color:#e6db74">&#34;net_orderer.example.com&#34;</span> with default driver
+</span></span><span style="display:flex;"><span>Creating volume <span style="color:#e6db74">&#34;net_peer0.org1.example.com&#34;</span> with default driver
+</span></span><span style="display:flex;"><span>Creating volume <span style="color:#e6db74">&#34;net_peer0.org2.example.com&#34;</span> with default driver
+</span></span><span style="display:flex;"><span>Creating peer0.org2.example.com ... <span style="color:#66d9ef">done</span>
+</span></span><span style="display:flex;"><span>Creating orderer.example.com    ... <span style="color:#66d9ef">done</span>
+</span></span><span style="display:flex;"><span>Creating peer0.org1.example.com ... <span style="color:#66d9ef">done</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 现在的docker中包含的容器，test-network到这里就是初步启动成功了</span>
+</span></span><span style="display:flex;"><span>CONTAINER ID   IMAGE                               COMMAND             CREATED          STATUS                  PORTS                              NAMES
+</span></span><span style="display:flex;"><span>ae8899485a40   hyperledger/fabric-peer:latest      <span style="color:#e6db74">&#34;peer node start&#34;</span>   <span style="color:#ae81ff">18</span> seconds ago   Up Less than a second   0.0.0.0:7051-&gt;7051/tcp             peer0.org1.example.com
+</span></span><span style="display:flex;"><span>e8e4acee2cdd   hyperledger/fabric-orderer:latest   <span style="color:#e6db74">&#34;orderer&#34;</span>           <span style="color:#ae81ff">18</span> seconds ago   Up Less than a second   0.0.0.0:7050-&gt;7050/tcp             orderer.example.com
+</span></span><span style="display:flex;"><span>c0c720b03c4a   hyperledger/fabric-peer:latest      <span style="color:#e6db74">&#34;peer node start&#34;</span>   <span style="color:#ae81ff">18</span> seconds ago   Up <span style="color:#ae81ff">1</span> second             7051/tcp, 0.0.0.0:9051-&gt;9051/tcp   peer0.org2.example.com
+</span></span></code></pre></div>
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E5%8C%BA%E5%9D%97%E9%93%BE/">区块链</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/bitcoin%E7%99%BD%E7%9A%AE%E4%B9%A6/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">bitcoin白皮书</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E4%BD%BF%E7%94%A8golang%E6%9E%84%E5%BB%BA%E5%8C%BA%E5%9D%97%E9%93%BEpart7%E7%BD%91%E7%BB%9C/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">使用Golang构建区块链Part7：网络</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E4%BD%BF%E7%94%A8golang%E6%9E%84%E5%BB%BA%E5%8C%BA%E5%9D%97%E9%93%BEpart6%E4%BA%A4%E6%98%93-2/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">使用Golang构建区块链Part6：交易-2</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E4%BD%BF%E7%94%A8golang%E6%9E%84%E5%BB%BA%E5%8C%BA%E5%9D%97%E9%93%BEpart5%E5%9C%B0%E5%9D%80/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">使用Golang构建区块链Part5：地址</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E4%BD%BF%E7%94%A8golang%E6%9E%84%E5%BB%BA%E5%8C%BA%E5%9D%97%E9%93%BEpart4%E4%BA%A4%E6%98%93-1/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">使用Golang构建区块链Part4：交易-1</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

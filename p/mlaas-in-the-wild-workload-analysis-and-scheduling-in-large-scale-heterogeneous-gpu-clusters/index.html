@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='来源： NSDI&#39;22 作者：Alibaba Group 摘要 在ML as a Service中，数据中心为ML提供算力保证。而多样的ML工作负载面对异构GPU集群时会出现一些'>
+<title>MLaaS in the Wild: Workload Analysis and Scheduling in Large-Scale Heterogeneous GPU Clusters</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/mlaas-in-the-wild-workload-analysis-and-scheduling-in-large-scale-heterogeneous-gpu-clusters/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='MLaaS in the Wild: Workload Analysis and Scheduling in Large-Scale Heterogeneous GPU Clusters'>
+<meta property='og:description' content='来源： NSDI&#39;22 作者：Alibaba Group 摘要 在ML as a Service中，数据中心为ML提供算力保证。而多样的ML工作负载面对异构GPU集群时会出现一些'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/mlaas-in-the-wild-workload-analysis-and-scheduling-in-large-scale-heterogeneous-gpu-clusters/'>
+<meta property='og:site_name' content='Li Duo'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='云原生' /><meta property='article:tag' content='ML' /><meta property='article:tag' content='资源调度' /><meta property='article:tag' content='笔记' /><meta property='article:tag' content='可观测性' /><meta property='article:published_time' content='2022-03-21T21:05:51&#43;08:00'/><meta property='article:modified_time' content='2022-03-21T21:05:51&#43;08:00'/>
+<meta name="twitter:title" content="MLaaS in the Wild: Workload Analysis and Scheduling in Large-Scale Heterogeneous GPU Clusters">
+<meta name="twitter:description" content="来源： NSDI&#39;22 作者：Alibaba Group 摘要 在ML as a Service中，数据中心为ML提供算力保证。而多样的ML工作负载面对异构GPU集群时会出现一些">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Li Duo</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#摘要">摘要</a></li>
+    <li><a href="#introduction">Introduction</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#工作负载特征分析">工作负载特征分析</a>
+      <ul>
+        <li><a href="#追踪概述">追踪概述</a></li>
+        <li><a href="#时间模型">时间模型</a></li>
+        <li><a href="#空间模型">空间模型</a></li>
+      </ul>
+    </li>
+    <li><a href="#gpu利用率">GPU利用率</a>
+      <ul>
+        <li><a href="#计算资源利用率">计算资源利用率</a></li>
+        <li><a href="#网络和io的低利用率">网络和I/O的低利用率</a></li>
+      </ul>
+    </li>
+    <li><a href="#优化集群管理的方向">优化集群管理的方向</a>
+      <ul>
+        <li><a href="#gpu共享">GPU共享</a></li>
+        <li><a href="#预测重复任务的持续时间">预测重复任务的持续时间</a></li>
+      </ul>
+    </li>
+    <li><a href="#调度面临的挑战">调度面临的挑战</a>
+      <ul>
+        <li><a href="#高gpu需求任务的研究">高GPU需求任务的研究</a></li>
+        <li><a href="#低gpu需求的任务研究">低GPU需求的任务研究</a></li>
+        <li><a href="#部署调度策略">部署调度策略</a></li>
+        <li><a href="#其他待解决的问题">其他待解决的问题</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/" >
+                云原生
+            </a>
+        
+            <a href="/categories/ml/" >
+                ML
+            </a>
+        
+            <a href="/categories/%E8%B5%84%E6%BA%90%E8%B0%83%E5%BA%A6/" >
+                资源调度
+            </a>
+        
+            <a href="/categories/%E7%AC%94%E8%AE%B0/" >
+                笔记
+            </a>
+        
+            <a href="/categories/%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7/" >
+                可观测性
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/mlaas-in-the-wild-workload-analysis-and-scheduling-in-large-scale-heterogeneous-gpu-clusters/">MLaaS in the Wild: Workload Analysis and Scheduling in Large-Scale Heterogeneous GPU Clusters</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Mar 21, 2022</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 11 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>来源： NSDI'22</p>
+<p>作者：Alibaba Group</p>
+</blockquote>
+<h2 id="摘要">摘要</h2>
+<p>在ML as a Service中，数据中心为ML提供算力保证。而多样的ML工作负载面对<strong>异构GPU集群</strong>时会出现一些问题。通过两个月的数据收集，采集了超过<strong>6000个GPU</strong>的生产数据。并发现集群调度面临的一些问题：</p>
+<ul>
+<li>低GPU利用率</li>
+<li>长队列延迟</li>
+<li>需要高端GPU的任务调度难度大</li>
+<li>异构机器负载不均衡</li>
+<li>CPU潜在的瓶颈问题</li>
+</ul>
+<p>文章对上述问题提供了一些解决方案。</p>
+<p>本文的最大贡献是提供了一个真实的大规模生产级别的ML集群的追踪数据，并在此基础之上进行分析，为ML as a Service - 云环境下的ML工作负载调度提供了重要的一手数据。</p>
+<h2 id="introduction">Introduction</h2>
+<p>在ML框架下的任务需要不同的调度策略，例如GPU局部性、群调度，而且需要调配跨数量级的资源。同时集群中的机器是异构的，一些配置如下图：</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220320210534789.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220320210534789"
+	
+	
+></p>
+<p>而异构的运行环境给资源管理和调度带来新的困难。</p>
+<h4 id="gpu碎片化使用带来的低利用率">GPU碎片化使用带来的低利用率</h4>
+<p>例如一个任务实例只使用GPU资源的一部分。流处理程序的GPU利用率的中位数值只有0.042GPU。<strong>粗粒度的GPU分配</strong>使得资源使用率低下。</p>
+<p>为解决这个问题，文章提出了<strong>GPU sharing</strong>，一种可以以<strong>时分复用的方式让多个任务共享GPU</strong>的控制方式。使用该方式，将许多低GPU的工作负载整合起来，使用一个GPU，提高资源使用效率。此外，这种共享方式<strong>不会引起资源争用干扰</strong>，资源竞争的概率十分小。</p>
+<h4 id="短任务面临的长排队延迟">短任务面临的长排队延迟</h4>
+<p>短时间运行的任务实例容易由于队列头阻塞而导致长队列延迟，<strong>大约9%的任务排队等待的时间超过他们的执行时间</strong>。</p>
+<p>一种有效的解决方案是<strong>预测任务运行时间</strong>，<strong>并将短任务优先级尽可能提高</strong>，避免与长任务竞争。通过仔细的特征工程，我们可以预测大多数重复任务的持续时间，误差在25%以内，这足以根据之前的工作建议做出质量调度决策（因为，通过观察，集群中有65%的任务有重复的工作负载）。跟踪驱动的仿真结果表明，通过预测任务持续时间采用最短作业优先调度，平均完成时间减少63%以上。</p>
+<h4 id="高gpu使用的作业难以进行调度">高GPU使用的作业难以进行调度</h4>
+<p>集群中的<strong>一些任务要求无共享的使用GPU，以利用高级硬件特性，达到加速训练的目的</strong>，如NVLink[12]，因此，对这些任务难以进行调度。</p>
+<p>集群中的调度器使用一个简单的 reserving-and-packing 策略在集群中分辨出这样的任务。它<strong>保留高端的GPU机器</strong>，如，V100 with NVLinks，用于少数具有挑剔调度要求的高GPU任务，同时将其他工作负载打包到不太高级的机器上，使用GPU共享策略<strong>保证资源的利用率</strong>。此外，该策略还<strong>提升了平均队列等待延迟，加快了任务调度</strong>。</p>
+<h4 id="负载不均衡">负载不均衡</h4>
+<p>明显的是，<strong>低端GPU比高端GPU更加拥挤</strong>，前者被分配了70%的GPU和CPU资源，而后者只被分配35%的CPU和49%的GPU资源。</p>
+<p>工作负载和机器之间也存在供应不匹配的问题。例如，工作在8GPU的工作负载对CPU的需求是那些可以提供12GPU的1.9倍，简而言之就是，那些<strong>性能更弱的机器被分配了与其能力不匹配的工作负载</strong>。</p>
+<h4 id="cpu瓶颈">CPU瓶颈</h4>
+<p>一些机器学习、深度学习作业不仅仅需要GPU，有的也需要CPU资源，这造成CPU瓶颈。同时发现， 工作在高CPU利用率机器上的任务容易减速。</p>
+<h2 id="工作负载特征分析">工作负载特征分析</h2>
+<h3 id="追踪概述">追踪概述</h3>
+<p>关于数据集的数据内容和下载请查看<a class="link" href="https://github.com/alibaba/clusterdata"  target="_blank" rel="noopener"
+    >clusterdata</a>。实际上并不能明确的知道容器里执行的到底是什么类型的训练任务，但是可以从作业名中得到一些线索。</p>
+<p>下图为PAI和Trace的架构：</p>
+<!-- raw HTML omitted -->
+<h4 id="jobs-tasks-and-instances">Jobs, tasks, and instances</h4>
+<p>用户提交jobs，一个job有一个或多个tasks来扮演不同的计算角色，每个task使用Docker运行一个或多个instances。</p>
+<p>例如，一个分布式训练job有一个参数服务task，该task有两个实例，此外还有一个worker task有10个实例。一个task的所有instances有相同的资源需求，并且需要gang-schedule。</p>
+<p>我们主要<strong>关注任务实例，也就是instance这一级别的工作</strong>。</p>
+<h4 id="heavy-skewed-instance-distribution">Heavy-skewed instance distribution</h4>
+<p>PAI追踪了120万个tasks，超过750万个instances，由超过1300个用户提交。下图展示了用户提交的task instance的分布，表现出严重的不平衡：</p>
+<!-- raw HTML omitted -->
+<p>5%的用户提交了大概77%的task instances，大概每个用户运行1.75万instance。而50%的用户每人运行少于180个instances。</p>
+<h4 id="the-prevalence-of-gang-scheduling">The prevalence of gang-scheduling</h4>
+<p>分布式的任务需要gang-schedule（认为超过2个GPU的调度），如下图：</p>
+<!-- raw HTML omitted -->
+<p>大约85%的任务需要这样的需求，有20%的任务需要超过100个GPU的调度，还有的甚至要进行超过1000个GPU的调度。</p>
+<h4 id="gpu-locality">GPU locality</h4>
+<p>除了gang-schedule，一个任务可能会在同一台机器上的多个GPU上运行它的所有实例，也就是存在<strong>GPU局部性</strong>。</p>
+<p>虽然这种情况会引发调度延迟的加剧（一些任务等待调度的时间延长），但是在单节点的GPU上进行训练减少了GPU to GPU的通信时间。</p>
+<p>但是通过增强GPU局部性，可以<strong>让某些任务的训练速度加快10倍</strong>。</p>
+<h4 id="gpu-sharing">GPU sharing</h4>
+<p>GPU sharing利用时分复用的原理使得多用户可共享一个GPU进行训练。</p>
+<h4 id="various-gpu-types-to-choose-from">Various GPU types to choose from</h4>
+<p>PAI提供异构的GPU可供任务选择。在集群中只有6%的训练任务需要运行在特定的GPU上，其他的任务则对GPU类型没有限制。</p>
+<h3 id="时间模型">时间模型</h3>
+<p>从时间角度来观察PAI工作负载。</p>
+<h4 id="diurnal-task-submissions-and-resource-requests">Diurnal task submissions and resource requests</h4>
+<p>下图是一周中task和instance的提交情况，还有总体的资源请求情况：</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220321104136979.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220321104136979"
+	
+	
+></p>
+<p>从中可以得到以下几点信息：</p>
+<ul>
+<li>周中提交数量多余周末</li>
+<li>夜晚也有任务提交的高峰</li>
+<li>大多数在夜间提交的任务并非计算密集型</li>
+</ul>
+<h4 id="instance-run-time-in-a-wide-range">Instance run-time in a wide range</h4>
+<p>下图展示了instance运行时间的分布：</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>运行时间的变化范围很大，有4个数量级</li>
+</ul>
+<h4 id="non-uniform-queueing-delays">Non-uniform queueing delays</h4>
+<p>理解为在队列中等待调度的时间。这段时间指task提交到instance执行的时间，如下图：</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>对比long-task，short-task通常花费更多比例的时间在等待调度上</li>
+<li>大约9%的短作业实例花费超过完成时间的一半去等待调度，而长左右这个数值只有3%</li>
+</ul>
+<p>此外，task instance的队列延迟还取决于GPU的需求，如下图：</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>那些可以共享GPU的instance（GPU需求为0-1）可以更快的被调度，其等待调度的等待时间P90值为497s</li>
+<li>而不支持共享GPU的任务的这一值为1150</li>
+</ul>
+<p>同时，长队列等待时间也出现在一些需要高端GPU的任务中，如下图：</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>例如在V100和V100M32上的instance需要更多等待时间</li>
+</ul>
+<h3 id="空间模型">空间模型</h3>
+<p>通过分析资源请求和使用，分析了PAI task instance的空间模型。每15s进行一次测量，并使用虚拟化工具[2, 25]去分析用户的负载模式和他们的资源需求。</p>
+<h4 id="heavy-tailed-distribution-of-resource-requests">Heavy-tailed distribution of resource requests</h4>
+<p>如下图：</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>
+<p>图5(a)(b)(c)中的蓝色实现表示，大约20%的实例占用了80%的资源，而其余的只要很少一部分资源</p>
+</li>
+<li>
+<p>以P95和中位数比较，P95需要12vCPU、1GPU、59GB内存，而中位数只要6vCPU、0.5GPU和29GB内存。</p>
+</li>
+</ul>
+<h4 id="uneven-resource-usage-low-on-gpu-but-high-on-cpu">Uneven resource usage: Low on GPU but high on CPU</h4>
+<p>集群中instance的资源使用中位数在1.4vCPU、0.042GPU和3.5GB内存，远小于资源请求的中位数。</p>
+<ul>
+<li>
+<p>观察到存在GPU空闲和CPU不够用的情况，并推断GPU的低利用率不是因为对GPU的需求少，而是CPU瓶颈限制了GPU的使用</p>
+</li>
+<li>
+<p>从5(b)中也可以看到，对GPU的实际使用远小于GPU资源的需求</p>
+</li>
+<li>
+<p>从5(d)中，对应X坐标&gt;1的值表示CPU的使用量大于申请的量，有19%的instance出现这种情况，而超量使用GPU的只有约3%的实例，对内存来说这一值也只有9%</p>
+</li>
+</ul>
+<h2 id="gpu利用率">GPU利用率</h2>
+<h3 id="计算资源利用率">计算资源利用率</h3>
+<p>包括CPU、GPU和Memory。监控系统每15s收集数据，并存到时间序列数据库中。</p>
+<p>如下图：</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>相比内存来说，GPU和CPU利用率普遍高，也说明大部分任务不是内存集中型</li>
+<li>GPU利用率的P90跨度很广，这与GPU使用有突发性相关，同时也与调度策略有关</li>
+</ul>
+<h3 id="网络和io的低利用率">网络和I/O的低利用率</h3>
+<!-- raw HTML omitted -->
+<ul>
+<li>网络中数据接收量普遍较低</li>
+<li>网络带宽普遍不能达到指定数值(如不能达到保证的10Gbps、32Gbps)</li>
+<li>iowait模式比usr和kernel模式少三个数量级，这意味着CPU大多数时间在进行计算而不是在等待I/O</li>
+</ul>
+<h2 id="优化集群管理的方向">优化集群管理的方向</h2>
+<p>在PAI中，集群管理有两个优化目标：</p>
+<ol>
+<li>实现GPU的高利用率</li>
+<li>缩短task的运行时间</li>
+</ol>
+<h3 id="gpu共享">GPU共享</h3>
+<p>与CPU不同，GPU天生就没有共享特性。PAI以<strong>时分复用和空分复用（内存）方式</strong>，使多个任务实例可以共享一个GPU。</p>
+<h4 id="benefits-of-gpu-sharing">Benefits of GPU sharing</h4>
+<p>下图将是否使用GPU sharing的表现进行对比：</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>平均而言，共享只需要50%的GPU资源，可节省高达73%的费用，节省大量的GPU资源</li>
+</ul>
+<h4 id="does-gpu-sharing-cause-contention">Does GPU sharing cause contention?</h4>
+<p>随着利用率的增加，运行在共享GPU上的实例开始争夺资源。</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>由于大多数高利用率的GPU上面运行单个实例(平均4.5%的GPU运行多个实例)，因此不会发生争用，所以认为GPU共享不会在集群中引起严重的争用</li>
+</ul>
+<h3 id="预测重复任务的持续时间">预测重复任务的持续时间</h3>
+<p>文章认为预测ML认为实例的运行时间是实现更好调度的关键。现存的预测方案基于迭代次数、损耗曲线、目标精度和训练速度等指标。</p>
+<h4 id="the-prevalence-of-recurring-tasks">The prevalence of recurring tasks</h4>
+<p>文章发现大多数任务都是重复的，并且它们的实例运行时可以很好地从过去的执行中预测出来。通过对任务的元数据，如：脚本、命令行参数、数据源和输出，进行hash得到Group tag来标识重复的任务。</p>
+<!-- raw HTML omitted -->
+<!-- raw HTML omitted -->
+<ul>
+<li>约65%的任务在trace中至少运行5轮</li>
+<li>大多数重复任务每个周期都有相似的运行时间</li>
+</ul>
+<h4 id="instance-duration-prediction-for-recurring-tasks">Instance duration prediction for recurring tasks</h4>
+<p>实际的预测使用三个特征作为输入：</p>
+<ul>
+<li>task&rsquo;s username - User</li>
+<li>resource request - Resource including GPU and other resources</li>
+<li>group tag - Group</li>
+</ul>
+<p>利用上述特征，基于CART(Classification And Regression Tress)算法预测实例的平均运行时间。作为评估，使用至少重复5轮的任务，下图为预测详情：</p>
+<!-- raw HTML omitted -->
+<p>从上图得知：</p>
+<ul>
+<li>Group是重要指标</li>
+</ul>
+<h4 id="benefits-for-scheduling">Benefits for scheduling</h4>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220417180125631.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220417180125631"
+	
+	
+></p>
+<p>上图展示不同调度方法。</p>
+<ul>
+<li>SJF-Oracle明显好于其他算法，该算法基于真实的任务持续时间和预测算法</li>
+<li>给的特征越多，效果越好</li>
+</ul>
+<h2 id="调度面临的挑战">调度面临的挑战</h2>
+<p>本部分使用两个案例：典型的ML tasks，分别有高/低GPU资源需求的特性。</p>
+<h3 id="高gpu需求任务的研究">高GPU需求任务的研究</h3>
+<p>集群中一些任务有计算密集型实例，需要很高的GPU资源。</p>
+<h4 id="nlp-with-advanced-language-models">NLP with advanced language models</h4>
+<p>NLP任务中，73%的有大规模的输入，需要16GB或更高的内存。下图展示了NLP实例对GPU资源的需求和使用情况：</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>约40%的实例需要超过1个GPU，超过那些常规的任务</li>
+</ul>
+<h4 id="image-classification-with-massive-output">Image classification with massive output</h4>
+<p>集群中还有些任务需要GPU to GPU的高效率通信，GPU局部性可以提高通信效率。典型代表就是图像分类模型，其中存在规模庞大的全连接层，要求在工作实例之间进行大量的梯度更新，需要使用大量的通信资源，使通信成为瓶颈。</p>
+<p>如图14(b)中，启用NVLink极大缩短了任务的运行时间。</p>
+<h3 id="低gpu需求的任务研究">低GPU需求的任务研究</h3>
+<p>使用三种广泛使用的任务进行研究。一些CPU密集型的任务可能会导致GPU的利用率低下。</p>
+<h4 id="ctr-prediction-model-training-and-inference">CTR prediction model training and inference</h4>
+<p>在追踪中，有6.7%的广告点击率预测系统（ advertisement click- through rate (CTR) prediction）使用了CTR模型。其中有25%的实例负责训练，75%的实例负责推理工作。这些实例的CPU和GPU资源分布如下：</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>与训练相比，执行推理任务的实例具有更高的CPU利用率，因为它们处理源源不断到达的大量数据</li>
+<li>有近75%的实例使用的GPU小于0.1</li>
+</ul>
+<p>下图展示了这些模型运行时资源情况：</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>CPU资源的使用明显高于其他资源</li>
+</ul>
+<h4 id="gnn-training">GNN training</h4>
+<p>图神经网络也是计算密集型任务， CPU的使用率远超GPU，如下图所示：</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>在模型训练阶段，需要进行大量的CPU操作</li>
+</ul>
+<h4 id="reinforcement-learning">Reinforcement learning</h4>
+<p>加强学习算法通过并行模拟迭代生成一批数据将生成的数据放到GPU上进行训练，以改进学习策略。</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>有72%的任务需要超过10个实例来完成，加大调度难度</li>
+<li>但是大多数RL任务对GPU的需求极低</li>
+</ul>
+<h3 id="部署调度策略">部署调度策略</h3>
+<h4 id="reserving-and-packing">Reserving-and-packing</h4>
+<p>集群中有<strong>意保留高端GPU资源</strong>，而尽可能将任务打包在一起，共享使用低端GPU资源。</p>
+<p>对于每个任务，调度程序生成一个有序的分配计划序列；每个计划指定了预期的GPU设备，并与尝试超时值相关联。</p>
+<p>对于需要高端GPU的任务，先尝试高端GPU的分配，然后再尝试较低端GPU的分配；对于其他任务，顺序颠倒过来，GPU调度器是在基于局部树的调度系统Fuxi[26,71]上实现的。</p>
+<h4 id="load-balancing">Load-balancing</h4>
+<p>在Reserving-and-packing的前提下，调度器还会优先将实例调度到分配率较低的机器上，分配率衡量为已分配的CPU、内存和GPU的加权总和，这些资源按机器的容量进行标准化。</p>
+<h4 id="benefits">Benefits</h4>
+<p>具体对应两种调度方法：</p>
+<ol>
+<li>简单地使用渐进式填充的负载平衡机器(总是将任务的实例调度到利用率最低的节点)</li>
+<li>不考虑负载均衡，只执行Reserving-and-packing</li>
+</ol>
+<p>下图展示了这两种策略的实际表现：</p>
+<!-- raw HTML omitted -->
+<ul>
+<li>
+<p>请注意，任务的排队延迟也包括在它的组调度实例的排队延迟</p>
+</li>
+<li>
+<p>在这两个策略下，超过90%的实例和任务会立即启动</p>
+</li>
+<li>
+<p>与负载均衡算法相比，Reserving-and-packing算法将平均任务排队率降低了45%，主要原因是尾部延迟的显著缩短超过10000秒</p>
+</li>
+<li>
+<p>进一步比较了业务关键型任务和请求V100的实例的排队延迟，在两种策略下，GPU的平均任务排队延迟减少了68%</p>
+</li>
+</ul>
+<h3 id="其他待解决的问题">其他待解决的问题</h3>
+<h4 id="mismatch-between-machine-specs-and-instance-requests">Mismatch between machine specs and instance requests</h4>
+<p>该问题带来的影响如下图：</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220417191055419.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20220417191055419"
+	
+	
+></p>
+<ul>
+<li>这直接导致：相较于高端机器来说，低端机器明显更拥挤，它们的资源使用率也高于高端机器</li>
+</ul>
+<h4 id="overcrowded-weak-gpu-machines">Overcrowded weak-GPU machines</h4>
+<h4 id="imbalanced-load-in-high-end-machines">Imbalanced load in high-end machines</h4>
+<h4 id="cpu-can-be-the-bottleneck">CPU can be the bottleneck</h4>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">云原生</a>
+        
+            <a href="/tags/ml/">ML</a>
+        
+            <a href="/tags/%E8%B5%84%E6%BA%90%E8%B0%83%E5%BA%A6/">资源调度</a>
+        
+            <a href="/tags/%E7%AC%94%E8%AE%B0/">笔记</a>
+        
+            <a href="/tags/%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7/">可观测性</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/faat-a-transparent-auto-scaling-cache-for-serverless-applications/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Faa$T: A Transparent Auto-Scaling Cache for Serverless Applications</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/service-level-fault-injection-testing/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Service-Level Fault Injection Testing</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/showar-right-sizing-and-efficient-scheduling-of-microservices/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E7%AC%94%E8%AE%B0-showar-right-sizing-and-efficient-scheduling-of-microservices/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">笔记 &gt; SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E7%AC%94%E8%AE%B0-service-level-fault-injection-testing/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">笔记 &gt; Service-Level Fault Injection Testing</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 Li Duo
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

@@ -811,6 +811,455 @@ census,location=klamath,scientist=anderson bees
 </description>
         </item>
         <item>
+        <title>记一次Kubernetes使用Cilium，coredns健康检查失败的排错</title>
+        <link>https://lizonglingo.github.io/p/%E8%AE%B0%E4%B8%80%E6%AC%A1kubernetes%E4%BD%BF%E7%94%A8ciliumcoredns%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E5%A4%B1%E8%B4%A5%E7%9A%84%E6%8E%92%E9%94%99/</link>
+        <pubDate>Fri, 15 Jul 2022 14:35:19 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E8%AE%B0%E4%B8%80%E6%AC%A1kubernetes%E4%BD%BF%E7%94%A8ciliumcoredns%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E5%A4%B1%E8%B4%A5%E7%9A%84%E6%8E%92%E9%94%99/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;该问题最后在Github的Cilium项目中提了issue，被大佬解决了。&lt;/p&gt;
+&lt;p&gt;issue地址：https://github.com/cilium/cilium/issues/20498&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;问题描述&#34;&gt;问题描述&lt;/h2&gt;
+&lt;p&gt;由于后面打算学习eBPF，将原来用的CNI组件从flannel换成cilium。Cilium作为基于eBPF的CNI实现，比起flannel有了更多的功能，包括但不限于高度定制化的网络策略、安全加固。&lt;/p&gt;
+&lt;p&gt;但是，我在使用cilium时，出现如下问题，以下是集群部署的过程，及问题发现和问题描述。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;版本信息如下：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Kubernetes 1.23.0 （kubelet/kubeadm/kubectl都对应集群版本）&lt;/li&gt;
+&lt;li&gt;Cilium 1.11.6&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;使用&lt;code&gt;kubeadm --config kubeadm.conf&lt;/code&gt; 初始化集群，初始化的配置文件如下。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kind: InitConfiguration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;localAPIEndpoint:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  advertiseAddress: 192.168.153.21
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  bindPort: &lt;span style=&#34;color:#ae81ff&#34;&gt;6443&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nodeRegistration:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  criSocket: /var/run/dockershim.sock
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  imagePullPolicy: IfNotPresent
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  name: nm
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  taints: null
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;---
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;apiServer:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  timeoutForControlPlane: 4m0s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;apiVersion: kubeadm.k8s.io/v1beta3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;certificatesDir: /etc/kubernetes/pki
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;clusterName: kubernetes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;controllerManager: &lt;span style=&#34;color:#f92672&#34;&gt;{}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;dns: &lt;span style=&#34;color:#f92672&#34;&gt;{}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;etcd:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  local:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    dataDir: /var/lib/etcd
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;imageRepository: registry.aliyuncs.com/google_containers
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kind: ClusterConfiguration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kubernetesVersion: 1.23.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;networking:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  dnsDomain: cluster.local
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  serviceSubnet: 10.96.0.0/12
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  podSubnet: 10.5.0.0/16
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;scheduler: &lt;span style=&#34;color:#f92672&#34;&gt;{}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;---
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;apiVersion: kubelet.config.k8s.io/v1beta1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kind: KubeletConfiguration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;resolvConf: /run/systemd/resolve/resolv.conf
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;2&#34;&gt;
+&lt;li&gt;然后像往常一样加入工作节点，测试集群使用1Master和2Worker，其IP如下。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;master: 192.168.153.21&lt;/li&gt;
+&lt;li&gt;worker1: 192.168.153.22&lt;/li&gt;
+&lt;li&gt;worker2: 192.168.153.23&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol start=&#34;3&#34;&gt;
+&lt;li&gt;安装网络组件，使用&lt;code&gt;cilium install&lt;/code&gt;进行安装，其中一些cilium的配置保持默认。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# kubectl get pods -A -o wide
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAMESPACE     NAME                               READY   STATUS             RESTARTS        AGE   IP               NODE   NOMINATED NODE   READINESS GATES
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   cilium-99lxc                       1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               18m   192.168.153.22   na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   cilium-ct5s7                       1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               18m   192.168.153.21   nm     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   cilium-drtlh                       1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               18m   192.168.153.23   nb     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   cilium-operator-5d67fc458d-zxgdd   1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               18m   192.168.153.22   na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   coredns-6d8c4cb4d-jkssb            0/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;2m55s ago&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;   19m   10.0.0.240       na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   coredns-6d8c4cb4d-psxvw            0/1     CrashLoopBackOff   &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;83s ago&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;     19m   10.0.2.176       nb     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   etcd-nm                            1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;               25m   192.168.153.21   nm     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-apiserver-nm                  1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;               25m   192.168.153.21   nm     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-controller-manager-nm         1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;               25m   192.168.153.21   nm     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-proxy-hv5nc                   1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               24m   192.168.153.22   na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-proxy-pbzlx                   1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               24m   192.168.153.23   nb     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-proxy-rqpxw                   1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               25m   192.168.153.21   nm     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-scheduler-nm                  1/1     Running            &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;               25m   192.168.153.21   nm     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;安装cilium之前，我已经清理的之前的CNI配置，将&lt;code&gt;/etc/cni/net.d/&lt;/code&gt;下面的网络配置全部清除。但是出现了上述情况，两个&lt;code&gt;coredns&lt;/code&gt;的Pod虽然处于&lt;code&gt;Running&lt;/code&gt;状态但是始终不&lt;code&gt;Ready&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;然后我查看了&lt;code&gt;coredns&lt;/code&gt;的&lt;code&gt;log&lt;/code&gt;以及&lt;code&gt;describe&lt;/code&gt;。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# kubectl logs  coredns-6d8c4cb4d-jkssb -n kube-system
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;WARNING&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/kubernetes: starting server with unsynced Kubernetes API
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;.:53
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/reload: Running configuration MD5 &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; db32ca3650231d74073ff4cf814959a7
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;CoreDNS-1.8.6
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;linux/amd64, go1.17.1, 13a9191
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:39983-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:53240-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:49802-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:54428-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:43974-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:37821-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:36545-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:56785-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:47913-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/errors: &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; 7607030484537686268.4300248127207674545. HINFO: read udp 10.0.0.240:38162-&amp;gt;192.168.153.2:53: i/o timeout
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; SIGTERM: Shutting down servers &lt;span style=&#34;color:#66d9ef&#34;&gt;then&lt;/span&gt; terminating
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; plugin/health: Going into lameduck mode &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; 5s
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;coredns&lt;/code&gt;对其上游的网关UDP服务不可达，这里的&lt;code&gt;192.168.153.2&lt;/code&gt;是我虚拟机网络的网关。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# kubectl describe pod  coredns-6d8c4cb4d-jkssb -n kube-system
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Name:                 coredns-6d8c4cb4d-jkssb
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Namespace:            kube-system
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Priority:             &lt;span style=&#34;color:#ae81ff&#34;&gt;2000000000&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Priority Class Name:  system-cluster-critical
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Node:                 na/192.168.153.22
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Start Time:           Wed, &lt;span style=&#34;color:#ae81ff&#34;&gt;13&lt;/span&gt; Jul &lt;span style=&#34;color:#ae81ff&#34;&gt;2022&lt;/span&gt; 00:37:51 +0800
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Labels:               k8s-app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;kube-dns
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                      pod-template-hash&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;6d8c4cb4d
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Annotations:          &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Status:               Running
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;IP:                   10.0.0.240
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;IPs:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  IP:           10.0.0.240
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Controlled By:  ReplicaSet/coredns-6d8c4cb4d
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Containers:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  coredns:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Container ID:  docker://cc35b97903b120cb54765641da47c69ea8c833e6c72958407c7e605a5aa001b4
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Image:         registry.aliyuncs.com/google_containers/coredns:v1.8.6
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Image ID:      docker-pullable://registry.aliyuncs.com/google_containers/coredns@sha256:5b6ec0d6de9baaf3e92d0f66cd96a25b9edbce8716f5f15dcd1a616b3abd590e
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Ports:         53/UDP, 53/TCP, 9153/TCP
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Host Ports:    0/UDP, 0/TCP, 0/TCP
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Args:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      -conf
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      /etc/coredns/Corefile
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    State:          Waiting
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      Reason:       CrashLoopBackOff
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Last State:     Terminated
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      Reason:       Completed
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      Exit Code:    &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      Started:      Wed, &lt;span style=&#34;color:#ae81ff&#34;&gt;13&lt;/span&gt; Jul &lt;span style=&#34;color:#ae81ff&#34;&gt;2022&lt;/span&gt; 00:57:12 +0800
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      Finished:     Wed, &lt;span style=&#34;color:#ae81ff&#34;&gt;13&lt;/span&gt; Jul &lt;span style=&#34;color:#ae81ff&#34;&gt;2022&lt;/span&gt; 00:59:06 +0800
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Ready:          False
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Restart Count:  &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Limits:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      memory:  170Mi
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Requests:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      cpu:        100m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      memory:     70Mi
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Liveness:     http-get http://:8080/health delay&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;60s timeout&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;5s period&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;10s &lt;span style=&#34;color:#75715e&#34;&gt;#success=1 #failure=5&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Readiness:    http-get http://:8181/ready delay&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;0s timeout&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;1s period&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;10s &lt;span style=&#34;color:#75715e&#34;&gt;#success=1 #failure=3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Environment:  &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Mounts:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      /etc/coredns from config-volume &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;ro&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-v8hzn &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;ro&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Conditions:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Type              Status
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Initialized       True 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Ready             False 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  ContainersReady   False 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  PodScheduled      True 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Volumes:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  config-volume:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Type:      ConfigMap &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;a volume populated by a ConfigMap&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Name:      coredns
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Optional:  false
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  kube-api-access-v8hzn:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Type:                    Projected &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;a volume that contains injected data from multiple sources&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    TokenExpirationSeconds:  &lt;span style=&#34;color:#ae81ff&#34;&gt;3607&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    ConfigMapName:           kube-root-ca.crt
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    ConfigMapOptional:       &amp;lt;nil&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    DownwardAPI:             true
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;QoS Class:                   Burstable
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Node-Selectors:              kubernetes.io/os&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;linux
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Tolerations:                 CriticalAddonsOnly op&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;Exists
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                             node-role.kubernetes.io/control-plane:NoSchedule
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                             node-role.kubernetes.io/master:NoSchedule
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                             node.kubernetes.io/not-ready:NoExecute op&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;Exists &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; 300s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                             node.kubernetes.io/unreachable:NoExecute op&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;Exists &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; 300s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Events:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Type     Reason                  Age   From               Message
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  ----     ------                  ----  ----               -------
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Normal   Scheduled               21m   default-scheduler  Successfully assigned kube-system/coredns-6d8c4cb4d-jkssb to na
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Warning  FailedCreatePodSandBox  20m   kubelet            Failed to create pod sandbox: rpc error: code &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; Unknown desc &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; failed to set up sandbox container &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;8ae4c118e4c3ff1c0bd2c601c808cae2c17cbc27552fb148b755b7d798f0bb71&amp;#34;&lt;/span&gt; network &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; pod &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;coredns-6d8c4cb4d-jkssb&amp;#34;&lt;/span&gt;: networkPlugin cni failed to set up pod &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;coredns-6d8c4cb4d-jkssb_kube-system&amp;#34;&lt;/span&gt; network: unable to connect to Cilium daemon: failed to create cilium agent client after 30.000000 seconds timeout: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http:///var/run/cilium/cilium.sock/v1/config&amp;#34;&lt;/span&gt;: dial unix /var/run/cilium/cilium.sock: connect: no such file or directory
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Is the agent running?
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Normal   SandboxChanged  20m                   kubelet  Pod sandbox changed, it will be killed and re-created.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Normal   Pulled          20m                   kubelet  Container image &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;registry.aliyuncs.com/google_containers/coredns:v1.8.6&amp;#34;&lt;/span&gt; already present on machine
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Normal   Created         20m                   kubelet  Created container coredns
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Normal   Started         20m                   kubelet  Started container coredns
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Warning  Unhealthy       20m &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;x2 over 20m&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;     kubelet  Readiness probe failed: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http://10.0.0.240:8181/ready&amp;#34;&lt;/span&gt;: dial tcp 10.0.0.240:8181: i/o timeout &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Client.Timeout exceeded &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; awaiting headers&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Warning  Unhealthy       18m &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;x13 over 20m&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;    kubelet  Readiness probe failed: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http://10.0.0.240:8181/ready&amp;#34;&lt;/span&gt;: context deadline exceeded &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Client.Timeout exceeded &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; awaiting headers&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Warning  Unhealthy       15m &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;x12 over 19m&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;    kubelet  Liveness probe failed: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http://10.0.0.240:8080/health&amp;#34;&lt;/span&gt;: context deadline exceeded &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Client.Timeout exceeded &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; awaiting headers&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  Normal   Killing         14m                   kubelet  Container coredns failed liveness probe, will be restarted
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;而&lt;code&gt;describe&lt;/code&gt;给出的信息则是健康检查失败。奇怪的是，cilium的组件的状态则正常，但由于&lt;code&gt;coredns&lt;/code&gt;状态异常，显然集群网络无法正常工作。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# cilium status
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    /¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt; /¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\ &lt;/span&gt;   Cilium:         &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; errors
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/    Operator:       OK
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; /¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\ &lt;/span&gt;   Hubble:         disabled
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/¯¯&lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/    ClusterMesh:    disabled
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ae81ff&#34;&gt;\_&lt;/span&gt;_/
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;DaemonSet         cilium             Desired: 3, Ready: 3/3, Available: 3/3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Deployment        cilium-operator    Desired: 1, Ready: 1/1, Available: 1/1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Containers:       cilium             Running: &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                  cilium-operator    Running: &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Cluster Pods:     2/2 managed by Cilium
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Image versions    cilium-operator    quay.io/cilium/operator-generic:v1.11.6@sha256:9f6063c7bcaede801a39315ec7c166309f6a6783e98665f6693939cf1701bc17: &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                  cilium             quay.io/cilium/cilium:v1.11.6@sha256:f7f93c26739b6641a3fa3d76b1e1605b15989f25d06625260099e01c8243f54c: &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Errors:           cilium             cilium-hn9g5    controller cilium-health-ep is failing since 27s &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;21x&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http://10.0.2.134:4240/hello&amp;#34;&lt;/span&gt;: context deadline exceeded &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Client.Timeout exceeded &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; awaiting headers&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                  cilium             cilium-7l6br    controller cilium-health-ep is failing since 27s &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;21x&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http://10.0.0.36:4240/hello&amp;#34;&lt;/span&gt;: context deadline exceeded &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Client.Timeout exceeded &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; awaiting headers&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                  cilium             cilium-rzkb6    controller cilium-health-ep is failing since 27s &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;21x&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;http://10.0.1.222:4240/hello&amp;#34;&lt;/span&gt;: context deadline exceeded &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Client.Timeout exceeded &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; awaiting headers&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;补充信息&#34;&gt;补充信息&lt;/h2&gt;
+&lt;p&gt;另外，一些关键组件的补充信息如下。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;cilium sysdump&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# cilium sysdump
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting sysdump with cilium-cli version: v0.11.11, args: &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;sysdump&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes nodes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collect Kubernetes nodes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes events
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collect Kubernetes version
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes namespaces
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes services
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes pods summary
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes endpoints
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Kubernetes network policies
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium cluster-wide network policies
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium network policies
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium local redirect policies
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium egress NAT policies
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium endpoints
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium identities
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium nodes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Ingresses
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting CiliumEnvoyConfigs
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting CiliumClusterwideEnvoyConfigs
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting Cilium etcd secret
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Cilium configuration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Cilium daemonset&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;s&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Hubble daemonset
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Hubble Relay deployment
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Hubble Relay configuration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Hubble UI deployment
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the Cilium operator deployment
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the CNI configuration files from Cilium pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ Deployment &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;hubble-ui&amp;#34;&lt;/span&gt; not found in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt; - this is expected &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; Hubble UI is not enabled
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the CNI configmap
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting the &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;clustermesh-apiserver&amp;#39;&lt;/span&gt; deployment
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ Deployment &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;hubble-relay&amp;#34;&lt;/span&gt; not found in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt; - this is expected &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; Hubble is not enabled
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting gops stats from Cilium pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting gops stats from Hubble pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting gops stats from Hubble Relay pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;cilium-bugtool&amp;#39;&lt;/span&gt; output from Cilium pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting logs from Cilium pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🔍 Collecting logs from Cilium operator pods
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ Deployment &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;clustermesh-apiserver&amp;#34;&lt;/span&gt; not found in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt; - this is expected &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;clustermesh-apiserver&amp;#39;&lt;/span&gt; isn&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;t enabled
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;🔍 Collecting logs from &amp;#39;&lt;/span&gt;clustermesh-apiserver&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39; pods
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;🔍 Collecting logs from Hubble pods
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;🔍 Collecting logs from Hubble Relay pods
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;🔍 Collecting logs from Hubble UI pods
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;🔍 Collecting platform-specific data
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;🔍 Collecting Hubble flows from Cilium pods
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ The following tasks failed, the sysdump may be incomplete:
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ [11] Collecting Cilium egress NAT policies: failed to collect Cilium egress NAT policies: the server could not find the requested resource (get ciliumegressnatpolicies.cilium.io)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ [12] Collecting Cilium local redirect policies: failed to collect Cilium local redirect policies: the server could not find the requested resource (get ciliumlocalredirectpolicies.cilium.io)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ [17] Collecting CiliumClusterwideEnvoyConfigs: failed to collect CiliumClusterwideEnvoyConfigs: the server could not find the requested resource (get ciliumclusterwideenvoyconfigs.cilium.io)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ [18] Collecting CiliumEnvoyConfigs: failed to collect CiliumEnvoyConfigs: the server could not find the requested resource (get ciliumenvoyconfigs.cilium.io)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ [23] Collecting the Hubble Relay configuration: failed to collect the Hubble Relay configuration: configmaps &amp;#34;hubble-relay-config&amp;#34; not found
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ cniconflist-cilium-7l6br: error dialing backend: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ cniconflist-cilium-hn9g5: command terminated with exit code 1
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ cniconflist-cilium-rzkb6: command terminated with exit code 1
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ gops-cilium-7l6br-memstats: failed to list processes &amp;#34;cilium-7l6br&amp;#34; (&amp;#34;cilium-agent&amp;#34;) in namespace &amp;#34;kube-system&amp;#34;: error dialing backend: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ gops-cilium-7l6br-stack: failed to list processes &amp;#34;cilium-7l6br&amp;#34; (&amp;#34;cilium-agent&amp;#34;) in namespace &amp;#34;kube-system&amp;#34;: error dialing backend: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ gops-cilium-7l6br-stats: failed to list processes &amp;#34;cilium-7l6br&amp;#34; (&amp;#34;cilium-agent&amp;#34;) in namespace &amp;#34;kube-system&amp;#34;: error dialing backend: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;⚠️ cilium-bugtool-cilium-7l6br: failed to collect &amp;#39;&lt;/span&gt;cilium-bugtool&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&amp;#39;&lt;/span&gt; output &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-7l6br&amp;#34;&lt;/span&gt; in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt;: error dialing backend: dial tcp 192.168.153.23:10250: connect: no route to host: 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ logs-cilium-7l6br-cilium-agent: failed to collect logs &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-7l6br&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-agent&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://192.168.153.23:10250/containerLogs/kube-system/cilium-7l6br/cilium-agent?limitBytes=1073741824&amp;amp;sinceTime=2021-07-13T08%3A20%3A54Z&amp;amp;timestamps=true&amp;#34;&lt;/span&gt;: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ logs-cilium-operator-5d67fc458d-gjdc6-cilium-operator: failed to collect logs &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-operator-5d67fc458d-gjdc6&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-operator&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://192.168.153.23:10250/containerLogs/kube-system/cilium-operator-5d67fc458d-gjdc6/cilium-operator?limitBytes=1073741824&amp;amp;sinceTime=2021-07-13T08%3A20%3A55Z&amp;amp;timestamps=true&amp;#34;&lt;/span&gt;: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ logs-cilium-7l6br-mount-cgroup: failed to collect logs &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-7l6br&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;mount-cgroup&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://192.168.153.23:10250/containerLogs/kube-system/cilium-7l6br/mount-cgroup?limitBytes=1073741824&amp;amp;sinceTime=2021-07-13T08%3A20%3A54Z&amp;amp;timestamps=true&amp;#34;&lt;/span&gt;: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ logs-cilium-7l6br-clean-cilium-state: failed to collect logs &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-7l6br&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;clean-cilium-state&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt;: Get &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://192.168.153.23:10250/containerLogs/kube-system/cilium-7l6br/clean-cilium-state?limitBytes=1073741824&amp;amp;sinceTime=2021-07-13T08%3A20%3A54Z&amp;amp;timestamps=true&amp;#34;&lt;/span&gt;: dial tcp 192.168.153.23:10250: connect: no route to host
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ hubble-flows-cilium-7l6br: failed to collect hubble flows &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;cilium-7l6br&amp;#34;&lt;/span&gt; in namespace &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-system&amp;#34;&lt;/span&gt;: error dialing backend: dial tcp 192.168.153.23:10250: connect: no route to host: 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;⚠️ Please note that depending on your Cilium version and installation options, this may be expected
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;🗳 Compiling sysdump
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;✅ The sysdump has been saved to /work-place/kubernetes/create-cluster/cilium-sysdump-20220713-162053.zip
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;coredns&lt;/code&gt;的&lt;code&gt;configMap&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;root@nm:/work-place/kubernetes/create-cluster# kubectl describe cm coredns -n kube-system
+Name:         coredns
+Namespace:    kube-system
+Labels:       &amp;lt;none&amp;gt;
+Annotations:  &amp;lt;none&amp;gt;
+
+Data
+====
+Corefile:
+----
+.:53 {
+    errors
+    health {
+       lameduck 5s
+    }
+    ready
+    kubernetes cluster.local in-addr.arpa ip6.arpa {
+       pods insecure
+       fallthrough in-addr.arpa ip6.arpa
+       ttl 30
+    }
+    prometheus :9153
+    forward . /etc/resolv.conf {
+       max_concurrent 1000
+    }
+    cache 30
+    loop
+    reload
+    loadbalance
+}
+
+
+BinaryData
+====
+
+Events:  &amp;lt;none&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;kubelet&lt;/code&gt;的&lt;code&gt;config&lt;/code&gt;信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;root@nm:/home/lzl# cat /var/lib/kubelet/config.yaml 
+apiVersion: kubelet.config.k8s.io/v1beta1
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    cacheTTL: 0s
+    enabled: true
+  x509:
+    clientCAFile: /etc/kubernetes/pki/ca.crt
+authorization:
+  mode: Webhook
+  webhook:
+    cacheAuthorizedTTL: 0s
+    cacheUnauthorizedTTL: 0s
+cgroupDriver: systemd
+clusterDNS:
+- 10.96.0.10
+clusterDomain: cluster.local
+cpuManagerReconcilePeriod: 0s
+evictionPressureTransitionPeriod: 0s
+fileCheckFrequency: 0s
+healthzBindAddress: 127.0.0.1
+healthzPort: 10248
+httpCheckFrequency: 0s
+imageMinimumGCAge: 0s
+kind: KubeletConfiguration
+logging:
+  flushFrequency: 0
+  options:
+    json:
+      infoBufferSize: &amp;#34;0&amp;#34;
+  verbosity: 0
+memorySwap: {}
+nodeStatusReportFrequency: 0s
+nodeStatusUpdateFrequency: 0s
+resolvConf: /run/systemd/resolve/resolv.conf
+rotateCertificates: true
+runtimeRequestTimeout: 0s
+shutdownGracePeriod: 0s
+shutdownGracePeriodCriticalPods: 0s
+staticPodPath: /etc/kubernetes/manifests
+streamingConnectionIdleTimeout: 0s
+syncFrequency: 0s
+volumeStatsAggPeriod: 0s
+&lt;/code&gt;&lt;/pre&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;kubeadm&lt;/code&gt;对&lt;code&gt;kubelet&lt;/code&gt;添加的flag&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;root@nm:/home/lzl# cat /var/lib/kubelet/kubeadm-flags.env 
+KUBELET_KUBEADM_ARGS=&amp;#34;--network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.6&amp;#34;
+&lt;/code&gt;&lt;/pre&gt;&lt;ul&gt;
+&lt;li&gt;OS信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ cat /etc/os-release
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;PRETTY_NAME&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Ubuntu 22.04 LTS&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Ubuntu&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;VERSION_ID&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;22.04&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;VERSION&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;22.04 LTS (Jammy Jellyfish)&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;VERSION_CODENAME&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;jammy
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;ubuntu
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ID_LIKE&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;debian
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;HOME_URL&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://www.ubuntu.com/&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;SUPPORT_URL&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://help.ubuntu.com/&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;BUG_REPORT_URL&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://bugs.launchpad.net/ubuntu/&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;PRIVACY_POLICY_URL&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;https://www.ubuntu.com/legal/terms-and-policies/privacy-policy&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;UBUNTU_CODENAME&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;jammy
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ uname -a
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Linux nm 5.15.0-41-generic &lt;span style=&#34;color:#75715e&#34;&gt;#44-Ubuntu SMP Wed Jun 22 14:20:53 UTC 2022 x86_64 x86_64 x86_64 GNU/Linux&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;sysctl -a | grep -w rp_filter&lt;/code&gt;信息如下&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# sysctl -a | grep -w rp_filter
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.all.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.cilium_host.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.cilium_net.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.cilium_vxlan.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.default.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.docker0.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.ens33.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.lo.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;net.ipv4.conf.lxc_health.rp_filter &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;此外，补充一点，在我使用flannel做集群网络时，一切都是正常的。&lt;/p&gt;
+&lt;h2 id=&#34;我所做的尝试&#34;&gt;我所做的尝试&lt;/h2&gt;
+&lt;p&gt;在大佬指点之前，我按照下面的链接做出一些调整。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;coredns在k8s集群中的troubleshooting：https://github.com/coredns/coredns/blob/master/plugin/loop/README.md#troubleshooting-loops-in-kubernetes-clusters&lt;/li&gt;
+&lt;li&gt;和我这个问题比较相似的plugin/loop导致的集群网络异常：https://github.com/coredns/coredns/issues/2790&lt;/li&gt;
+&lt;li&gt;本次排错中也出现的coredns [ERROR] plugin/errors: 2 read udp上游不可达：https://github.com/kubernetes/kubernetes/issues/86762&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;然后我又通过&lt;code&gt;busybox&lt;/code&gt;进到容器里面，分别在正常的使用flannel的网络环境和异常的使用cilium的网络环境下去尝试&lt;code&gt;ping&lt;/code&gt;我的网关。&lt;/p&gt;
+&lt;p&gt;在使用flannel的网络中，一切正常：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@master:/home/lzl/work-place/kubernetes/deploy-k8s# kubectl run -it --rm --restart&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;Never busybox --image&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;docker.io/library/busybox sh
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;If you don&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&amp;#39;&lt;/span&gt;t see a command prompt, try pressing enter.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/ &lt;span style=&#34;color:#75715e&#34;&gt;# ping 10.96.0.10&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;PING 10.96.0.10 &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;10.96.0.10&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;56&lt;/span&gt; data bytes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;^C
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;--- 10.96.0.10 ping statistics ---
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt; packets transmitted, &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt; packets received, 100% packet loss
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/ &lt;span style=&#34;color:#75715e&#34;&gt;# ping 192.168.153.2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;PING 192.168.153.2 &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;192.168.153.2&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;56&lt;/span&gt; data bytes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;64&lt;/span&gt; bytes from 192.168.153.2: seq&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt; ttl&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;127&lt;/span&gt; time&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;0.458 ms
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;64&lt;/span&gt; bytes from 192.168.153.2: seq&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; ttl&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;127&lt;/span&gt; time&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;0.405 ms
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;64&lt;/span&gt; bytes from 192.168.153.2: seq&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; ttl&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;127&lt;/span&gt; time&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;1.041 ms
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;^C
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;--- 192.168.153.2 ping statistics ---
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; packets transmitted, &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; packets received, 0% packet loss
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;round-trip min/avg/max &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; 0.405/0.634/1.041 ms
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;而使用cilium中异常网络，则无法&lt;code&gt;ping&lt;/code&gt;通：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/kubernetes/create-cluster# kubectl run -it --rm --restart&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;Never busybox --image&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;docker.io/library/busybox sh
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;If you don&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&amp;#39;&lt;/span&gt;t see a command prompt, try pressing enter.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;/ &lt;span style=&#34;color:#75715e&#34;&gt;# ping 192.168.153.2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;PING 192.168.153.2 &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;192.168.153.2&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;56&lt;/span&gt; data bytes
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我所做的尝试都没有用。&lt;/p&gt;
+&lt;h2 id=&#34;问题解决&#34;&gt;问题解决&lt;/h2&gt;
+&lt;p&gt;最终的解决办法是&lt;a class=&#34;link&#34; href=&#34;https://github.com/vincentmli&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;vincentmli&lt;/a&gt;给出的，如下。&lt;/p&gt;
+&lt;p&gt;手工在 &lt;code&gt;/etc/sysctl.d/&lt;/code&gt; 中写入下面的文件，然后重启节点。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;cat /etc/sysctl.d/99-zzz-override_cilium.conf
+# Disable rp_filter on Cilium interfaces since it may cause mangled packets to be dropped
+net.ipv4.conf.lxc*.rp_filter = 0
+net.ipv4.conf.cilium_*.rp_filter = 0
+# The kernel uses max(conf.all, conf.{dev}) as its value, so we need to set .all. to 0 as well.
+# Otherwise it will overrule the device specific settings.
+net.ipv4.conf.all.rp_filter = 0
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;所有节点执行上面的工作后，&lt;code&gt;coredns&lt;/code&gt;终于正常了，而且我尝试部署了测试应用，可以通过网络访问。&lt;/p&gt;
+&lt;p&gt;关于为什么这样做请看这条issue：https://github.com/cilium/cilium/pull/20072&lt;/p&gt;
+&lt;p&gt;另外，其他信息请查看：https://github.com/cilium/cilium/issues/20498&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>Sinan: ML-Based and QoS-Aware Resource Management for Cloud Microservices</title>
         <link>https://lizonglingo.github.io/p/sinan-ml-based-and-qos-aware-resource-management-for-cloud-microservices/</link>
         <pubDate>Sun, 26 Jun 2022 15:00:34 +0800</pubDate>
@@ -2280,6 +2729,460 @@ census,location=klamath,scientist=anderson bees
 &lt;h4 id=&#34;overcrowded-weak-gpu-machines&#34;&gt;Overcrowded weak-GPU machines&lt;/h4&gt;
 &lt;h4 id=&#34;imbalanced-load-in-high-end-machines&#34;&gt;Imbalanced load in high-end machines&lt;/h4&gt;
 &lt;h4 id=&#34;cpu-can-be-the-bottleneck&#34;&gt;CPU can be the bottleneck&lt;/h4&gt;
+</description>
+        </item>
+        <item>
+        <title>Faa$T: A Transparent Auto-Scaling Cache for Serverless Applications</title>
+        <link>https://lizonglingo.github.io/p/faat-a-transparent-auto-scaling-cache-for-serverless-applications/</link>
+        <pubDate>Mon, 07 Mar 2022 15:48:15 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/faat-a-transparent-auto-scaling-cache-for-serverless-applications/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源：ACM SoCC&#39;21&lt;/p&gt;
+&lt;p&gt;作者：Microsoft Research&amp;amp;Stanford University&amp;amp;Microsoft Azure&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;摘要&#34;&gt;摘要&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;问题来源：FaaS平台依赖远程存储来维护状态信息，限制了FaaS应用的运行效率。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;难点：FaaS平台的一些缓存工作尝试解决这个问题，但是&lt;strong&gt;由于FaaS应用不同的特点，难以基于业务负载的弹性的调整缓存容量&lt;/strong&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;解决方案：文章提出了Faa$T，一个自动伸缩的分布式FaaS缓存系统：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;每个FaaS应用有自己的缓存，在被调用、函数被激活时，应用程序从内存加载到缓存；&lt;/li&gt;
+&lt;li&gt;在下一次调用时，可以使用缓存将应用程序“预热”，加快访问速度（冷启动问题？）。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;缩放依据：根据工作集和对象的大小管理缓存I/O带宽。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;实验表现：最大提高92%的FaaS应用性能表现（平均57%）。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;问题来源&#34;&gt;问题来源&lt;/h2&gt;
+&lt;h3 id=&#34;faas内存回收和冷启动&#34;&gt;FaaS内存回收和冷启动&lt;/h3&gt;
+&lt;p&gt;FaaS厂商为控制效益，在function不工作时会将其从内存中卸载掉。&lt;/p&gt;
+&lt;h3 id=&#34;stateless应用的状态维护依赖远端存储&#34;&gt;Stateless应用的状态维护依赖远端存储&lt;/h3&gt;
+&lt;p&gt;FaaS function通常具有无状态的特点，但在业务中往往需要维护一些状态，例如以下场景：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;下一次函数的调用需要上一次调用的状态信息；&lt;/li&gt;
+&lt;li&gt;函数pipeline多阶段执行，一个函数的执行需要依赖另一个函数的结果；&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;这是现实的问题，&lt;strong&gt;现有的解决方案是将状态信息写到远端存储中&lt;/strong&gt;（如Amazon S3），在需要时将其从远端存储读出来。&lt;/p&gt;
+&lt;p&gt;而&lt;strong&gt;远端存储的一个不可避免的问题在于更高的延迟和更低的带宽&lt;/strong&gt;，同时增加开销和管理成本。&lt;/p&gt;
+&lt;h2 id=&#34;研究现状&#34;&gt;研究现状&lt;/h2&gt;
+&lt;p&gt;本地缓存策略作为缓解上述问题的方案，已经有了初步的解决方案。&lt;/p&gt;
+&lt;h3 id=&#34;现有方案存在如下不足&#34;&gt;现有方案存在如下不足&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;为多个应用实现单个缓存，&lt;strong&gt;忽略了FaaS应用程序的广泛不同特性&lt;/strong&gt;。例如很多应用的调用频率非常低[48]，为这种应用实现缓存实际上没有必要；但是，如果不为这些应用配置缓存又会影响到服务质量。&lt;/li&gt;
+&lt;li&gt;先前的方案中，要么就是&lt;strong&gt;缓存大小是固定的&lt;/strong&gt;，要么就是&lt;strong&gt;缓存伸缩仅根据计算负载&lt;/strong&gt;。这些方案在数据访问模式稳定和工作集大小小于缓存容量时很有效。&lt;/li&gt;
+&lt;li&gt;没有考虑到&lt;strong&gt;大数据对象访问的问题&lt;/strong&gt;，由于数据量大、VM/容器资源竞争、I/O带宽的限制，在访问大数据对象时会出现性能下降问题。在如机器学习推理这样的大数据量应用中，缓存的横向扩容能使这种服务的性能大大提升。&lt;/li&gt;
+&lt;li&gt;现有的&lt;strong&gt;缓存机制对用户来说不透明&lt;/strong&gt;，需要明确的指定；要么就是提供了一个单独的API来访问缓存。这违背了FaaS平台让用户在管理不必要资源中解脱出来的初衷。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;文章做的工作&#34;&gt;文章做的工作&lt;/h3&gt;
+&lt;p&gt;文章表示，问题的根源在于，&lt;strong&gt;Serverless的Cache层从未实现真正的Serverless——与应用程序无感绑定、自动缩放、对上层用户透明&lt;/strong&gt;。&lt;/p&gt;
+&lt;h4 id=&#34;faat的特性和作用&#34;&gt;Faa$T的特性和作用&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;是&lt;strong&gt;内存层面的缓存&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;每个应用将本地Faa$T缓存加载到内存中，缓存在应用程序运行时&lt;strong&gt;透明的管理&lt;/strong&gt;程序所访问的数据；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;应用从内存中被卸载时，Faa$T也会被卸载&lt;/strong&gt;（对那些调用频率低的应用来说，在他们很长时间不被调用时，其缓存也会被卸载）；&lt;/li&gt;
+&lt;li&gt;该方法&lt;strong&gt;消除的对远程缓存存储的需求，减少远程流量开销&lt;/strong&gt;，降低成本；&lt;/li&gt;
+&lt;li&gt;针对不同的应用提供&lt;strong&gt;不同的替换策略和维持策略&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;应用重新加载时可以&lt;strong&gt;预先将最常用的数据加载至缓存&lt;/strong&gt;中。&lt;/li&gt;
+&lt;li&gt;对缓存的扩缩容策略的方案是：a）为从远程存储中获取大对象&lt;strong&gt;增加传输带宽&lt;/strong&gt;；b）&lt;strong&gt;增加经常访问的远程数据的整体缓存大小&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;对于分布式缓存存储，默认是&lt;strong&gt;强数据一致性&lt;/strong&gt;，一致性和扩展策略也支持自定义。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;contributions&#34;&gt;Contributions&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;通过FaaS提供商的工作负载，总结了数据访问模型；&lt;/li&gt;
+&lt;li&gt;设计和实现了Faa$T，一个透明的FaaS应用自动扩缩容缓存；&lt;/li&gt;
+&lt;li&gt;提出Faa$T扩展策略，根据数据访问模式和对象大小调整带宽和缓存大小；&lt;/li&gt;
+&lt;li&gt;拓宽了可以在FaaS上以接近本机性能运行程序的范围，如ML程序和Jupyter notebook。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;对faas应用和缓存的分析&#34;&gt;对FaaS应用和缓存的分析&lt;/h2&gt;
+&lt;h3 id=&#34;表征当前的faas应用&#34;&gt;表征当前的FaaS应用&lt;/h3&gt;
+&lt;p&gt;文章收集了一段时间内FaaS Provider的日志数据，信息如下。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220305194809781.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220305194809781&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h4 id=&#34;数据大小&#34;&gt;数据大小&lt;/h4&gt;
+&lt;p&gt;包括20.3million不同的对象，大小有1.9TB。数据访问模式分布如下图：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;80%的数据大小小于12KB；&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;有25%的数据小于600B；&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;也有很少的一些数据大于1.8GB；&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;对数据的&lt;strong&gt;读取次数远远大于对数据的写入次数&lt;/strong&gt;；&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;虽然应用到后端数据存储有较大的带宽，但&lt;strong&gt;对小数据对象大量的访问加剧了存储延迟&lt;/strong&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;数据访问和重用&#34;&gt;数据访问和重用&lt;/h4&gt;
+&lt;p&gt;下图展示了FaaS应用每次调用访问不同的Blobs（一个存储系统）的比率。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;大部分应用被调用时只访问一个单独的存储&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;约11%的应用被调用时访问多个存储系统；&lt;/li&gt;
+&lt;li&gt;超过32%的应用在&lt;strong&gt;多次数据访问中访问同一个Blob&lt;/strong&gt;，更有7.7%的应用在100次调用中访问同一个Blob，还有一个应用在1000次调用中访问一个Blob；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;大多数应用会使用不超过100个不同的Blobs&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;所有的数据访问&lt;strong&gt;一共涉及到2.6TB的数据，而所有的数据语料只有1.9TB&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;这意味如果缓存已访问过的数据会节省27%的流量和54.3%的远程存储；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;跨应用、用户和地区的数据共享情况极为罕见&lt;/strong&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;时间访问模式&#34;&gt;时间访问模式&lt;/h4&gt;
+&lt;p&gt;下图展示了每个应用访问Blob的时间维度的模式：X轴是读写Blob函数的调用次数，Y轴是这些调用的到达间隔时间的变异系数（CoV， coefficient of variation），每个点代表具有3次访问次数以上的blob（少于三次不能计算变异系数）。&lt;/p&gt;
+&lt;p&gt;CoV为1表示到达间隔呈泊松分布，接近0表示周期性到达，大于1表示比泊松到达更大的突发性。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;可以看出，多数时间访问模式具有突发性的特点。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;访问性能&#34;&gt;访问性能&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;写操作通常快于读操作&lt;/strong&gt;（因为写入操作使用到了buffer，而且不需要在所有实例间同步持久化数据，读数据需要等待存储处理数据）；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;较小的Blob的吞吐量相对较低&lt;/strong&gt;，因为握手的开销相对于数据量来说过大。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;多样的调用模式&#34;&gt;多样的调用模式&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;调用模式的差异较大，&lt;strong&gt;81%的应用平均每分钟最多调用一次，更有45%的应用每小时平均调用一次&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;不到20%的应用产生了99%以上的调用次数&lt;/strong&gt;，这与在日志中的数据表现一致。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这就带来一个问题，为这些&lt;strong&gt;调用次数很少的应用缓存数据可能是浪费的，但这又关系到大部分用户体验&lt;/strong&gt;。&lt;/p&gt;
+&lt;h4 id=&#34;其他发现&#34;&gt;其他发现&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;超过30%的请求调用相同的数据&lt;/strong&gt;，这意味着缓存在数据复用上可以产生效果；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;访问的数据大小跨越了9个数量级&lt;/strong&gt;，从bytes到GBs；&lt;/li&gt;
+&lt;li&gt;函数调用的频率也有9个数量级的不同。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;缓存分析&#34;&gt;缓存分析&lt;/h3&gt;
+&lt;p&gt;如果缓存可以起作用，那么应满足如下三个关键条件：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;数据访问有良好的&lt;strong&gt;时间局部性和重用&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;应&lt;strong&gt;同时适用于调用频繁和调用次数很少的应用&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;缓存应利用&lt;strong&gt;空间局部性&lt;/strong&gt;尽可能&lt;strong&gt;减少访问大数据对象的开销&lt;/strong&gt;。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;根据后续分析，还应有以下的特点：&lt;/p&gt;
+&lt;ol start=&#34;4&#34;&gt;
+&lt;li&gt;缓存还应和应用程序进行绑定，不需要独立管理；&lt;/li&gt;
+&lt;li&gt;缓存还需要对用户透明，并且没有代码入侵性；&lt;/li&gt;
+&lt;li&gt;有多样的伸缩策略，如：a）根据应用负载变化扩展能力？，b）根据数据重用模式改变缓存大小，c）基于访问的数据对象大小改变远程存储带宽。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;现有的缓存系统的局限性&#34;&gt;现有的缓存系统的局限性&lt;/h3&gt;
+&lt;p&gt;下图是一些缓存系统的表征：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220305194853159.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220305194853159&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;缓存系统和应用是分离的，缓存系统独立管理，当应用在内存中卸载时，用户需要额外管理缓存状态或缓存所在的服务，&lt;strong&gt;所以缓存还应和应用程序进行绑定&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;需要进行配置，并表现出代码入侵的现象，需要改动代码来使用缓存，&lt;strong&gt;所以缓存还需要对用户透明，并且没有入侵性&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;在伸缩上仅基于计算负载，但实际的工作情况更加负载，文章建议是缓存层的弹性应考虑以下几点：&lt;strong&gt;a）根据应用负载变化扩展能力？，b）根据数据重用模式改变缓存大小，c）基于访问的数据对象大小改变远程存储带宽&lt;/strong&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;为现有faas平台扩展新的应用类型&#34;&gt;为现有FaaS平台扩展新的应用类型&lt;/h3&gt;
+&lt;h4 id=&#34;机器学习推理pipeline&#34;&gt;机器学习推理pipeline&lt;/h4&gt;
+&lt;p&gt;许多业务如健康检查、广告推荐、零售都依赖机器学习。FaaS的按需计算和伸缩很适合ML这种工作负载难以预测的应用。但机器学习需要较低的时延，例如实时人脸识别的需求。下图是一个应用场景：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;完成这一个场景通常需要秒级的性能甚至不超过1s。文章将上述场景部署在本地的虚拟机和真实的FaaS生产环境中，下图表明在FaaS平台上的速度比本地慢3.8倍，同时可以看出存层存储层的低效是造成延迟的最大因素：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220306130658707.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220306130658707&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h4 id=&#34;jupyter-notebooks&#34;&gt;Jupyter notebooks&lt;/h4&gt;
+&lt;p&gt;为验证Jupyter notebooks的性能，文章将其移植到FaaS平台，叫做JupyterLess。每一个cell被看作一个function被调用，cell之间的状态通过共享的中间存储层来保存。文章使用了一个350MB的DataFrame，共10个cell，在本地虚拟机和FaaS平台上进行比较。&lt;/p&gt;
+&lt;p&gt;由于存在加载中间存储和从远程存储拉取DataFrame的问题，JupyterLess比本地慢63倍。&lt;/p&gt;
+&lt;h2 id=&#34;faat设计&#34;&gt;Faa$T设计&lt;/h2&gt;
+&lt;p&gt;Faa$T缓存在函数执行期间访问的对象，以便可以跨调用重用数据对象。不需要外部存储层和额外的服务，因此可以透明的绑定到应用上（而且是语言无关性）。&lt;/p&gt;
+&lt;p&gt;当应用被卸载时，Faa$T收集有关缓存对象的元数据，并在程序重新加载到内存时用其预热缓存中常被访问到的对象，这对调用频繁的应用有很大的帮助。&lt;/p&gt;
+&lt;p&gt;Faa$T的自动缩放依赖三个方面：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;基于一个&lt;strong&gt;应用每秒被调用的次数&lt;/strong&gt;，对那些调用频繁的应用非常有必要；（计算维度的伸缩）&lt;/li&gt;
+&lt;li&gt;基于&lt;strong&gt;数据重用模式&lt;/strong&gt;，对涉及到大数据量、大工作集的应用很有必要；（缓存容量维度的伸缩）&lt;/li&gt;
+&lt;li&gt;基于&lt;strong&gt;数据对象大小&lt;/strong&gt;，以扩展远程存储访问的带宽资源，加速应用和远程存储之间的网络I/O；（网络带宽维度的伸缩）。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在应用加载到内存后，Faa$T使用一致散列有效的跨实例定位对象，无需大量的位置数据。&lt;/p&gt;
+&lt;h3 id=&#34;系统架构&#34;&gt;系统架构&lt;/h3&gt;
+&lt;p&gt;下图展示了FaaS平台上的Faa$T的架构：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220306140156075.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220306140156075&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Faa$T和应用是一对一的，共同运行在FaaS Runtime中；&lt;/li&gt;
+&lt;li&gt;Cachelet通过Member Daemon交互，确定数据对象的位置和所有者，所有者负载上传和下载远程数据对象；&lt;/li&gt;
+&lt;li&gt;Load Daemon收集缓存对象的元数据，并用来决定在加载应用程序时需要预热哪些数据对象；&lt;/li&gt;
+&lt;li&gt;Memory Darmon用来监控函数和缓存的内存消耗，避免内存占用导致应用出现问题；&lt;/li&gt;
+&lt;li&gt;Frontend负责将请求负载均衡，Scale Controller负责根据运行时指标来增减实例数量。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;访问和缓存数据&#34;&gt;访问和缓存数据&lt;/h3&gt;
+&lt;h4 id=&#34;读操作&#34;&gt;读操作&lt;/h4&gt;
+&lt;p&gt;下图为读数据操作:&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ul&gt;
+&lt;li&gt;local hit：在本地的Faa$T数据缓存中命中；&lt;/li&gt;
+&lt;li&gt;local miss：本地的Faa$T缓存中不存在要访问的数据，cachelet会从远程仓库中寻找数据；&lt;/li&gt;
+&lt;li&gt;remote hit：在本地的Faa$T缓存中没有找到数据，但是在该数据的所有者的缓存中找到数据；&lt;/li&gt;
+&lt;li&gt;remote miss：在本地缓存和数据对象所有者的缓存中均没有命中。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Faa$T使用一致哈希确定对象所有权。&lt;/p&gt;
+&lt;h4 id=&#34;写操作&#34;&gt;写操作&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;当应用程序需要输出数据时，Faa$T会直接写入数据所有者缓存；&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;执行该函数的实例将数据发送到所有者缓存，然后将其写入远程存储；&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;写缓存和写远程存储是同步写入的。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这保证了所有者始终拥有应用数据的最新版本。应用程序可以将 Faa$T配置为异步写入或根本不写入远程存储。因为Faa$T绑定到每个应用程序，不同的应用程序可以同时使用不同的策略。&lt;/p&gt;
+&lt;h4 id=&#34;一致性&#34;&gt;一致性&lt;/h4&gt;
+&lt;p&gt;下图展示了可能发生的读写设置、性能和一致性表现、还有容错情况：&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;默认在读对象时，先验证缓存的版本是否与远程存储的版本是否匹配，在此期间不发生数据传输；&lt;strong&gt;如果匹配，不再检索对象是否发生变动，这种验证提供了强一致性保证&lt;/strong&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;但有些应用会放弃强一致性来换取性能&lt;/strong&gt;。此时，Faa$T可以读取任何缓存版本并异步写入远程存储。这样只能保证最终一致性，允许在某些时刻存在数据不一致的表现。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;还有，&lt;strong&gt;应用程序也可以完全跳过写入远程存储并依赖分布式缓存&lt;/strong&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;数据预热&#34;&gt;数据预热&lt;/h3&gt;
+&lt;p&gt;为达到这一目的，Faa$T在应用被卸载时，记录了有关缓存的元数据。包括：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;缓存对象的大小；&lt;/li&gt;
+&lt;li&gt;数据对象的版本；&lt;/li&gt;
+&lt;li&gt;每个访问类型的次数（local hit、remote miss等）；&lt;/li&gt;
+&lt;li&gt;对象的平均访问间隔时间等。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;使用卸载时间为时间戳，为收集的每个元数据进行标记，以捕获缓存的状态历史。&lt;/p&gt;
+&lt;p&gt;Faa$T需要决定何时将应用加载到内存中，这里使用了混合直方图策略[48]，直方图跟踪应用调用之间的空闲时间，当应用被卸载时，使用直方图预测下一次调用可能到达的时间，并在该事件之前重新加载应用。这也适用于解决冷启动问题。&lt;/p&gt;
+&lt;p&gt;同时，Faa$T也需要决定将哪些数据对象被加载到新的cachelet中。使用下面两个条件确定需要加载的对象：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;对象的local或remote命中率大于阈值，就加载该对象；&lt;/li&gt;
+&lt;li&gt;在记录的元数据中多次设计一个对象，就加载该对象。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;在faat中清除数据&#34;&gt;在Faa$T中清除数据&lt;/h3&gt;
+&lt;p&gt;FaaS应用所拥有的内存是事先规定好的，当函数和缓存对象消耗的内存达到一定数量时，就会将部分数据对象从缓存中剔除。&lt;/p&gt;
+&lt;p&gt;这里文章实现了两种策略。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;LRU最近最少使用；&lt;/li&gt;
+&lt;li&gt;目标对象的大小大于阈值。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;如果需要更多的内存，那么就先使用策略2，再使用策略1。&lt;/p&gt;
+&lt;h2 id=&#34;faat扩缩容&#34;&gt;Faa$T扩缩容&lt;/h2&gt;
+&lt;p&gt;Scale Controller监控了端到端性能和每个应用的工作负载。它也会周期性的询问每个应用是否需要投票以增减实例，正数表示增加实例，负数表示减少实例。&lt;/p&gt;
+&lt;p&gt;Faa$T有三种缩放类型。&lt;/p&gt;
+&lt;h3 id=&#34;compute-scaling&#34;&gt;Compute Scaling&lt;/h3&gt;
+&lt;p&gt;基于请求数量、请求处理队列的大小以及平均响应时间，来扩展实例数量。&lt;/p&gt;
+&lt;p&gt;服务性能下降、请求率过高或者处理队列过长，都会使实例数量增加，反之会减少实例数量。&lt;/p&gt;
+&lt;h3 id=&#34;cache-size-scaling&#34;&gt;Cache size scaling&lt;/h3&gt;
+&lt;p&gt;Faa$T还可以拓展来匹配工作集大小。例如JupyterLess的一个数据密集型难以提高缓存命中率，因此换入、换出的概率非常高。为解决这个问题，cachelet会跟踪缓存对象换入换出的次数，如果发现这样的情况经常发生，就扩大缓存容量。反之，缩小缓存容量。&lt;/p&gt;
+&lt;h3 id=&#34;bandwidth-scaling&#34;&gt;Bandwidth scaling&lt;/h3&gt;
+&lt;p&gt;Faa$T 还支持具有大型输入对象的应用程序。对于此类对象，Faa$T 将远程存储的下载平均分配到多个缓存中，以达到两个目的：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;为远程存储创建更高的累积 I/O 带宽；&lt;/li&gt;
+&lt;li&gt;利用实例之间更高的通信带宽（与每个实例和远程存储之间的带宽相比，实例间的带宽更好，网络I/O更有效率）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;当cachelet接收到对象访问时，使用如下公式计算多个实例和对象大小S的数据传输延迟$T_{DR}$:&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220307142349577.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220307142349577&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;N：实例数量；&lt;/li&gt;
+&lt;li&gt;S：对象的大小；&lt;/li&gt;
+&lt;li&gt;$T_{Load}$：实例加载的延迟；&lt;/li&gt;
+&lt;li&gt;$BW_{BS}$和$BW_{Inst}$：记录不同的网络和远程存储的带宽。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;迭代过程在$T_{DR}$的变化小于10%或$T_{DR}$在迭代过程中增加时停止。&lt;/p&gt;
+&lt;h3 id=&#34;handling-conflicting-scaling-requests&#34;&gt;Handling conflicting scaling requests&lt;/h3&gt;
+&lt;p&gt;当扩缩容策略发生冲突时，控制器会优先处理扩容策略，因为这样更加保守。但是，如果所有策略都表明缩减实例不会导致问题时，就会缩容。&lt;/p&gt;
+&lt;h3 id=&#34;idle-function-computation-resources&#34;&gt;Idle function computation resources&lt;/h3&gt;
+&lt;p&gt;在一些情况，实例数量扩容可能会导致资源浪费。此时可以将一些低优先级的任务拿出来运行。&lt;/p&gt;
+&lt;h2 id=&#34;实现&#34;&gt;实现&lt;/h2&gt;
+&lt;h3 id=&#34;生产级别的faas平台&#34;&gt;生产级别的FaaS平台&lt;/h3&gt;
+&lt;p&gt;应用包含一个或多个功能，Faa$T透明的加载和管理对象：触发器（接收http request）、数据输入（blob）、输出（消息队列）。用户可在使用时配置Faa$T的一些策略，如扩展策略、一致性策略、缓存置换策略等。&lt;/p&gt;
+&lt;p&gt;下图展示了应用实例、FaaS Runtime还有function在VM或Docker Container中运行：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220307144606555.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220307144606555&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;接收到请求；&lt;/li&gt;
+&lt;li&gt;Runtime收集请求输入并调用function，将参数传递；&lt;/li&gt;
+&lt;li&gt;function处理完后，将结果返回给Runtime；&lt;/li&gt;
+&lt;li&gt;Runtime继续执行，如将数据写入远程存储或消息队列。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;缓存数据&#34;&gt;缓存数据&lt;/h3&gt;
+&lt;p&gt;运行时和function使用持久的RPC进行控制和数据交换。共享内存时Faa$T缓存数据的地方，通过传递共享内存中数据的地址，减少端到端时延。&lt;/p&gt;
+&lt;p&gt;当运行时在调用函数前，准备进行数据绑定时，Faa$T先拦截并检查缓存。当函数产生输出时，Faa$T会缓存起来备用。&lt;/p&gt;
+&lt;h2 id=&#34;实验评估&#34;&gt;实验评估&lt;/h2&gt;
+&lt;h3 id=&#34;两个比较点&#34;&gt;两个比较点&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;Faa$T给应用带来的性能提升；&lt;/li&gt;
+&lt;li&gt;评估四种缓存访问情况：local hit、local miss、remote hit、remote miss。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;六个基准&#34;&gt;六个基准&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;本地的大型虚拟机，所有访问都在本地进行；&lt;/li&gt;
+&lt;li&gt;没有集成Faa$T的大型FaaS平台Vanilla，对象的访问都在远程存储，它的最佳性能表现等同于Faa$T LM；&lt;/li&gt;
+&lt;li&gt;InfiniCache[55]（IC），为远程实例配置Faa$T，类比Faa$T RH；&lt;/li&gt;
+&lt;li&gt;Cloudburst（CB）的存储层，最佳实例表现等同Faa$T LH；&lt;/li&gt;
+&lt;li&gt;Pocket，近似于手动管理的Redis VM，所有数据均已内存速度访问；&lt;/li&gt;
+&lt;li&gt;商业级Redis服务。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;两个应用&#34;&gt;两个应用&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;ML推理应用；&lt;/li&gt;
+&lt;li&gt;Jupyter notebook。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;主要以程序延迟和成本为指标。对ML应用，使用单模型和带有pipeline的推理。&lt;/p&gt;
+&lt;p&gt;对于单模型，使用了两个不同的模型，在资源使用和延迟上都有所不同：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;SqueezeNet，5MB；&lt;/li&gt;
+&lt;li&gt;AlexNet，239MB。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;带有推理管道的模型使用了上面提到的识别汽车和人脸的应用，边界模型（35MB）的输出被输入到人体识别（97MB）和汽车识别（5MB）的模型中。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;对于 JupyterLess，有5个notebooks：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;单消息日志记录；&lt;/li&gt;
+&lt;li&gt;对 350MB 的 DataFrame 列求和；&lt;/li&gt;
+&lt;li&gt;进行数据收集和绘图的能力规划；&lt;/li&gt;
+&lt;li&gt;FaaS数据表征特征；&lt;/li&gt;
+&lt;li&gt;计数到 1K。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;函数数据对象由每个单元执行后的笔记本状态组成，以 JSON 格式存储。&lt;/p&gt;
+&lt;h3 id=&#34;结果&#34;&gt;结果&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220307153746200.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220307153746200&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;hr&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220307153938569.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220307153938569&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220307154114309.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220307154114309&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220307154157216.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220307154157216&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220307154307461.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220307154307461&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220307154412346.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220307154412346&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/image-20220307154445374.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
 </description>
         </item>
         <item>

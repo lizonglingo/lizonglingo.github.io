@@ -6,7 +6,554 @@
         <description>Recent content in k8s on Li Duo</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-CN</language>
-        <lastBuildDate>Fri, 15 Jul 2022 14:35:19 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/k8s/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Mon, 01 Aug 2022 18:10:59 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/k8s/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>cri-dockerd，在kubernetes1.24后继续使用Docker作为容器运行时</title>
+        <link>https://lizonglingo.github.io/p/cri-dockerd%E5%9C%A8kubernetes1.24%E5%90%8E%E7%BB%A7%E7%BB%AD%E4%BD%BF%E7%94%A8docker%E4%BD%9C%E4%B8%BA%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6/</link>
+        <pubDate>Mon, 01 Aug 2022 18:10:59 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/cri-dockerd%E5%9C%A8kubernetes1.24%E5%90%8E%E7%BB%A7%E7%BB%AD%E4%BD%BF%E7%94%A8docker%E4%BD%9C%E4%B8%BA%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;为体验Kubernetes以及Cilium组合在一起产生的新特性，我计划将Kubernetes升级到1.24+，并使用最新的稳定版cilium1.12来作集群网络。&lt;/p&gt;
+&lt;p&gt;我所看重的最大改变：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;kubernetes1.24+正式移除dockershim，关于“kubernetes弃用Docker”这一话题也算是尘埃落定，kubernetes正式拥抱纯净的CRI。&lt;/li&gt;
+&lt;li&gt;cilium1.12后正式支持kubernetes1.24.0，并且其重大的新特性cilium service mesh引起了我的兴趣，“multi control plan”、“sidercar/sidercar-free”等亮点让我很想尝试，是不是基于eBPF的service mesh在性能开销、指标粒度上能够给云上可观测性带来更好的体验。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;所以，第一个问题来了，移除dockershim后，我们怎样继续使用docker engine作为底层的容器管理以及运行时管理者呢？&lt;/p&gt;
+&lt;h2 id=&#34;dockershim和容器运行时&#34;&gt;Dockershim和容器运行时&lt;/h2&gt;
+&lt;p&gt;我们知道，提供服务的终点是Pod中运行的容器，kubernetes本身并不提供这种能力，而是依赖CRI去接入其他容器运行时，实现这样的能力的。我们最直接的体会就是kubernetes可以按照声明文件自动拉取、运行容器，其实这都是容器运行时的工作。例如docker，它就有这样的能力，并且在k8s发展初期，Docker甚至比k8s更有知名度，同时Docker比k8s CRI这样概念要早，docker engine也就没有实现CRI接口这一说，所以k8s使用&lt;code&gt;dockershim&lt;/code&gt;作为支撑docker这一容器运行时的过渡。因此在k8s早期版本，就针对docker这个容器运行时做了适配。&lt;/p&gt;
+&lt;p&gt;每个节点上的kubelet在dockershim的能力下，可以与节点上的docker engine进行交互，去使用docker的能力。&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220730233109830.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220730233109830&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;从上图中可以看出，dockershim的作用与一个CRI实现是一样的。尽管目前docker底层也是使用了&lt;code&gt;containerd&lt;/code&gt;，但是我们还需要多一个中间环节，用docker调用containerd。&lt;/p&gt;
+&lt;p&gt;而k8s中CRI之一&lt;code&gt;containerd&lt;/code&gt;则为k8s提供了直接调用containerd的能力。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;目前主要的CRI实现有：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;containerd&lt;/li&gt;
+&lt;li&gt;cri-o&lt;/li&gt;
+&lt;li&gt;cri-dockerd&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;正因如此，k8s不必局限于docker这一种运行时，CRI的能力可以让k8s使用特性不同的容器运行时。&lt;/p&gt;
+&lt;h3 id=&#34;弃用dockershim后docker还有用吗&#34;&gt;弃用dockershim后，Docker还有用吗？&lt;/h3&gt;
+&lt;p&gt;当然。&lt;/p&gt;
+&lt;p&gt;在我的印象里，docker仍然是目前使用最多的容器打包构建、镜像管理和运行工具。docker hub有丰富镜像资源、有很多开发者在使用docker去构建自己应用镜像。使用&lt;code&gt;docker build&lt;/code&gt;打包的镜像依然符合CRI的标准（因为已经容器运行时以及有标准化组织OCI为其制定规范了）。&lt;/p&gt;
+&lt;p&gt;只不过，原来为docker engine做适配工作现在已经不属于k8s社区的管辖范围，需要其他社区自己去按照CRI的标准，为docker engine编写接入k8s的“转接头”。因此，就有了&lt;code&gt;cri-dockerd&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;如果我们想继续使用在k8s中使用docker，就必须使用&lt;code&gt;cri-dockerd&lt;/code&gt;作为适配器，它让我们可以通过CRI来使用docker engine。&lt;/p&gt;
+&lt;h2 id=&#34;在新版本集群中使用cri-dockerd&#34;&gt;在新版本集群中使用cri-dockerd&lt;/h2&gt;
+&lt;p&gt;之前的博客中我们分享到，搭建集群只需要节点上有docker engine就可以，然后按照&lt;code&gt;kubeadm&lt;/code&gt;，&lt;code&gt;kubelet&lt;/code&gt;，&lt;code&gt;kubectl&lt;/code&gt;就可以了，不会去刻意、显式的配置容器运行时。那是因为k8s内置的dockershim自动帮我们完成了这个工作。&lt;/p&gt;
+&lt;p&gt;在1.24.0之后，我们在创建集群之前，也要像安装CNI那样先配置我们的容器运行时，才可以正常初始化k8s集群。&lt;/p&gt;
+&lt;h3 id=&#34;安装并配置cri-dockerd&#34;&gt;安装并配置cri-dockerd&lt;/h3&gt;
+&lt;p&gt;:warning:这需要节点上有正常运行的docker engine。同时要在所有节点上安装cri-dockerd。&lt;/p&gt;
+&lt;p&gt;我们这里使用Ubuntu22.04作为环境，直接在&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd/releases&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;release&lt;/a&gt;下载构建好的对应Ubuntu版本的&lt;code&gt;.deb&lt;/code&gt;安装文件。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202207311437400.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220731143731223&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;然后，进行安装：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; dpkg -i cri-dockerd_0.2.3.3-0.ubuntu-jammy_amd64.deb
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Selecting previously unselected package cri-dockerd.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;Reading database ... &lt;span style=&#34;color:#ae81ff&#34;&gt;212454&lt;/span&gt; files and directories currently installed.&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Preparing to unpack cri-dockerd_0.2.3.3-0.ubuntu-jammy_amd64.deb ...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Unpacking cri-dockerd &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;0.2.3~3-0~ubuntu-jammy&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; ...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Setting up cri-dockerd &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;0.2.3~3-0~ubuntu-jammy&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; ...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Created symlink /etc/systemd/system/multi-user.target.wants/cri-docker.service → /lib/systemd/system/cri-docker.service.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Created symlink /etc/systemd/system/sockets.target.wants/cri-docker.socket → /lib/systemd/system/cri-docker.socket.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;安装log里有两个很重要的信息点：&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;Created symlink /etc/systemd/system/multi-user.target.wants/cri-docker.service → /lib/systemd/system/cri-docker.service.&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;Created symlink /etc/systemd/system/sockets.target.wants/cri-docker.socket → /lib/systemd/system/cri-docker.socket.&lt;/code&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;sysmlink&lt;/code&gt;是Linux中的一种文件类型，称为“符号链接”、“软链接”，指向计算机上另一个文件或者文件夹。类似于Windows中的快捷方式。这种链接文件记录了被链接文件的路径，更方便的访问某些文件。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;在安装cri-dockerd时，为&lt;code&gt;cri-docker.service&lt;/code&gt;，和&lt;code&gt;cri-docker.socket&lt;/code&gt;创建了软链接。&lt;/p&gt;
+&lt;p&gt;安装后，我们执行&lt;code&gt;cri-dockerd -h&lt;/code&gt; 了解一下基本信息：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; cri-dockerd -h
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;CRI that connects to the Docker Daemon
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Usage:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  cri-dockerd &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;flags&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Flags:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --buildinfo                               Prints the build information about cri-dockerd
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --cni-bin-dir string                      &amp;lt;Warning: Alpha feature&amp;gt; A comma-separated list of full paths of directories in which to search &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; CNI plugin binaries. &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/opt/cni/bin&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --cni-cache-dir string                    &amp;lt;Warning: Alpha feature&amp;gt; The full path of the directory in which CNI should store cache files. &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/var/lib/cni/cache&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --cni-conf-dir string                     &amp;lt;Warning: Alpha feature&amp;gt; The full path of the directory in which to search &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; CNI config files &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/etc/cni/net.d&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --container-runtime-endpoint string       The endpoint of backend runtime service. Currently unix socket and tcp endpoints are supported on Linux, &lt;span style=&#34;color:#66d9ef&#34;&gt;while&lt;/span&gt; npipe and tcp endpoints are supported on windows.  Examples:&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;unix:///var/run/cri-dockerd.sock&amp;#39;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;npipe:////./pipe/cri-dockerd&amp;#39;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;unix:///var/run/cri-dockerd.sock&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --cri-dockerd-root-directory string       Path to the cri-dockerd root directory. &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/var/lib/cri-dockerd&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --docker-endpoint string                  Use this &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; the docker endpoint to communicate with. &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;unix:///var/run/docker.sock&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --hairpin-mode HairpinMode                &amp;lt;Warning: Alpha feature&amp;gt; The mode of hairpin to use. &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default none&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  -h, --help                                    Help &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; cri-dockerd
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --image-pull-progress-deadline duration   If no pulling progress is made before this deadline, the image pulling will be cancelled. &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default 1m0s&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --ipv6-dual-stack                         Enable IPv6 dual stack support
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --log-level string                        The log level &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; cri-docker &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;info&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --network-plugin string                   &amp;lt;Warning: Alpha feature&amp;gt; The name of the network plugin to be invoked &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; various events in kubelet/pod lifecycle.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --network-plugin-mtu int32                &amp;lt;Warning: Alpha feature&amp;gt; The MTU to be passed to the network plugin, to override the default. Set to &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt; to use the default &lt;span style=&#34;color:#ae81ff&#34;&gt;1460&lt;/span&gt; MTU.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --pod-cidr string                         The CIDR to use &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; pod IP addresses, only used in standalone mode.  In cluster mode, this is obtained from the master. For IPv6, the maximum number of IP&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&amp;#39;&lt;/span&gt;s allocated is &lt;span style=&#34;color:#ae81ff&#34;&gt;65536&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --pod-infra-container-image string        The image whose network/ipc namespaces containers in each pod will use &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;default &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;k8s.gcr.io/pause:3.6&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --runtime-cgroups string                  Optional absolute name of cgroups to create and run the runtime in.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      --version                                 Prints the version of cri-dockerd
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;从“CRI that connects to the Docker Daemon”中看到，cri-dockerd的作用是连接节点上的docker daemon的，然后k8s再连接cri-dockerd，就能使用docker作为容器运行时了。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;--cni-bin-dir string&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--cni-cache-dir string&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--cni-conf-dir string&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;上面三个参数是关于容器网络的，暂时在alpha阶段。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;--container-runtime-endpoint&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这个参数需要我们注意，它指定了k8s需要连接CRI端点，默认是&lt;code&gt;unix:///var/run/cri-dockerd.sock&lt;/code&gt;，在后面配置kubeadm config时需要用到。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;--docker-endpoint string&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这个参数就是cri-dockerd要去连接的docker daemon的端点，来使用docker的能力。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;--pod-cidr string&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;该参数只有在单节点部署时才会用到，在集群环境下cri-dockerd通过获取master node的信息知晓pod的cidr划分。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;--pod-infra-container-image&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;该参数可以用来设置Pod中的pause容器的镜像版本，默认使用&lt;code&gt;k8s.gcr.io/pause:3.6&lt;/code&gt;这个镜像。但是在k8s1.24中，应该使用3.7版本，并且要换成aliyun镜像，在后面需要设置。&lt;/p&gt;
+&lt;h3 id=&#34;修改kubeadm-config文件&#34;&gt;修改kubeadm config文件&lt;/h3&gt;
+&lt;p&gt;我先导出&lt;code&gt;kubeadm&lt;/code&gt;默认的启动配置文件。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;kubeadm config print init-defaults &amp;gt; kubeadm1.24.conf&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;然后做一些修改，我的修改如下：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;apiVersion: kubeadm.k8s.io/v1beta3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;bootstrapTokens:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;- groups:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - system:bootstrappers:kubeadm:default-node-token
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  token: abcdef.0123456789abcdef
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  ttl: 24h0m0s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  usages:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - signing
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - authentication
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kind: InitConfiguration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;localAPIEndpoint:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  advertiseAddress: 192.168.153.21
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  bindPort: &lt;span style=&#34;color:#ae81ff&#34;&gt;6443&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nodeRegistration:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  criSocket: unix:///var/run/cri-dockerd.sock
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  imagePullPolicy: IfNotPresent
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  name: nm
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  taints: null
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;---
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;apiServer:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  timeoutForControlPlane: 4m0s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;apiVersion: kubeadm.k8s.io/v1beta3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;certificatesDir: /etc/kubernetes/pki
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;clusterName: kubernetes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;controllerManager: &lt;span style=&#34;color:#f92672&#34;&gt;{}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;dns: &lt;span style=&#34;color:#f92672&#34;&gt;{}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;etcd:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  local:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    dataDir: /var/lib/etcd
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;imageRepository: registry.aliyuncs.com/google_containers
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kind: ClusterConfiguration
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kubernetesVersion: 1.24.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;networking:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  dnsDomain: cluster.local
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  serviceSubnet: 10.96.0.0/12
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  podSubnet: 10.5.0.0/16
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;scheduler: &lt;span style=&#34;color:#f92672&#34;&gt;{}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;需要注意的几个点有：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;advertiseAddress: 192.168.153.21&lt;/code&gt;：设置控制平面API Server的地址和端口。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;criSocket: unix:///var/run/cri-dockerd.sock&lt;/code&gt;：这需要特别注意，criSocket就是上面我们说的cri-dockerd中的&lt;code&gt;--container-runtime-endpoint&lt;/code&gt;参数，如果使用了别的容器运行时这里也要相应修改。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;name: nm&lt;/code&gt;：本机的hostname。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;imageRepository: registry.aliyuncs.com/google_containers&lt;/code&gt;：国内用aliyun的镜像。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;podSubnet: 10.5.0.0/16&lt;/code&gt;：Pod cidr信息。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;启动集群启动失败&#34;&gt;启动集群(启动失败)&lt;/h3&gt;
+&lt;p&gt;然后我们尝试启动集群：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# kubeadm init --config ../create-cluster/kubeadm1.24.conf &lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;init&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Using Kubernetes version: v1.24.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Running pre-flight checks
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;WARNING SystemVerification&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;: missing optional cgroups: blkio
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;error execution phase preflight: &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Some fatal errors occurred:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;ERROR CRI&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;: container runtime is not running: output: time&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;2022-07-31T15:41:42+08:00&amp;#34;&lt;/span&gt; level&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;debug msg&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;get runtime connection&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;time&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;2022-07-31T15:41:42+08:00&amp;#34;&lt;/span&gt; level&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;fatal msg&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;unable to determine runtime API version: rpc error: code = Unavailable desc = connection error: desc = \&amp;#34;transport: Error while dialing dial unix /var/run/cri-dockerd.sock: connect: connection refused\&amp;#34;&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;, error: exit status &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; If you know what you are doing, you can make a check non-fatal with &lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;--ignore-preflight-errors&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;...&lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;To see the stack trace of this error execute with --v&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;5&lt;/span&gt; or higher
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;发现报错了&lt;code&gt;level=fatal msg=&amp;quot;unable to determine runtime API version: rpc error: code = Unavailable desc = connection error: desc = \&amp;quot;transport: Error while dialing dial unix /var/run/cri-dockerd.sock: connect: connection refused\&amp;quot;&lt;/code&gt;。我们的socket没有连上。&lt;/p&gt;
+&lt;p&gt;原因就是，&lt;strong&gt;我们安装了cri-dockerd后，它并不会像systemctl所管理的service，或者守护进程那样自动驻留在本机上。我们必须手动的启动cri-dockerd。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;所以，需要手动运行cri-dockerd，并且添加&lt;code&gt;--pod-infra-container-image&lt;/code&gt;参数。（使用&lt;code&gt;kubeadm config images list --config kubeadm1.24.conf&lt;/code&gt;可以知道需要的镜像版本）&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; cri-dockerd --pod-infra-container-image&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;registry.aliyuncs.com/google_containers/pause:3.7
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Connecting to docker on the Endpoint unix:///var/run/docker.sock 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Start docker client with request timeout 0s  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Hairpin mode is set to none                  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker cri networking managed by network plugin kubernetes.io/no-op 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker Info: &amp;amp;&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:HEPZ:PXCZ:XHZR:SKBX:TJL5:EG5L:U6P3:PI5A:PVZZ:ASKB:QJUC:QEDR Containers:2 ContainersRunning:1 ContainersPaused:0 ContainersStopped:1 Images:13 Driver:overlay2 DriverStatus:&lt;span style=&#34;color:#f92672&#34;&gt;[[&lt;/span&gt;Backing Filesystem extfs&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Supports d_type true&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Native Overlay Diff true&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;userxattr false&lt;span style=&#34;color:#f92672&#34;&gt;]]&lt;/span&gt; SystemStatus:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; Plugins:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Volume:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;local&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Network:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;bridge host ipvlan macvlan null overlay&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Authorization:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; Log:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;awslogs fluentd gcplogs gelf journald json-file local logentries splunk syslog&lt;span style=&#34;color:#f92672&#34;&gt;]}&lt;/span&gt; MemoryLimit:true SwapLimit:true KernelMemory:false KernelMemoryTCP:false CPUCfsPeriod:true CPUCfsQuota:true CPUShares:true CPUSet:true PidsLimit:true IPv4Forwarding:true BridgeNfIptables:true BridgeNfIP6tables:true Debug:false NFd:31 OomKillDisable:false NGoroutines:39 SystemTime:2022-07-31T15:49:40.481000763+08:00 LoggingDriver:json-file CgroupDriver:systemd NEventsListener:0 KernelVersion:5.15.0-41-generic OperatingSystem:Ubuntu 22.04 LTS OSType:linux Architecture:x86_64 IndexServerAddress:https://index.docker.io/v1/ RegistryConfig:0xc0001de540 NCPU:4 MemTotal:8302116864 GenericResources:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; DockerRootDir:/var/lib/docker HTTPProxy: HTTPSProxy: NoProxy: Name:nm Labels:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; ExperimentalBuild:false ServerVersion:20.10.17 ClusterStore: ClusterAdvertise: Runtimes:map&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;io.containerd.runc.v2:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Path:runc Args:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; io.containerd.runtime.v1.linux:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Path:runc Args:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; runc:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Path:runc Args:&lt;span style=&#34;color:#f92672&#34;&gt;[]}]&lt;/span&gt; DefaultRuntime:runc Swarm:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;NodeID: NodeAddr: LocalNodeState:inactive ControlAvailable:false Error: RemoteManagers:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; Nodes:0 Managers:0 Cluster:&amp;lt;nil&amp;gt; Warnings:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; LiveRestoreEnabled:false Isolation: InitBinary:docker-init ContainerdCommit:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:10c12954828e7c7c9b6e0ea9b0c02b01407d3ae1 Expected:10c12954828e7c7c9b6e0ea9b0c02b01407d3ae1&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; RuncCommit:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:v1.1.2-0-ga916309 Expected:v1.1.2-0-ga916309&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; InitCommit:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:de40ad0 Expected:de40ad0&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; SecurityOptions:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;apparmor name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;seccomp,profile&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;default name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cgroupns&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ProductLicense: Warnings:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Setting cgroupDriver systemd                 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker cri received runtime config &amp;amp;RuntimeConfig&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;NetworkConfig:&amp;amp;NetworkConfig&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;PodCidr:,&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;,&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Starting the GRPC backend &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; the Docker CRI interface. 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Start cri-dockerd grpc backend
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我们看到，它已经连上了docker的endpoint。&lt;/p&gt;
+&lt;p&gt;这时我们再另起一个终端，启动集群。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;需要注意，在清理集群时，要添加一个socket参数，如&lt;code&gt;kubeadm reset --cri-socket unix:///var/run/cri-dockerd.sock&lt;/code&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubeadm init --config kubeadm1.24.3.conf 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;init&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Using Kubernetes version: v1.24.0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Running pre-flight checks
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;WARNING SystemVerification&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;: missing optional cgroups: blkio
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Pulling images required &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; setting up a Kubernetes cluster
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; This might take a minute or two, depending on the speed of your internet connection
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; You can also perform this action in beforehand using &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;kubeadm config images pull&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;certs&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Using certificateDir folder &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/etc/kubernetes/pki&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;...
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;在cri-dockerd的终端中，有了新的输出：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Start cri-dockerd grpc backend               
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0157&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Will attempt to re-write config file /var/lib/docker/containers/000f099fa98530c39e69458881c051f25200feb4f25dfd3d8f02f7444e6763ac/resolv.conf as &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;nameserver 192.168.153.2 nameserver 192.168.153.2 search &lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0157&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Will attempt to re-write config file /var/lib/docker/containers/ed0aa34e77adbf4ff444998b75e2365f1ebe44e831cdf4c55d3eecd4b6582958/resolv.conf as &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;nameserver 192.168.153.2 nameserver 192.168.153.2 search &lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0157&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Will attempt to re-write config file /var/lib/docker/containers/3431d46d839451adc30f1c44994990daed5b24899959aae34b5cfd3d5c695fc6/resolv.conf as &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;nameserver 192.168.153.2 nameserver 192.168.153.2 search &lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0157&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Will attempt to re-write config file /var/lib/docker/containers/50ae6ccb6e7c1420f58c1873bf2c17e291a26597a3b042b0df86a1ef2729470c/resolv.conf as &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;nameserver 192.168.153.2 nameserver 192.168.153.2 search &lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0167&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc00098ea80 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0168&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc00098f440 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0168&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc000791b00 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;然而这里还报出一些奇怪的错误。&lt;/p&gt;
+&lt;p&gt;我们查看docker容器：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; docker container ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;CONTAINER ID   IMAGE                                               COMMAND                  CREATED         STATUS         PORTS                                       NAMES
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;bbded4be83db   a4ca41631cc7                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/coredns -conf /etc…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_coredns_coredns-74586cf9b6-s6n6g_kube-system_68e930db-ac76-4995-bef2-a9f094b5cf88_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;173154bfdc43   a4ca41631cc7                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/coredns -conf /etc…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_coredns_coredns-74586cf9b6-wstwx_kube-system_178e7a4e-3c35-42e6-b78b-1053274d9d4d_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;fb2810fe84a3   77b49675beae                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/usr/local/bin/kube…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_kube-proxy_kube-proxy-fpfq7_kube-system_3a52d7e5-ffa8-4193-a2de-948861818bf0_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;640f6546ff97   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_coredns-74586cf9b6-s6n6g_kube-system_68e930db-ac76-4995-bef2-a9f094b5cf88_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;8933a7f18e54   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_coredns-74586cf9b6-wstwx_kube-system_178e7a4e-3c35-42e6-b78b-1053274d9d4d_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;c2319d389da4   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_kube-proxy-fpfq7_kube-system_3a52d7e5-ffa8-4193-a2de-948861818bf0_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;c441aae26e22   88784fb4ac2f                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-controller-man…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_kube-controller-manager_kube-controller-manager-nm_kube-system_0b57267fec9fa21f5d899c064341d122_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;c2251251c6be   e3ed7dee73e9                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-scheduler --au…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_kube-scheduler_kube-scheduler-nm_kube-system_4b1a2622b0a7caad68556441288e8374_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;90df81c294fc   aebe758cef4c                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;etcd --advertise-cl…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_etcd_etcd-nm_kube-system_c305f8ecb58a3de0b142aa31e3c6e6cc_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;d14f4a822e37   529072250ccc                                        &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;kube-apiserver --ad…&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_kube-apiserver_kube-apiserver-nm_kube-system_a38fd4cf236ff9d9bba5bb8f006ffdfd_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;000f099fa985   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_kube-scheduler-nm_kube-system_4b1a2622b0a7caad68556441288e8374_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;50ae6ccb6e7c   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_kube-controller-manager-nm_kube-system_0b57267fec9fa21f5d899c064341d122_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ed0aa34e77ad   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_kube-apiserver-nm_kube-system_a38fd4cf236ff9d9bba5bb8f006ffdfd_0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;3431d46d8394   registry.aliyuncs.com/google_containers/pause:3.7   &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/pause&amp;#34;&lt;/span&gt;                 &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes ago   Up &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt; minutes                                               k8s_POD_etcd-nm_kube-system_c305f8ecb58a3de0b142aa31e3c6e6cc_0
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;系统的组件都启动了。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get cs
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Warning: v1 ComponentStatus is deprecated in v1.19+
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME                 STATUS    MESSAGE                         ERROR
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;scheduler            Healthy   ok                              
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;controller-manager   Healthy   ok                              
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;etcd-0               Healthy   &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;health&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;true&amp;#34;&lt;/span&gt;,&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;reason&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;   
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get pod -A
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAMESPACE     NAME                         READY   STATUS    RESTARTS   AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   coredns-74586cf9b6-vpdp5     1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          33s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   coredns-74586cf9b6-zdfpw     1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          33s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   etcd-nm                      1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          46s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-apiserver-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          49s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-controller-manager-nm   1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          49s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-proxy-gs9lq             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          33s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-scheduler-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          46s
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;加入工作节点。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubeadm join 192.168.153.21:6443 --token abcdef.0123456789abcdef &lt;span style=&#34;color:#ae81ff&#34;&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;&lt;/span&gt;        --discovery-token-ca-cert-hash sha256:d1902aa47f486d6fd1d35f7fb92286ffaa39da0437ded9be8d2de5670d52a8ca
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Found multiple CRI endpoints on the host. Please define which one &lt;span style=&#34;color:#66d9ef&#34;&gt;do&lt;/span&gt; you wish to use by setting the &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;criSocket&amp;#39;&lt;/span&gt; field in the kubeadm configuration file: unix:///var/run/containerd/containerd.sock, unix:///var/run/cri-dockerd.sock
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我们发现这里出现了运行时冲突，需要指定，这里就直接在命令行指明，如下：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubeadm join 192.168.153.21:6443 --token abcdef.0123456789abcdef --discovery-token-ca-cert-hash sha256:d1902aa47f486d6fd1d35f7fb92286ffaa39da0437ded9be8d2de5670d52a8ca --cri-socket unix:///var/run/cri-dockerd.sock
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Running pre-flight checks
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;WARNING SystemVerification&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;: missing optional cgroups: blkio
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Reading configuration from the cluster...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;preflight&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; FYI: You can look at this config file with &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;kubectl -n kube-system get cm kubeadm-config -o yaml&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;kubelet-start&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Writing kubelet configuration to file &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/var/lib/kubelet/config.yaml&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;kubelet-start&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Writing kubelet environment file with flags to file &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/var/lib/kubelet/kubeadm-flags.env&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;kubelet-start&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Starting the kubelet
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;kubelet-start&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Waiting &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; the kubelet to perform the TLS Bootstrap...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;This node has joined the cluster:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;* Certificate signing request was sent to apiserver and a response was received.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;* The Kubelet was informed of the new secure connection details.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Run &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;kubectl get nodes&amp;#39;&lt;/span&gt; on the control-plane to see this node join the cluster.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;然后，我们看到节点已加入集群：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get nodes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME   STATUS   ROLES           AGE     VERSION
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;na     Ready    &amp;lt;none&amp;gt;          2m14s   v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nb     Ready    &amp;lt;none&amp;gt;          24s     v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nm     Ready    control-plane   7m33s   v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;这里我不解的是，之前设置CNI前，core-dns的状态是pending，而且节点状态也是Not Ready。但是现在却看似一切正常。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;我们先使用简单的flannel做集群网络，注意不要忘记修改cidr为集群创建时指定的。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get pods -A
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAMESPACE      NAME                         READY   STATUS    RESTARTS   AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-flannel   kube-flannel-ds-5v2vn        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          41s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-flannel   kube-flannel-ds-bcgwm        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          41s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-flannel   kube-flannel-ds-ctt4v        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          41s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    coredns-74586cf9b6-vpdp5     1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          14m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    coredns-74586cf9b6-zdfpw     1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          14m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    etcd-nm                      1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          15m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-apiserver-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          15m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-controller-manager-nm   1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          15m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-proxy-6px66             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          9m56s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-proxy-cc4fw             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          8m6s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-proxy-gs9lq             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          14m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-scheduler-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          15m
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;网络CNI也正常工作了。&lt;/p&gt;
+&lt;p&gt;然后我们部署一个简单的微服务应用试试。&lt;/p&gt;
+&lt;p&gt;看似一切正常，但是我发现集群网络出现问题，不能访问service的服务。而且通过&lt;code&gt;-o wide&lt;/code&gt;查看Pod发现他们并不在我所指定的CIDR网段，而是在一个奇怪的172网段。&lt;/p&gt;
+&lt;p&gt;结合上面的，“还没有部署CNI节点和core-dns就Ready”这个奇怪的现象。我认为cri-dockerd的网络配置有问题。于是我又详细查看的参考资料，发现有一个配置和参考资料中的不一样。&lt;/p&gt;
+&lt;p&gt;并且我们详细查看上面的cri-docker启动日志：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker cri networking managed by network plugin kubernetes.io/no-op
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;cri-dockerd的网络是由&lt;code&gt;network plugin kubernetes.io/no-op&lt;/code&gt;管理的，这是个啥？&lt;/p&gt;
+&lt;h3 id=&#34;cni&#34;&gt;CNI&lt;/h3&gt;
+&lt;p&gt;所以，这里就不得不讨论下kubernetes1.24之后的另一个重大改变：&lt;strong&gt;在 Kubernetes 1.24 之前，CNI 插件也可以由 kubelet 使用命令行参数 &lt;code&gt;cni-bin-dir&lt;/code&gt; 和 &lt;code&gt;network-plugin&lt;/code&gt; 管理。Kubernetes 1.24 移除了这些命令行参数， CNI 的管理不再是 kubelet 的工作。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;也就是说，kubelet已经从管理CNI中得到了解放。谁来管理cni呢？&lt;/p&gt;
+&lt;p&gt;容器运行时。&lt;/p&gt;
+&lt;p&gt;又回到参考资料中对cri-dockerd的配置，是这样写的：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ExecStart&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;/usr/bin/cri-dockerd --network-plugin&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cni --pod-infra-container-image&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;registry.aliyuncs.com/google_containers/pause:3.7
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;对&lt;code&gt;--network-plugin=cni&lt;/code&gt;进行了配置。上述cri-dockerd的启动参数中，有一句：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;--network-plugin string                   &amp;lt;Warning: Alpha feature&amp;gt; The name of the network plugin to be invoked &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; various events in kubelet/pod lifecycle.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;于是我按照这个提示找到一篇解读kubelet配置cni的博文，Warning这句话正是原来在kubelet代码中的（见&lt;a class=&#34;link&#34; href=&#34;https://www.cnblogs.com/lianngkyle/p/15171630.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;kubernetes/k8s CNI分析-容器网络接口分析&lt;/a&gt;）。&lt;/p&gt;
+&lt;p&gt;kubelet网络插件有下面三种类型：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;cni&lt;/li&gt;
+&lt;li&gt;kubenet&lt;/li&gt;
+&lt;li&gt;noop：不配置网络插件&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这样我们就明白了，在最初启动cri-dockerd的日志就表示我们并没有给cri-dockerd配置网络插件&lt;code&gt;INFO[0000] Docker cri networking managed by network plugin kubernetes.io/no-op&lt;/code&gt;，结合它的启动参数&lt;code&gt;--network-plugin&lt;/code&gt;，因此这个问题应该就是出于此。&lt;/p&gt;
+&lt;h3 id=&#34;再次启动集群&#34;&gt;再次启动集群&lt;/h3&gt;
+&lt;p&gt;我们先清除集群环境，包括flannel网络环境。&lt;/p&gt;
+&lt;p&gt;在启动cri-dockerd的命令中加上网络插件参数。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; cri-dockerd --pod-infra-container-image&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;registry.aliyuncs.com/google_containers/pause:3.7 --network-plugin&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cni
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Connecting to docker on the Endpoint unix:///var/run/docker.sock 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Start docker client with request timeout 0s  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Hairpin mode is set to none                  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Loaded network plugin cni                    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker cri networking managed by network plugin cni 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker Info: &amp;amp;&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:HEPZ:PXCZ:XHZR:SKBX:TJL5:EG5L:U6P3:PI5A:PVZZ:ASKB:QJUC:QEDR Containers:16 ContainersRunning:12 ContainersPaused:0 ContainersStopped:4 Images:15 Driver:overlay2 DriverStatus:&lt;span style=&#34;color:#f92672&#34;&gt;[[&lt;/span&gt;Backing Filesystem extfs&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Supports d_type true&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Native Overlay Diff true&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;userxattr false&lt;span style=&#34;color:#f92672&#34;&gt;]]&lt;/span&gt; SystemStatus:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; Plugins:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Volume:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;local&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Network:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;bridge host ipvlan macvlan null overlay&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Authorization:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; Log:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;awslogs fluentd gcplogs gelf journald json-file local logentries splunk syslog&lt;span style=&#34;color:#f92672&#34;&gt;]}&lt;/span&gt; MemoryLimit:true SwapLimit:true KernelMemory:false KernelMemoryTCP:false CPUCfsPeriod:true CPUCfsQuota:true CPUShares:true CPUSet:true PidsLimit:true IPv4Forwarding:true BridgeNfIptables:true BridgeNfIP6tables:true Debug:false NFd:89 OomKillDisable:false NGoroutines:83 SystemTime:2022-07-31T16:59:32.329402283+08:00 LoggingDriver:json-file CgroupDriver:systemd NEventsListener:0 KernelVersion:5.15.0-41-generic OperatingSystem:Ubuntu 22.04 LTS OSType:linux Architecture:x86_64 IndexServerAddress:https://index.docker.io/v1/ RegistryConfig:0xc000468a10 NCPU:4 MemTotal:8302116864 GenericResources:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; DockerRootDir:/var/lib/docker HTTPProxy: HTTPSProxy: NoProxy: Name:nm Labels:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; ExperimentalBuild:false ServerVersion:20.10.17 ClusterStore: ClusterAdvertise: Runtimes:map&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;io.containerd.runc.v2:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Path:runc Args:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; io.containerd.runtime.v1.linux:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Path:runc Args:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; runc:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;Path:runc Args:&lt;span style=&#34;color:#f92672&#34;&gt;[]}]&lt;/span&gt; DefaultRuntime:runc Swarm:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;NodeID: NodeAddr: LocalNodeState:inactive ControlAvailable:false Error: RemoteManagers:&lt;span style=&#34;color:#f92672&#34;&gt;[]&lt;/span&gt; Nodes:0 Managers:0 Cluster:&amp;lt;nil&amp;gt; Warnings:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; LiveRestoreEnabled:false Isolation: InitBinary:docker-init ContainerdCommit:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:10c12954828e7c7c9b6e0ea9b0c02b01407d3ae1 Expected:10c12954828e7c7c9b6e0ea9b0c02b01407d3ae1&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; RuncCommit:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:v1.1.2-0-ga916309 Expected:v1.1.2-0-ga916309&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; InitCommit:&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;ID:de40ad0 Expected:de40ad0&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; SecurityOptions:&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;apparmor name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;seccomp,profile&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;default name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cgroupns&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ProductLicense: Warnings:&lt;span style=&#34;color:#f92672&#34;&gt;[]}&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Setting cgroupDriver systemd                 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Docker cri received runtime config &amp;amp;RuntimeConfig&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;NetworkConfig:&amp;amp;NetworkConfig&lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;PodCidr:,&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;,&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Starting the GRPC backend &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; the Docker CRI interface. 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;0000&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Start cri-dockerd grpc backend     
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;可以看到&lt;code&gt;INFO[0000] Loaded network plugin cni&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;在另一个终端里，初始化集群，并安装flannel插件。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get pods -A
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAMESPACE     NAME                         READY   STATUS    RESTARTS   AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   coredns-74586cf9b6-2p28x     0/1     Pending   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          46s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   coredns-74586cf9b6-lkrn6     0/1     Pending   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          46s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   etcd-nm                      1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          58s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-apiserver-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          58s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-controller-manager-nm   1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          59s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-proxy-qcgfk             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          46s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system   kube-scheduler-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          58s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get node
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME   STATUS     ROLES           AGE     VERSION
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;na     NotReady   &amp;lt;none&amp;gt;          10s     v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nb     NotReady   &amp;lt;none&amp;gt;          13s     v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nm     NotReady   control-plane   2m34s   v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl apply -f ../network/flannel.yaml 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;namespace/kube-flannel created
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;clusterrole.rbac.authorization.k8s.io/flannel created
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;clusterrolebinding.rbac.authorization.k8s.io/flannel created
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;serviceaccount/flannel created
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;configmap/kube-flannel-cfg created
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;daemonset.apps/kube-flannel-ds created
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get pods -A
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAMESPACE      NAME                         READY   STATUS    RESTARTS   AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-flannel   kube-flannel-ds-2rcs4        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          19s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-flannel   kube-flannel-ds-9szxg        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          19s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-flannel   kube-flannel-ds-cxw5k        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          19s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    coredns-74586cf9b6-2p28x     1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m22s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    coredns-74586cf9b6-lkrn6     1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m22s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    etcd-nm                      1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m34s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-apiserver-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m34s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-controller-manager-nm   1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m35s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-proxy-7lsdq             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          77s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-proxy-fb96h             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          74s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-proxy-qcgfk             1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m22s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kube-system    kube-scheduler-nm            1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          3m34s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get node
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME   STATUS   ROLES           AGE     VERSION
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;na     Ready    &amp;lt;none&amp;gt;          76s     v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nb     Ready    &amp;lt;none&amp;gt;          79s     v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;nm     Ready    control-plane   3m40s   v1.24.3
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;安装flannel前，core-dns为pending、节点为NotReady。安装后正常，这是符合预期的。&lt;/p&gt;
+&lt;p&gt;并且cri-dockerd中也打印了cni的信息：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3090&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Using CNI configuration file /etc/cni/net.d/10-flannel.conflist 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;INFO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3095&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; Using CNI configuration file /etc/cni/net.d/10-flannel.conflist
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;再次部署用于测试的服务，一切正常：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get pods -o wide -n cinema
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME                            READY   STATUS    RESTARTS   AGE   IP         NODE   NOMINATED NODE   READINESS GATES
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;bookings-78c77d68f9-j5jzf       1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          17s   10.5.2.2   na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mongo-deploy-57dc8c8f49-n6psq   1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          17s   10.5.1.6   nb     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;movies-6fbc5986b9-vs6j8         1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          17s   10.5.2.3   na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;showtimes-56fc847b7-4bq87       1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          17s   10.5.1.4   nb     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;users-6996b995d4-5l5tq          1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          17s   10.5.2.4   na     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;website-867ff4b9dd-5zz49        1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          17s   10.5.1.5   nb     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; kubectl get svc -o wide -n cinema
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;S&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;          AGE   SELECTOR
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;bookings      ClusterIP   10.110.129.6    &amp;lt;none&amp;gt;        8080/TCP         27s   app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;bookings
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mongodb-svc   ClusterIP   10.103.92.132   &amp;lt;none&amp;gt;        27017/TCP        27s   app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;mongodb
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;movies        ClusterIP   10.103.102.97   &amp;lt;none&amp;gt;        8080/TCP         27s   app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;movies
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;showtimes     ClusterIP   10.96.139.99    &amp;lt;none&amp;gt;        8080/TCP         27s   app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;showtimes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;users         ClusterIP   10.106.152.98   &amp;lt;none&amp;gt;        8080/TCP         27s   app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;users
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;website       NodePort    10.96.103.3     &amp;lt;none&amp;gt;        8080:30021/TCP   27s   app&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;website
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202207311754304.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220731175441143&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;到这里，1.24.0版本的集群就正常部署Pod并提供服务了。&lt;/p&gt;
+&lt;h2 id=&#34;一些问题&#34;&gt;一些问题&lt;/h2&gt;
+&lt;h3 id=&#34;cri-dockerd报错&#34;&gt;cri-dockerd报错&lt;/h3&gt;
+&lt;p&gt;虽然目前功能上看来没啥问题，但是cri-dockerd一直打印错误信息：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3404&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc0003c8900 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3404&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc0005dcb00 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3404&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc0003c9c40 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3404&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc0005dd700 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ERRO&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;3404&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; ContainerStats resp: &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;0xc0007be540 linux&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我尝试在当前版本的源码中需要这句日志的输出位置，结果没有发现。然后在社区中提了&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd/issues/98&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;这个issue&lt;/a&gt;。这个问题和社区中&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd/issues/85&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Lots of obscure error logging #85&lt;/a&gt;问题大概是一样的，可能是一些测试中的遗留，被误合并到主分支上去了。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220801181830962.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220801181830962&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;好在容器运行时的功能貌似没有受影响。&lt;/p&gt;
+&lt;h3 id=&#34;cri-dockerd常驻一个终端&#34;&gt;cri-dockerd常驻一个终端&lt;/h3&gt;
+&lt;p&gt;这种方法在安装cri-dockerd时将其视为一个软件，必须手动启动它，才可以让它监听socket实现和k8s以及docker的通信。博文&lt;a class=&#34;link&#34; href=&#34;https://www.modb.pro/db/428370&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;基于docker和cri-dockerd部署Kubernetes 1.24&lt;/a&gt;中则是使用了另一种方法，并且为我本次的测试提供了很大的帮助。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;当然也可以按照cri-dockerd的文档，手动编译、部署。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;在博文&lt;a class=&#34;link&#34; href=&#34;https://www.modb.pro/db/428370&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;基于docker和cri-dockerd部署Kubernetes 1.24&lt;/a&gt;中，作者的思路与&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;官方的安装思路&lt;/a&gt;思路是一样的，即，创建一个可以被systemctl管理的service和socket对。让cri-dockerd在后台启动，不用显式启动并占用一个终端。&lt;/p&gt;
+&lt;p&gt;其中，关键部分如下。&lt;/p&gt;
+&lt;p&gt;首先，出于系统通用性，使用&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd/releases&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;cri-dockerd的release&lt;/a&gt;中的&lt;code&gt;.amd64.tgz&lt;/code&gt;版本。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220730234545013.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220730234545013&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;将文件解压，并将里面的可执行文件移动到&lt;code&gt;/usr/bin/&lt;/code&gt;下面。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; tar -xf cri-dockerd-0.2.3.amd64.tgz 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; cp cri-dockerd/cri-dockerd /usr/bin/
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&amp;gt; chmod +x /usr/bin/cri-dockerd 
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;然后很重要的一步，配置cri-dockerd的启动文件。在&lt;code&gt;/usr/lib/systemd/system/cri-docker.service&lt;/code&gt;中写入以下内容：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Unit&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Description&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;CRI Interface &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; Docker Application Container Engine
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Documentation&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;https://docs.mirantis.com
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;After&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;network-online.target firewalld.service docker.service
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Wants&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;network-online.target
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Requires&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cri-docker.socket
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Service&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Type&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;notify
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ExecStart&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;/usr/bin/cri-dockerd --network-plugin&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cni --pod-infra-container-image&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;registry.aliyuncs.com/google_containers/pause:3.7
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ExecReload&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;/bin/kill -s HUP $MAINPID
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;TimeoutSec&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;RestartSec&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Restart&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;always
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;StartLimitBurst&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;StartLimitInterval&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;60s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;LimitNOFILE&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;infinity
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;LimitNPROC&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;infinity
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;LimitCORE&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;infinity
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;TasksMax&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;infinity
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Delegate&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;yes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;KillMode&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;process
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Install&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;WantedBy&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;multi-user.target
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;在&lt;code&gt;/usr/lib/systemd/system/cri-docker.socket&lt;/code&gt;写入下面内容：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Unit&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Description&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;CRI Docker Socket &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; the API
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;PartOf&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;cri-docker.service
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Socket&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ListenStream&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;%t/cri-dockerd.sock
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;SocketMode&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;0660&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;SocketUser&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;root
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;SocketGroup&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;docker
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Install&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;WantedBy&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;sockets.target
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;关于这两个配置文件，可以参考&lt;a class=&#34;link&#34; href=&#34;https://www.cnblogs.com/ggzhangxiaochao/p/15039617.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Linux配置service服务&lt;/a&gt;，&lt;a class=&#34;link&#34; href=&#34;http://www.jinbuguo.com/systemd/systemd.socket.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;systemd.socket 中文手册&lt;/a&gt;，这篇文章。&lt;/p&gt;
+&lt;p&gt;然后我们启动这个服务，这样cri-dockerd实际上就有我们刚才创建的名叫cri-docker的service所管理：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code class=&#34;language-she&#34; data-lang=&#34;she&#34;&gt;systemctl daemon-reload
+systemctl start cri-docker
+systemctl enable cri-docker
+systemctl status cri-docker
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这样一来，在每次启动集群前，就不要手动的配置运行cri-dockerd，systemd就帮我们完成这些操作了。&lt;/p&gt;
+&lt;h2 id=&#34;参考资料&#34;&gt;参考资料&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.modb.pro/db/428370&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;基于docker和cri-dockerd部署Kubernetes 1.24&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.qikqiak.com/post/containerd-usage/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;一文搞懂容器运行时 Containerd&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://opencontainers.org/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Open Container Initiative&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/migrating-from-dockershim/migrate-dockershim-dockerd/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;将 Docker Engine 节点从 dockershim 迁移到 cri-dockerd&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/blog/2022/02/17/dockershim-faq/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;更新：移除 Dockershim 的常见问题&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/migrating-from-dockershim/check-if-dockershim-removal-affects-you/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;检查移除 Dockershim 是否对你有影响&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/migrating-from-dockershim/troubleshooting-cni-plugin-related-errors/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;排查 CNI 插件相关的错误&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/setup/production-environment/container-runtimes/#cri-versions&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;容器运行时&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;网络插件&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/kubernetes-sigs&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;kubernetes-sigs&lt;/a&gt;/&lt;strong&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/kubernetes-sigs/cri-tools&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;cri-tools&lt;/a&gt;&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Mirantis&lt;/a&gt;/&lt;strong&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;cri-dockerd&lt;/a&gt;&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://blog.51cto.com/liuzhengwei521/2382257&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;k8s卸载flannel网络&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.cnblogs.com/lianngkyle/p/15171630.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;kubernetes/k8s CNI分析-容器网络接口分析&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.cnblogs.com/ggzhangxiaochao/p/15039617.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Linux配置service服务&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
         <title>记一次Kubernetes使用Cilium，coredns健康检查失败的排错</title>
         <link>https://lizonglingo.github.io/p/%E8%AE%B0%E4%B8%80%E6%AC%A1kubernetes%E4%BD%BF%E7%94%A8ciliumcoredns%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E5%A4%B1%E8%B4%A5%E7%9A%84%E6%8E%92%E9%94%99/</link>
         <pubDate>Fri, 15 Jul 2022 14:35:19 +0800</pubDate>
@@ -453,6 +1000,489 @@ net.ipv4.conf.all.rp_filter = 0
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;所有节点执行上面的工作后，&lt;code&gt;coredns&lt;/code&gt;终于正常了，而且我尝试部署了测试应用，可以通过网络访问。&lt;/p&gt;
 &lt;p&gt;关于为什么这样做请看这条issue：https://github.com/cilium/cilium/pull/20072&lt;/p&gt;
 &lt;p&gt;另外，其他信息请查看：https://github.com/cilium/cilium/issues/20498&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>RunWild: Resource Management System with Generalized Modeling for Microservices on Cloud</title>
+        <link>https://lizonglingo.github.io/p/runwild-resource-management-system-with-generalized-modeling-for-microservices-on-cloud/</link>
+        <pubDate>Sun, 24 Apr 2022 15:17:07 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/runwild-resource-management-system-with-generalized-modeling-for-microservices-on-cloud/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源：IEEE CLOUD&#39;21&lt;/p&gt;
+&lt;p&gt;作者：IBM&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;star摘要&#34;&gt;:star:摘要&lt;/h2&gt;
+&lt;h3 id=&#34;问题背景&#34;&gt;问题背景&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;微服务内部通信的复杂性，必须考虑资源利用、调度策略和请求均衡之间的平衡，以防止跨微服务级联的服务质量下降。&lt;/strong&gt;&lt;/p&gt;
+&lt;h3 id=&#34;文章做了什么&#34;&gt;文章做了什么&lt;/h3&gt;
+&lt;p&gt;提出资源管理系统&lt;strong&gt;RunWild&lt;/strong&gt;，可以控制所有节点涉及到的微服务管理：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;扩缩容&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;调度&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;自动&lt;/strong&gt;的根据&lt;strong&gt;指定性能表现&lt;/strong&gt;的&lt;strong&gt;负载和性能平衡优化&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;统一的&lt;strong&gt;持续部署方案&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;着重强调了&lt;strong&gt;协同metrics感知&lt;/strong&gt;在&lt;strong&gt;预测资源使用和制定部署计划&lt;/strong&gt;中的重要性。&lt;/p&gt;
+&lt;p&gt;在IBM云进行实验，&lt;strong&gt;以K8s的自动调度为基线&lt;/strong&gt;，减少P90响应时间11%，增加10%的吞吐率，降低30%的资源使用。&lt;/p&gt;
+&lt;h3 id=&#34;贡献&#34;&gt;贡献&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;扩展的部署框架：&lt;strong&gt;适用于K8s的调度框架&lt;/strong&gt;，用来在资源分配、部署、和运行时来控制部署机制；&lt;/li&gt;
+&lt;li&gt;通用的建模方法：综合考虑微服务特性、节点的相对独立性、工作负载和全局协同节点状态感知，通过结合聚类和回归技术预测资源使用；&lt;/li&gt;
+&lt;li&gt;微服务间交互指标：一个称为内聚的指标反映了在同一个&lt;strong&gt;节点上放置高度相互通信的微服务的优势&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;通过&lt;strong&gt;Service Mesh&lt;/strong&gt;对运行时工作负载进行分区：利用服务网格操作流量路由，用其控制能力来划分工作负载以匹配资源的分配。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;star现有技术存在的问题&#34;&gt;:star:现有技术存在的问题&lt;/h2&gt;
+&lt;h3 id=&#34;水平伸缩&#34;&gt;水平伸缩&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;超过某个阈值时，实例的增多与性能表现的增长不匹配，正如收益递减定律所解释的那样；&lt;/li&gt;
+&lt;li&gt;资源过度分配并不会显著增加性能表现；&lt;/li&gt;
+&lt;li&gt;而资源不足会导致性能下降或者致命错误。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;垂直伸缩&#34;&gt;垂直伸缩&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;K8s虽然可以支持HPA和VPA，但是不能一起工作，同时进行HPA和VPA难免会造成干扰。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;此外，复杂的资源依赖，全局的资源调度策略使得伸缩方案受多方面影响。&lt;/p&gt;
+&lt;p&gt;文章的动机是&lt;strong&gt;识别、描述和管理所有因素和维度&lt;/strong&gt;，以实现&lt;strong&gt;统一的部署解决方案&lt;/strong&gt;，而不是运行相互干扰的机制。&lt;/p&gt;
+&lt;h3 id=&#34;部署的三个角度&#34;&gt;部署的三个角度&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;所部署的服务的实例副本数；&lt;/li&gt;
+&lt;li&gt;节点上每个实例所得到的资源；&lt;/li&gt;
+&lt;li&gt;每个实例的网络容量。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;然后引出下面4个重要的问题：&lt;/strong&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;调度所涉及到的策略、资源和具体情景很复杂，要考虑的东西太多；&lt;/li&gt;
+&lt;li&gt;同一节点上部署的服务可能&lt;strong&gt;对资源的争用很敏感&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;微服务之间的通信，亲和性&lt;/strong&gt;等因素会影响到&lt;strong&gt;全局的服务性能表现、响应事件及吞吐量&lt;/strong&gt;，最好的方式是使部署的微服务&lt;strong&gt;减少跨节点的通信&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;如何将&lt;strong&gt;请求负载均衡到不同实例以带来更好的网络表现&lt;/strong&gt;，虽然Service Mesh能够实现负载的分发，但是难以解决上述问题。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;文章列举了一些其他文章做的工作，并对比这些工作解决了上述4个问题中的哪些：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220423213910376.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220423213910376&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;starrunwild&#34;&gt;:star:RunWild&lt;/h2&gt;
+&lt;p&gt;RunWild主要解决：决定实例数量，决定在哪个节点放置实例，如何对工作负载进行分区，如何根据众多资源类型和情景优化部署？&lt;/p&gt;
+&lt;p&gt;涉及到的技术有：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;用循环执行的监控-分析系统对部署进行分析：根据监控和分析环节，设计一个资源使用模型，来预测资源使用。利用automated AI技术获得优化的回归模型来预测资源使用，同时考虑消息请求和节点上资源竞争产生的扰动因素。&lt;/li&gt;
+&lt;li&gt;根据分析制定部署计划：定义一个聚合指标，表示微服务间(通信)的联系程度。部署计划应用于所有机器，包括水平部署、资源分配、放置调度和负载均衡。&lt;/li&gt;
+&lt;li&gt;执行部署：利用Service Mesh提供的运行时链路控制，通过标签动态将工作负载进行分区。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;系统架构&#34;&gt;系统架构&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220424132723898.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220424132723898&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h4 id=&#34;management-module&#34;&gt;Management Module&lt;/h4&gt;
+&lt;p&gt;接收用户提交的部署细节信息。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Specification Handler：管理输入的部署文件并自动化处理；&lt;/li&gt;
+&lt;li&gt;Reconcile Timer：计算并触发每个输入规范的部署自动化过程。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;computation-module&#34;&gt;Computation Module&lt;/h4&gt;
+&lt;p&gt;在全周期中给出部署的解决方案。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Monitor：监控每个实例的资源使用情况和工作负载，文章将工作负载理解为请求的数量；&lt;/li&gt;
+&lt;li&gt;Modeler：用来预测资源使用的模型；&lt;/li&gt;
+&lt;li&gt;Planner：计算部署计划，包括实例数量、节点放置策略、资源预留、工作负载分区。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;execution-module&#34;&gt;Execution Module&lt;/h4&gt;
+&lt;p&gt;用来执行计算的部署结果。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Scaler：更新实例数量；&lt;/li&gt;
+&lt;li&gt;Scheduler：将容器放置到计划的节点；&lt;/li&gt;
+&lt;li&gt;Partitioner：配置链路控制机制，对工作负载进行计划的分区。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;系统实现&#34;&gt;系统实现&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220424140304736.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20220424140304736&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;star实验测试&#34;&gt;:star:实验测试&lt;/h2&gt;
+&lt;p&gt;集群包含8个节点，每个节点4vCPU，16GB内存，并部署了Istio和Prometheus。&lt;/p&gt;
+&lt;p&gt;部署70个微服务，600个容器实例，收集了3天的数据。&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</title>
+        <link>https://lizonglingo.github.io/p/showar-right-sizing-and-efficient-scheduling-of-microservices/</link>
+        <pubDate>Tue, 22 Feb 2022 13:45:25 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/showar-right-sizing-and-efficient-scheduling-of-microservices/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;来源：ACM SoCC&#39;21&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://acmsocc.org/2021/accepted-papers.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://acmsocc.org/2021/accepted-papers.html&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;概述&#34;&gt;概述&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;解决了什么问题：提出一个微服务资源调度框架，解决微服务的调度问题，具体来说从&lt;strong&gt;水平扩缩容——增减服务实例&lt;/strong&gt;和&lt;strong&gt;垂直扩缩容——控制每个服务CPU和内存等资源的配额&lt;/strong&gt;两个维度对微服务进行调度&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;适用于什么环境：该资源调度框架应用于&lt;strong&gt;使用K8s部署的微服务&lt;/strong&gt;上&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;实验的实施和结果：&lt;strong&gt;使用多个微服务应用和现实世界中的负载情况进行实验&lt;/strong&gt;，资源利用表现提高22%，用户端到端实验降低20%&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;目标和宗旨：找到一个最佳资源分配大小，&lt;strong&gt;保持良好服务质量的同时尽可能提高资源利用率&lt;/strong&gt;，减少资源配额&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;微服务调度存在的问题和挑战&#34;&gt;微服务调度存在的问题和挑战&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;确定微服务应用对资源的需求是个复杂工作，难以预先确定&lt;/li&gt;
+&lt;li&gt;如果分配过多的资源会造成集群资源利用率低，增加开销&lt;/li&gt;
+&lt;li&gt;分配资源过少则导致服务性能下降甚至服务不可用，带来更严重的问题&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;贡献&#34;&gt;贡献&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;垂直和水平扩缩容框架，旨在提高资源分配的效率&lt;/li&gt;
+&lt;li&gt;调度亲和性和反亲和性规则，为K8s调度程序生成更好的微服务调度规则，提高调度效率&lt;/li&gt;
+&lt;li&gt;实现上述要点并评估&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;设计思路&#34;&gt;设计思路&lt;/h2&gt;
+&lt;h3 id=&#34;概述-1&#34;&gt;概述&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;垂直扩缩容：参照&lt;strong&gt;历史资源利用率&lt;/strong&gt;来寻找每个微服务的最佳资源配额，调度的资源是每个服务占用的CPU、RAM、Disk等资源&lt;/li&gt;
+&lt;li&gt;水平扩缩容：使用Linux内核线程调度程序队列的指标（如&lt;strong&gt;eBPF runq latency&lt;/strong&gt;）为扩缩容指标，同时利用控制理论的思想，在微服务运行时对实例数量进行控制。并设计了一个&lt;em&gt;proportional-integral-derivative&lt;/em&gt;控制器，利用历史扩缩容操作和当前的运行时状态来做出下一个水平扩缩容决策，并保持服务的稳定，调度的资源是增减服务实例数量&lt;/li&gt;
+&lt;li&gt;服务间依赖：同时考虑了&lt;strong&gt;服务间依赖关系&lt;/strong&gt;，优先调度应用中负载压力大的微服务（如某个微服务作为其他微服务的引用）&lt;/li&gt;
+&lt;li&gt;服务性能：在找到一个最佳配额后，会协助集群调度微服务以获得更好的端到端性能&lt;/li&gt;
+&lt;li&gt;K8s亲和性与反亲和性：通过不同微服务的历史资源使用情况为K8s生成调度规则（如某种微服务和某类资源有正相关性或负相关性）&lt;/li&gt;
+&lt;li&gt;调度效率：能够快速适应工作负载变化&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;垂直扩缩容&#34;&gt;垂直扩缩容&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;调度依据指标：实例的历史资源使用情况（CPU、RAM、Disk、Network等）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;需要达成的效果有：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;在运行时为服务找到合适的资源需求&lt;/li&gt;
+&lt;li&gt;最大限度减少过度配置导致的资源使用松弛（松弛度=资源配额-资源使用量）&lt;/li&gt;
+&lt;li&gt;最大限度减少OOM错误和CPU负载过高的情况，保证服务质量&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;垂直扩缩容的局限：每个实例的资源占有量最大不会超过虚拟机的资源量，所以某些情况下即使将虚拟机的所有资源都给到实例也难以满足要求，这就需要水平扩缩容&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;水平扩缩容&#34;&gt;水平扩缩容&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;调度依赖指标：eBPF指标数据&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;eBPF：允许在内核级别允许安全和低开销的程序，从内核级别收集准确的事件信息，如CPU调度程序决策事件、内存分配事件和网络堆栈中的数据包事件。已经被广泛用于微服务检测、性能提升、链路追踪、负载均衡、网络监控和安全中。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;具体思路&#34;&gt;具体思路&lt;/h3&gt;
+&lt;h4 id=&#34;垂直自动扩缩容&#34;&gt;垂直自动扩缩容&lt;/h4&gt;
+&lt;p&gt;K8s（Google Autopilot也是类似）通过检测一段时间窗口（几分钟到几天）中的CPU和内存使用量来设置下一个事件窗口中的资源。通过一个&lt;code&gt;margin&lt;/code&gt;和观测到的如P95、P99的百分位值，目的是为资源增加一些宽裕度，尽可能减少OOM错误和CPU不够用的情况发生。&lt;strong&gt;作者认为这还不够节约，存在资源浪费的情况发生&lt;/strong&gt;。$\alpha$为宽限额度，$\pi$是某个测量的百分位数值。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220221103059.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;而SHOWAR使用“three-sigma”经验法则去分配资源&lt;/strong&gt;。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;SHOWAR收集持续时间W秒的最后一个窗口的每种资源使用的统计数据，每秒收集一次，用于递归计算该窗口上的资源使用平均值$\mu$和方差$\sigma^2$。&lt;/li&gt;
+&lt;li&gt;计算$s=\mu + 3\sigma$，这里$s$就是特定资源的一个估计量&lt;/li&gt;
+&lt;li&gt;然后每经过T秒（T &amp;laquo; W）评估资源使用量是否发生了很大的变化（如超过15%），一旦超过预期值就实施资源重新分配。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220221104502.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;作者认为使用百分数值的3-σ法则能在保证服务良好运行的情况下最大限度的减少资源浪费，同时使用一个阈值来决定是否进行资源重新分配操作能在资源使用差异较小时不会过度配置资源。虽然$\mu+3\sigma$和$\pi(1+\alpha)$都有明确的统计解释，但是使用$3\sigma$可以更加准确的看到均值的分布。如果方差非常小，则分布几乎是恒定的，这是关于 Pod 资源使用情况的单独有用信息。然而，在$\pi(1+\alpha)$方法中，当方差非常小时，尾部百分位数不能传达有用的信息。此外，安全宽裕度参数 $\alpha$的选择可能是任意的，如果未正确指定，可能会导致资源利用率低下或更多OOM错误。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;关于P90、P95等百分位数值的补充资料：https://www.cnblogs.com/hunternet/p/14354983.html&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&#34;水平自动扩缩容&#34;&gt;水平自动扩缩容&lt;/h4&gt;
+&lt;p&gt;水平自动扩缩容目前存在一些缺陷：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;由于水平扩缩容的主要形式是通过增减服务实例数量来调整资源分配，服务实例在遇到负载激变发生资源使用抖动时，可能导致极端过度配置或者配置严重不足。为了解决这种情况，有些自动缩放策略引入冷却期的概念，在最后一次操作之后的一段时间内不进行扩缩容。如果出现瞬时负载峰值过高的情况也会因为处于冷却期而避免不必要的扩容操作。&lt;/li&gt;
+&lt;li&gt;系统不会将系统微服务的依赖关系考虑在内，而是单独处理某个微服务。实践表明在不考虑微服务相关性的前提下的资源分配和缩放效率低下，并且不一定有助于应对负载变化和保证服务质量。如下图对某个后端服务在5s时注入高负载，然后经过一段时间，后端的高延迟情况传到了前端，如果考虑微服务间依赖关系，那么仅扩容后端微服务就可以解决这个问题。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220221112213.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;以往通常使用CPU利用率作为缩放指标，力求在所有微服务中保持目标 CPU 利用率。但CPU 利用率并不是自动缩放和资源分配的最有效指标，随着负载的增加，几乎所有微服务的 CPU 利用率都会增加，而上图的前端微服务的尾部延迟并不总是随着 CPU 利用率的增加而增加（主要是由于后端微服务的高延迟导致的）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;SHOWAR旨在解决上述问题，使用控制理论基本框架来设计有状态的水平缩放系统，在满足SLO指标下保证服务稳定。&lt;/p&gt;
+&lt;p&gt;通过观测值与目标值的差别来控制缩放是不准确的：$e=observation-target$​​，为此作者设计了更复杂的控制器&lt;em&gt;pro-portional–integral–derivative (PID) controller&lt;/em&gt;：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220221113150.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;对资源的检测使用我们使用&lt;strong&gt;eBPF Linux&lt;/strong&gt;调度程序&lt;strong&gt;runq 延迟度量&lt;/strong&gt;，它表示线程可运行与获取CPU并运行之间的时间。使用Runq延迟的P95作为目标点。&lt;strong&gt;与CPU利用率不同，高runq延迟与每个单独的微服务的高请求尾延迟高度相关，这表明runq延迟可以用作水平自动缩放的合适指标，以防止请求延迟增加。直观地说，runq延迟优于CPU利用率的原因是它表明应用程序线程如何竞争CPU资源，因此需要更多（或更少）的CPU资源&lt;/strong&gt;。在SHOWAR中，使用者要指定目标runq的延迟值作为配置的一部分。&lt;/p&gt;
+&lt;p&gt;水平扩缩容的传递函数很简单，如果runq超出目标值，则系统必须向外扩展并增加副本数量，反正小于目标值则缩减服务实例（这里目标是是一个范围？我是这么认为的）。为了防止执行过多的自动缩放操作以响应 runq 延迟指标中的快速变化和瞬时突发性，作者在目标周围设置了一个可配置的界限$\alpha%$​​（默认为 20%）作为缓冲区并且不执行自动缩放操作。自动缩放的增加或减少量是微服务当前副本数量的可配置 𝛽 百分比（默认为 10%），如果实际缩放副本数小于1则默认是1（我的理解是，如该实例有20个副本，则扩容20×0.1=2个副本，如果是4个副本4×0.1=0.4&amp;lt;1即扩容1个副本）。算法如下：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220221120450.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;水平自动扩缩容的两种架构：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;One For All：单个控制器负责自动扩展所有微服务类型。在每个自动缩放决策中，所有微服务都会根据所有微服务中当前度量值观察的平均值一次缩放。虽然这种方法受益于 PID 控制器，但它没有考虑微服务的微服务依赖关系图。&lt;/li&gt;
+&lt;li&gt;One For Each：控制器负责每个微服务。每个控制器监控其相应微服务的自动缩放指标runq，根据上述算法进行缩放。控制器输出的绝对值被排序，具有最高值（最大扩展需求）的那些被优先考虑。对于相等的控制器输出，我们会考虑微服务的依赖关系图，并将后端服务优先于依赖的前端服务（在图的拓扑排序之后）。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;将二者串联&#34;&gt;将二者串联&lt;/h4&gt;
+&lt;p&gt;在K8s等部署平台上推荐的方法是：一次部署仅使用一类缩放器（如为每个微服务确定固定的实例数量的前提下，部署垂直缩放器，自动调整每个实例的资源分配量；或是确定好资源分配量后，令服务通过水平缩放器自动进行实例数量的增减）。&lt;/p&gt;
+&lt;p&gt;SHOWAR通过允许串联部署这二者。首先，作者将任何垂直自动缩放决策优先于任何水平自动缩放决策。因为，例如在内存自动缩放的情况下，如果 Pod 的内存不足，应用程序会遇到OOM错误并停止执行，而不管其副本数如何，所以水平自动缩放器无法解决OOM问题。因此，在水平自动缩放控制器动作之前，它首先检查共享通道以查看该微服务是否正在进行垂直自动缩放，如果是则不会继续操作。类似地，在垂直Pod自动缩放器动作之前，它会通过共享通道发送消息通知水平自动缩放器，然后执行其操作。&lt;/p&gt;
+&lt;p&gt;此外，由于谷歌云平台的 Kubernetes 最佳实践，建议大多数 Pod 不需要超过一个核心，作者根据这个建议将其合并到 SHOWAR 的垂直自动缩放器设计中：如果垂直自动缩放器决定为 Pod 设置多个核心，它会改为通过共享通道向水平自动缩放器发出信号，并且不会继续执行垂直自动缩放操作。即：核心数增加转化为实例数量增加。&lt;/p&gt;
+&lt;h4 id=&#34;利用k8s亲和性和反亲和性获取更好的调度性能&#34;&gt;利用K8s亲和性和反亲和性获取更好的调度性能&lt;/h4&gt;
+&lt;p&gt;关于K8s的亲和性和反亲和性可以概括为：服务𝑆2与服务𝑆1的亲和性意味着调度程序将始终（或最好）尝试将服务 𝑆1 的 Pod 调度到服务 𝑆2 所在的节点上。类似地，服务𝑆2与服务𝑆1的反亲和性意味着调度程序永远不会（或最好不）这样做。&lt;/p&gt;
+&lt;p&gt;SHOWAR监控和使用微服务的历史（即最后（可配置）时间窗口）CPU、内存和网络使用情况，并计算每对微服务使用模式之间的Paerson相关系数来计算相关性：给定两种微服务类型𝑋和𝑌的CPU（或内存或网络I/O）使用分布，𝑋和𝑌之间的相关系数$\rho$​为：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222104614.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;对于两个微服务𝑆1和𝑆2，资源使用模式（例如CPU或内存）的正相关性越高，它们之间对该资源的资源争用就越高。同样，负相关越低，两个服务之间对该资源的争用就越低。这是 SHOWAR 对 CPU、内存和网络 I/O 等计算资源的亲和性和反亲和性规则的简单基础。&lt;/p&gt;
+&lt;p&gt;进一步产生亲和性和反亲和性规则，规则生成机制如下：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;CPU和NetWork：如果两个服务s1、s2的CPU和网络是用呈现强负相关（$\rho_{s1s2}\leq-0.8$​​​​​）,则为其生成亲和性规则。&lt;/li&gt;
+&lt;li&gt;Memeory：如果任何一对微服务s1和s2在它们的内存使用模式中具有强正相关（例如$\rho_{s1s2}\geq-0.8$​），则SHOWAR 为调度程序生成s1和s2的反亲和性规则。(实际上也是负相关$\Longrightarrow$亲和性)。&lt;/li&gt;
+&lt;li&gt;此外，为避免调度冲突，每个微服务在任意时间最多参与一个亲和性或反亲和性规则。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;实现&#34;&gt;实现&lt;/h2&gt;
+&lt;h3 id=&#34;系统架构&#34;&gt;系统架构&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222110542.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h3 id=&#34;monitoring-agents&#34;&gt;Monitoring Agents&lt;/h3&gt;
+&lt;p&gt;使用Prometheus从节点和容器收集不同的指标。通过集群中的每个节点上启动一个监控代理来收集容器指标，例如CPU使用率、内存使用率、网络带宽使用率等。代理被配置为每秒收集和报告一次指标。Prometheus附带一个时间序列数据库，代理存储收集到的指标。此外，还提供了一种查询语言来查询其他模块使用的时间序列数据库以利用收集的指标。&lt;/p&gt;
+&lt;p&gt;此外作者还开发了一个eBPF程序作为监控代理部署在集群中的每个节点上，以收集水平自动缩放器使用的 &lt;em&gt;runq latency&lt;/em&gt;指标。该指标是每个Pod的CPU线程在获取CPU之前所经历的延迟的直方图。程序每 1 秒收集一次&lt;em&gt;runq latency&lt;/em&gt;直方图，并将其存储在Prometheus时间序列数据库中。&lt;/p&gt;
+&lt;h3 id=&#34;the-vertical-autoscaler&#34;&gt;The Vertical Autoscaler&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;垂直自动缩放器是一个简单的循环，每分钟发生一次。&lt;/li&gt;
+&lt;li&gt;它会在前5分钟的窗口中为每种资源类型r（CPU和内存）评估$s_r = \mu_r + 3*\sigma_r$，如果s的值变化超过 15%，它会更新服务的资源需求s。&lt;/li&gt;
+&lt;li&gt;触发垂直自动缩放器的另一个条件是微服务报告 OOM 错误。&lt;/li&gt;
+&lt;li&gt;在应用微服务的新资源需求之前，垂直自动缩放器通过共享通道向水平自动缩放器发送一条消息，以不继续任何水平自动缩放操作，因为&lt;strong&gt;垂直自动缩放操作优先于水平自动缩放&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;如果微服务的CPU数量超过一个CPU核心，垂直自动缩放器也不会继续执行微服务的自动缩放操作，在这种情况下，它会通过另一个共享通道向水平自动缩放器以触发水平自动缩放操作。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;the-horizontal-autoscaler&#34;&gt;The Horizontal Autoscaler&lt;/h3&gt;
+&lt;p&gt;对于给定的目标&lt;em&gt;runq latency&lt;/em&gt;，它对该微服务执行水平自动缩放操作，使其始终具有目标值的&lt;em&gt;runq latency&lt;/em&gt;。控制器每1分钟决定eBPF程序收集60个度量直方图实例（每秒1个）。对于每个直方图，选择第 95个百分位数，控制器使用这60个数据点的平均值作为其当前观察值（也称为测量值）来执行其控制动作。每个水平扩展操作添加或删除至少1个或可配置百分比（默认为 10%）的微服务当前副本数，分别用于扩缩容。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222112427.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;PID控制参数的初始值取为$k_P=k_I=k_D=1/3$​​（每个参数限制为∈[0,10]，这几个参数会影响控制器的速度、稳定性和准确性）。这些参数的增量变化是 10%（我们通过实验发现 10% 可以提供非常好的性能）。控制器输出的波动是进行此类更改的基础，使用之前的N =10个样本进行测量。此外，控制器的“速度”被测量为达到区间[target(1 − 𝛼), target(1 + 𝛼)] 所需的迭代次数，因为 𝛼 =10%。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;增加$k_P$​会导致控制器速度执行增加（以达到稳定状态），同时过高的值可能引发不稳定性。&lt;/li&gt;
+&lt;li&gt;增加$k_I$​也会增加控制器的速度并可能导致不稳定，但增加它会降低控制器的噪声（变化和波动）和稳态误差。&lt;/li&gt;
+&lt;li&gt;增加$k_D$​会增加控制器的速度（达到稳态）以及不稳定的可能性，同时会显著放大控制器的噪声。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;控制器从系数的相等值开始。&lt;/li&gt;
+&lt;li&gt;随后这些系数基于监控的工作负载性能和控制器状态进行自适应和增量自调整。&lt;/li&gt;
+&lt;li&gt;如果当前指标值（尤其是runq延迟）远离目标指标值，则在每次迭代中增加$k_P$和$k_I$，以提高稳定性以及达到目标指标值的速度。&lt;/li&gt;
+&lt;li&gt;此外，如果观察到度量值的波动（在控制器中称为噪声），$k_D$​会逐渐减小以减少工作负载突发性引入的噪声。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;the-affinity-rule-generator&#34;&gt;The Affinity Rule Generator&lt;/h3&gt;
+&lt;p&gt;亲和性规则生成器每5分钟使用一次CPU、内存和网络利用率，这是一个由300个数据点组成的向量（每个数据点是微服务副本的平均值）来计算每个资源类型之间的相关系数一对微服务。为消除弱相关或无相关实例，[−0.8,+0.8]中的任何值都会被丢弃。其他强负相关和强正相关的微服务用于生成亲和性和反亲和性规则。资源使用模式会随着工作负载的变化（也称为工作负载转移）而变化，因此如果在随后的5分钟时间窗口内强烈的负相关或正相关变化超过20%（可配置），SHOWAR会撤销亲和性（或那对微服务的反亲和性）规则。&lt;/p&gt;
+&lt;h3 id=&#34;其他要点&#34;&gt;其他要点&lt;/h3&gt;
+&lt;p&gt;SHOWAR是作为Kubernetes控制器构建的，对于自动扩缩器和其他类型的控制器具有高度可插入性。此外，SHOWAR使用常用的Kubernetes监控代理（例如Prometheus）和一个自定义的eBPF指标监控代理。因此，与默认的Kubernetes自动缩放器相比，&lt;strong&gt;SHOWAR不会引入任何额外的开销&lt;/strong&gt;。此外，自动缩放器被调度在控制器节点上，并且不与调度在工作节点上的应用程序 Pod 共享资源。&lt;/p&gt;
+&lt;h2 id=&#34;实验&#34;&gt;实验&lt;/h2&gt;
+&lt;p&gt;在AWS部署K8s集群，用Google Autopilot和K8s默认的调度程序作比较。资源利用率提升22%，延迟降低20%。&lt;/p&gt;
+&lt;h3 id=&#34;实验设置&#34;&gt;实验设置&lt;/h3&gt;
+&lt;h4 id=&#34;applications&#34;&gt;Applications&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;社交网络应用：包含36个微服务，可以关注他人、撰写帖子、阅读他人帖子并与之互动。&lt;/li&gt;
+&lt;li&gt;火车票应用：包含41个微服务的应用程序，允许其用户在线预订门票并进行支付。&lt;/li&gt;
+&lt;li&gt;谷歌云平台的线上精品店：由 10 个微服务组成，用户可以通过他们的在线购物车购买在线商品并进行支付。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;实验将runq延迟的目标值设置为15𝑚𝑠，即 Linux 内核 sysctl_sched_latency[31] 调度程序参数的 2.5𝑥。&lt;/p&gt;
+&lt;h4 id=&#34;cluster-setup&#34;&gt;Cluster Setup&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;在AWS上进行的。&lt;/li&gt;
+&lt;li&gt;使用 𝑚5.𝑥𝑙𝑎𝑟𝑔𝑒 VM 实例，每个实例具有 4 个 vCPU、16 GB 内存和 0.192 美元/ℎ𝑟 价格。&lt;/li&gt;
+&lt;li&gt;运行Ubuntu 18.04 LTS，配置为支持运行eBPF程序。&lt;/li&gt;
+&lt;li&gt;除非另有说明，否则集群都是由25个VM实例组成。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;workload-and-load-generation&#34;&gt;Workload and Load Generation&lt;/h4&gt;
+&lt;p&gt;我们使用Wikipedia访问跟踪[59]作为我们的主要工作负载。它是用户与Wikipedia网站交互的真实世界轨迹，由流量模式组成，包括&lt;strong&gt;泊松到达时间、短期突发性和昼夜水平变化&lt;/strong&gt;。由于我们正在评估的微服务是面向用户的应用程序，因此工作负载必须反映真实的用户行为。因此，维基百科访问跟踪非常适合我们的评估。我们以分布式方式使用&lt;strong&gt;locust&lt;/strong&gt; [26]作为我们的工作负载生成器。 Locust客户端驻留在与托管应用程序的主集群不同的VM实例上。&lt;/p&gt;
+&lt;h4 id=&#34;baselines&#34;&gt;Baselines&lt;/h4&gt;
+&lt;p&gt;Kubernetes默认自动缩放器和 Google Autopilot。&lt;/p&gt;
+&lt;h3 id=&#34;vertical-autoscaling&#34;&gt;Vertical Autoscaling&lt;/h3&gt;
+&lt;p&gt;首先评估 SHOWAR 的垂直自动缩放器（禁用水平自动缩放器）在减少相对内存松弛方面的有效性。&lt;/p&gt;
+&lt;p&gt;使用来下图中所示的 Wikipedia 访问跟踪的一小时长的工作负载进行评估。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222120133.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;每5分钟记录一次垂直自动缩放器为每个微服务设置的内存限制以及微服务的实际使用情况，以计算其内存使用松弛（即松弛 = 限制 - 使用）。&lt;/p&gt;
+&lt;p&gt;下图描绘了社交应用所有微服务相对内存使用松弛的&lt;strong&gt;累积分布函数&lt;/strong&gt;（the cumulative distribution function，CDF）。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222120655.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;可以看出，通过历史资源使用的变化（使用3-σ规则），SHOWAR 的垂直自动缩放器与Autopilot 和 Kubernetes 的垂直自动缩放器相比能够改善内存使用松弛度。特别是，对于95%的服务实例，相对内存使用松弛率小于46%，而 Kubernetes 和 Autopilot 分别为 63% 和 66%。这 20% 的内存使用松弛可用于调度更多的服务实例或在集群中使用更少的 VM 资源，这将明显降低成本（见 5.5 小节）。我们还观察到 Kubernetes 的性能优于 Autopilot，因为它在设置限制方面采用了更激进的方法（使用 P95 × 1.15 的过去使用量与最大值相比）。&lt;/p&gt;
+&lt;p&gt;虽然低内存或 CPU 使用松弛可以导致高效且具有成本效益的资源分配，但它可能导致更高的 OOM 率或 CPU 节流，从而降低服务性能。下图显示了实验过程中 OOM 的数量。可以看出，虽然与 Kubernetes 相比，SHOWAR 的 OOM 数量相当，但与 Autopilot 相比，它们在内存扩展方面的激进方法导致了更多的 OOM。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222124148.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;下图则描绘了在实验过程中微服务的平均 CPU 节流（CPU 紧松弛的结果）。当 Pod 的 CPU 使用率超过其分配的 CPU 资源时，容器运行时（使用𝑐𝑔𝑟𝑜𝑢𝑝𝑠）会限制 Pod 的 CPU 份额。可以看出，由于微服务 CPU 使用率的高波动（方差），SHOWAR 的 CPU 节流与基线相当。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222124339.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;根据以上三图的分析，&lt;strong&gt;资源松弛度（也反映了资源使用效率）和系统稳定性之间存在权衡&lt;/strong&gt;。SHOWAR和K8s在带来更好的资源效率的同时回不可避免的导致更多的OOM错误和CPU性能限制。而 Autopilot 会导致更多的松弛和更少的 OOM。&lt;/p&gt;
+&lt;p&gt;因此，根据任务目标可调整 SHOWAR 和 Kubernetes 以实现更高的稳定性，但代价是更高的资源使用松弛度。例如，在 SHOWAR 中，可以使用 𝑘𝜎 代替 3𝜎 ，其中 𝑘 &amp;gt;3 为单个 Pod 分配更多资源并减轻 OOM 和 CPU 节流。&lt;/p&gt;
+&lt;h3 id=&#34;horizontal-autoscaling&#34;&gt;Horizontal Autoscaling&lt;/h3&gt;
+&lt;p&gt;使用垂直扩缩容相同的工作负载来评估水平扩缩容。将 SHOWAR 的 One for Each 和 One for All 设计与 Autopilot 和 Kubernetes 水平自动缩放器进行比较。Autopilot 和 Kubernetes 在水平自动缩放中使用相同的方法。我们将 Autopilot 和 Kubernetes 的目标 CPU 利用率设置为 65%，这是通常的建议。&lt;/p&gt;
+&lt;p&gt;下图描绘了在实验过程中社交网络应用程序中微服务副本数量的累积分布函数。我们观察到 SHOWAR 的水平自动缩放器都优于 Autopilot 和 Kubernetes 水平自动缩放器，因为它为大多数微服务分配了更少的副本，这反过来又可以更有效地分配资源并节省成本（见 5.5 小节）。通过为每个微服务定制一个控制器，SHOWAR 的 One for Each 设计也优于 One for All。这是因为在 One for All 设计中，单个控制器尝试使用单个目标 runq 延迟值和跨所有微服务的平均 runq 延迟测量来扩展微服务，这会导致不必要的微服务扩展和高 runq 延迟。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222125146.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;再次强调，SHOWAR 的有效性是由于：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;自动缩放器的状态控制器&lt;/li&gt;
+&lt;li&gt;用于自动缩放决策的更好的代表性指标（即 runq 延迟而不是 CPU 利用率）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;我们看到了在单个微服务的自动扩展决策中使用更有意义和代表性的指标的效果。特别是，在评估过程中，我们观察到 Kubernetes 和 Autopilot 通常为 nginx 设置 16 个副本，这主要是因为它的 CPU 利用率很高。但&lt;strong&gt;高 CPU 利用率并不总是对应于微服务性能的大幅提升&lt;/strong&gt;。相比之下，SHOWAR 只为这个微服务设置了 10 个副本。另一方面，对于其他几个微服务所依赖的 User 微服务，Kubernetes 和 Autopilot 通常只为其设置 3 个副本。相比之下，SHOWAR 通常为此微服务设置 6 个副本。&lt;/p&gt;
+&lt;h3 id=&#34;the-effect-of-affinity-and-anti-affinity-rules&#34;&gt;The Effect of Affinity and Anti-Affinity Rules&lt;/h3&gt;
+&lt;p&gt;实验使用不同微服务之间 CPU、内存和网络 I/O 使用率的相关性来评估 SHOWAR 生成的 Pod 亲和性和反亲和性规则的效果。仍使用相同的工作负载并禁用垂直和水平扩缩容控制器，以凸显亲和性和反亲和性生成器的工作效果，以此观察K8s调度器受其的影响。&lt;/p&gt;
+&lt;p&gt;同时观测了这如何影响端到端请求延迟，如下图所示。通过为调度程序提供调度提示（使用亲和性和反亲和性），SHOWAR 能够改善用户体验的 P99 延迟。特别是，使用 SHOWAR 生成的亲和和反亲和规则，请求延迟的 P99 为 6600 毫秒，而使用 Kubernetes 默认调度决策为 9000 毫秒。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222125945.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h3 id=&#34;end-to-end-performance&#34;&gt;End-to-End performance&lt;/h3&gt;
+&lt;p&gt;在端到端性能评估这部分使用三个组件协同工作，使用下图的工作负载进行测试。为了适应工作负载，我们将集群的大小增加到 30 个 VM 实例。结果表明，与基线相比，SHOWAR 改进了资源分配和利用率，同时保持性能的稳定。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222131341.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;下图描述了用户在实验的 24 小时内经历的端到端请求延迟的 CDF。可以看出，使用 SHOWAR 的端到端性能与基线相当，并且使用其亲和性和反亲和性规则生成器以及依赖关系感知的水平自动缩放，与 Autopilot 和 Kubernetes 相比SHOWAR 能够将 P99 延迟提高 20% 以上。 Autopilot 和 Kubernetes 在 P99th 延迟方面表现出相似的性能，但是，由于为副本分配了更多内存，Autopilot 通常在较低的尾部优于 Kubernetes。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222131527.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;下图显示了实验过程中集群中的总内存分配（即为微服务副本设置的内存限制总和）。与基线相比，SHOWAR 平均为微服务副本分配的内存更少。特别是，SHOWAR 平均分配了 205 GB，而 Autopilot 和 Kubernetes 分别分配了 264 GB 和 249 GB。主要是因为 SHOWAR 的垂直自动缩放器实现了较低的内存使用松弛度，并且其水平自动缩放器为微服务设置了较少的副本数量。因此，使用 SHOWAR 的总内存分配小于基线。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222131959.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;最后，在下图中，展示了每个实验的归一化集群成本。我们将平均内存分配标准化为集群中一台虚拟机的内存大小（即 16 GB 用于𝑚5.𝑥𝑙𝑎𝑟𝑔𝑒 实例），并将其乘以 24 小时内一台虚拟机的成本（即 $0.192/ℎ𝑜𝑢𝑟）。这是因为，通常虚拟机在公共云上的价格是内存大小的线性函数 [17]。可以看出，与 Autopilot 和 Kubernetes 相比，SHOWAR 将集群总成本效益分别提高了 22% 和 17%。这些改进来自这样一个事实，即与基线相比，SHOWAR 的垂直和水平自动缩放器用&lt;strong&gt;分配更少的计算资源就可以达到相同的性能和服务质量&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20220222135039.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;不足和未来工作&#34;&gt;不足和未来工作&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;SHOWAR是基于历史和现在进行反应式调度的，&lt;strong&gt;缺乏预测能力&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;我们将 SHOWAR 设计为计算量轻且适应性强，这与使用需要训练且无法应对工作负载转移的机器学习的“黑盒”方法形成对比，例如 [39,55,57]。然而，目前 SHOWAR 的一个主要限制是它对微服务的资源使用是反应性的。因此，&lt;strong&gt;一个合适的探索途径是为 SHOWAR 配备近期工作负载和资源使用预测&lt;/strong&gt;，例如 [18]。结合其当前设计，&lt;strong&gt;预测近期工作负载可以改善 SHOWAR 的资源分配并防止由于自动缩放操作不足而导致性能下降&lt;/strong&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;另一个限制是它只关注微服务自动扩展并假设一个固定大小的集群&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;解决应用程序自动缩放器请求的资源总量超过可用集群资源总量的场景非常重要&lt;/strong&gt;。虽然集群自动缩放与应用程序自动缩放是正交的，但它们需要协同工作以实现资源分配的整体效率和应用程序的性能要求。因此，需要两个自动扩缩器之间的通信和协调才能向集群添加更多资源。在未来的工作中，我们&lt;strong&gt;计划改进 SHOWAR 的自动缩放器以与现有的集群自动缩放器 [12] 一起使用&lt;/strong&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;还不适用于Serverless类型的工作负载&lt;/p&gt;
+&lt;p&gt;原因之一是垂直自动缩放不适用，因为&lt;strong&gt;无服务器功能的容器大小是预定义的&lt;/strong&gt;。 SHOWAR 的水平自动缩放器可能面临额外的复杂性，例如，跟踪“休眠”无服务器函数的数量（可以热启动）以及每个函数“过期”的时间（因此需要冷启动延迟）。我们将探索无服务器功能水平扩展的控制理论方法留给未来的工作。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;计划改进 SHOWAR 的亲和性和反亲和性规则生成器&lt;/p&gt;
+&lt;p&gt;目前使用简单的经验资源利用相关系数来确定微服务之间的成对亲和力。例如，我们可以在未来&lt;strong&gt;探索其他统计数据对亲和力的影响&lt;/strong&gt;，例如不同类型资源之间的互相关，并&lt;strong&gt;探索不同类型的调度机制&lt;/strong&gt;，这些调度机制可以直接利用这些“原始”统计信息来提高效率资源利用[19]。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
 </description>
         </item>
         <item>
@@ -1546,6 +2576,82 @@ net.ipv4.conf.all.rp_filter = 0
     &gt;Dashboard-Creating sample user&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh/docs/reference/access-authn-authz/rbac/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;k8s-基于角色的访问控制-使用 RBAC 鉴权&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
+        <title>笔记 &gt; SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</title>
+        <link>https://lizonglingo.github.io/p/%E7%AC%94%E8%AE%B0-showar-right-sizing-and-efficient-scheduling-of-microservices/</link>
+        <pubDate>Mon, 20 Dec 2021 14:51:34 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E7%AC%94%E8%AE%B0-showar-right-sizing-and-efficient-scheduling-of-microservices/</guid>
+        <description>&lt;h2 id=&#34;摘要&#34;&gt;摘要&lt;/h2&gt;
+&lt;p&gt;提出微服务的面临的一个挑战是为每个微服务找到最佳的分配资源和服务实例的数量。达到保证性能的同时最大限度的提高资源利用率这样一个目标。本文的SHOWAR是一个通过确定服务实例数量（横向扩展）以及每个服务实例的资源如CPU和内存（纵向扩展）来配置资源的框架。&lt;/p&gt;
+&lt;p&gt;对于纵向扩展，SHOWAR通过历史资源中的经验方差来寻找最佳资源分配量，保证性能同时减少不必要的资源浪费；对于横向扩展，使用控制理论的基本思想以及内核级性能指标来实施。&lt;/p&gt;
+&lt;p&gt;在确定微服务的现有状态后，SHOWAR使用调度程序生成亲和性规则来弥合最佳资源分配和调度之间的差距，实现资源分配和性能提高。&lt;/p&gt;
+&lt;p&gt;实验表明，SHOWAR与现有的最先进的自动缩放和调度系统相比，资源分配提高了22%，同时降低了99%的端到端请求延迟20%。&lt;/p&gt;
+&lt;h2 id=&#34;intro&#34;&gt;Intro&lt;/h2&gt;
+&lt;p&gt;本文的SHOWAR是一个用于微服务横向和纵向自动扩展的微服务管理系统，用于Kubernetes编排的微服务系统。&lt;/p&gt;
+&lt;p&gt;对于纵向缩放，SHOWAR 依赖&lt;strong&gt;历史资源使用情况的差异&lt;/strong&gt;，找到每个微服务的最佳资源大小，保持良好的性能的同时提高资源利用率。&lt;/p&gt;
+&lt;p&gt;对于横向自动缩放，SHOWAR 使用来自 &lt;strong&gt;Linux 内核线程调度程序队列的指标&lt;/strong&gt;（特别是 eBPF 运行时延迟）作为其自动缩放信号，以做出更准确和有意义的自动缩放决策。为了实现这个目标，SHOAWR使用了控制理论的基本思想，基于来自&lt;strong&gt;微服务运行时&lt;/strong&gt;的信号控制每个微服务的副本数量。&lt;/p&gt;
+&lt;p&gt;该团队设计了一个比例积分微分proportional–integral–derivative (PID) 控制器作为有状态自动缩放器，它使用历史自动缩放操作和当前运行时测量来做出下一个水平自动缩放决策并保持微服务“稳定”。此外，SHOWAR考虑不同微服务之间的依赖关系，优先考虑被依赖的微服务，以防止不必要的自动缩放操作和低资源利用率。&lt;/p&gt;
+&lt;p&gt;除了使用自动缩放器来确定微服务的资源外，SHOWAR还旨在桥接微服务的最佳资源分配和高效调度，&lt;strong&gt;在达成最佳资源分配和高效调度之间取得最佳平衡&lt;/strong&gt;。一旦确定了微服务的最佳大小，SHOWAR就会协助集群调度程序调度微服务以获得更好的端到端性能。为了防止资源争用和管理噪声邻居对微服务性能的影响，SHOWAR使用不同微服务之间历史资源使用情况的估计相关性来为Kubernetes调度程序生成规则。例如，这些规则可能会建议调度程序共同定位（调度亲和性）与某种资源类型具有负相关性的微服务，或者以其他方式分发它们（调度反亲和性）。&lt;/p&gt;
+&lt;p&gt;文章通过在AWS公共云上的虚拟机集群部署各种交互式微服务应用程序来评估SHOWAR。将SHOWAR的性能与两种最先进的自动缩放系统进行了比较：Google Autopilot和Kubernetes 默认的自动缩放器。使用实际生产工作负载，结果表明，SHOWAR在有效资源分配和端到端请求延迟的尾部分布方面优于这些参照。SHOWAR 平均将资源分配提高了22%，这可以直接转化为集群相关成本的总节省22%，同时将99%的端到端用户请求延迟降低20%。&lt;/p&gt;
+&lt;h2 id=&#34;贡献&#34;&gt;贡献&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;提出一种自动化的纵向扩容和横向扩容框架，达到保证服务性能的前提下提高资源利用率的目标&lt;/li&gt;
+&lt;li&gt;提出调度亲和性和反亲和规则，通过生成调度亲和性和反亲和性规则来帮助调度程序更好地放置微服务并提高微服务性能，弥合了适当调整微服务规模以提高资源效率和高效微服务调度之间的差距&lt;/li&gt;
+&lt;li&gt;通过实验证明SHOWAR的良好表现&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;前置知识&#34;&gt;前置知识&lt;/h2&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211220134037.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;这一个比较典型的微服务架构示意图，微服务之间的依赖关系错综复杂。&lt;strong&gt;其中一些微服务依赖于其他微服务，SHOWAR使用此依赖关系图信息来做出更好的自动缩放决策&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;除了 CPU 和内存使用数据外，SHOWAR还使用扩展的伯克利数据包过滤 ( Berkeley Packet Filtering - eBPF) [6] 指标数据进行水平自动缩放决策。&lt;strong&gt;eBPF 是最新的Linux内核技术，它支持在内核级别运行安全且低开销的程序，以从内核级别的事件（例如 CPU 调度程序决策事件、内存分配事件和内核网络堆栈中的数据包事件）中收集准确的指标&lt;/strong&gt;。它已被广泛用于微服务可观察性，用于性能改进、分析和跟踪、负载平衡、网络监控和安全等广泛目的。&lt;/p&gt;
+&lt;h2 id=&#34;showar&#34;&gt;SHOWAR&lt;/h2&gt;
+&lt;h3 id=&#34;系统架构&#34;&gt;系统架构&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/lizonglin313/MyPicGo/master/20211220141140.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;SHOWAR使用每个节点上的相应代理来收集资源使用日志以及 eBPF 指标，然后聚合到时间序列数据库中。&lt;/p&gt;
+&lt;p&gt;SHOWAR使用收集到的指标通过分别与Kubernetes API服务器及其调度程序通信来做出自动缩放决策以及调度亲和性和反亲和性规则。&lt;/p&gt;
+&lt;h3 id=&#34;系统实现&#34;&gt;系统实现&lt;/h3&gt;
+&lt;p&gt;SHOWAR 作为服务部署在控制器节点并与kubernetes API服务器及其调度程序交互以进行自动缩放操作以及为微服务应用生成的亲和性和反亲和性规则。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;监控代理Monitoring Agents&lt;/p&gt;
+&lt;p&gt;监控和日志数据是任何应用程序部署最重要的部分。监控数据用于可观察性、健康检查和自动缩放。本文使用最先进的监控和指标收集工具Prometheus从节点和容器收集不同的指标。Prometheus在集群中的每个节点上启动一个监控代理来收集容器指标，例如 CPU 使用率、内存使用率、网络带宽使用率等。代理被配置为每秒收集和报告指标（一秒是Prometheus 代理可以收集指标的最短时间。为了获得尽可能多的数据点，我们每秒钟收集一次数据）。Prometheus 带有一个时间序列数据库，代理存储收集的指标。此外，提供查询语言来查询其他模块使用的时间序列数据库以利用收集的指标。&lt;/p&gt;
+&lt;p&gt;除Prometheus外，文章还开发了一个eBPF程序，该程序作为监控代理部署在集群中的每个节点上，以收集横向自动缩放器使用的 𝑟𝑢𝑛𝑞 𝑙𝑎𝑡𝑒𝑛𝑐𝑦 指标。该指标是每个pod中的CPU线程在获取CPU之前所经历的延迟直方图。程序每1秒收集一张𝑟𝑢𝑛𝑞 𝑙𝑎𝑡𝑒𝑛𝑐𝑖𝑒𝑠的直方图并存储在Prometheus时间序列数据库中。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;纵向缩放器The Vertical Autoscaler&lt;/p&gt;
+&lt;p&gt;这一个简单的循环，每分钟进行一轮。在前 5 分钟的窗口内为每种资源类型 𝑟（CPU 和内存）计算 𝑠𝑟 =𝜇𝑟 +3∗𝜎𝑟，如果 𝑠 的值变化超过 15%，它会更新服务的资源需求为𝑠。&lt;/p&gt;
+&lt;p&gt;触发缩放器的另一个条件是微服务报告 OOM 错误时。在应用微服务的新资源需求之前，纵向自动缩放器通过共享通道向横向自动缩放器发送消息，不让其进行任何横向自动缩放操作，因为纵向自动缩放操作的优先级高于水平自动缩放。&lt;/p&gt;
+&lt;p&gt;如果该微服务的 CPU 数量超过一个 CPU 内核（即 𝑠𝐶𝑃𝑈 &amp;gt;1000𝑚），纵向自动缩放器也不会对微服务进行自动缩放操作，在这种情况下，它会通过另一个共享通道发送消息到横向自动缩放器触发横向自动缩放操作。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;横向缩放器The Horizontal Autoscaler&lt;/p&gt;
+&lt;p&gt;横向自动缩放器的核心是一个 PID 控制器，旨在保持每个微服务稳定。对于给定的目标 𝑟𝑢𝑛𝑞 𝑙𝑎𝑡𝑒𝑛𝑐𝑦，它对该微服务执行水平自动缩放操作，使其始终具有𝑟𝑢𝑛𝑞𝑟𝑢𝑛𝑞𝑙控制器每 1 分钟做出决定，eBPF 程序收集 60 个度量直方图实例（每秒 1 个）。对于每个直方图，选择第 95 个百分位数，控制器使用这 60 个数据点的平均值作为其当前观察（也称为测量）来执行其控制操作。每个水平扩展操作添加或删除至少 1 个或可配置百分比（默认为 10%）的微服务当前副本数，分别用于扩展和缩减。PID 控制参数的初始值取为 𝑘𝑃 =𝑘𝐼 =𝑘𝐷 =1/3（每个参数约束为 ∈ [0,10]）。这些参数的增量变化是 10%（我们通过实验发现 10% 的性能非常好）。控制器输出的波动是进行此类更改的基础，使用之前的 𝑁 = 10 个样本进行测量。此外，控制器的“速度”被测量为达到区间 [target(1 −𝛼),target(1 + 𝛼)] 所需的迭代次数，因为 𝛼 =10%。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;亲和规则生成器The Affinity Rule Generator&lt;/p&gt;
+&lt;p&gt;SHOWAR的亲和性规则生成器每 5 分钟使用一次 CPU、内存和网络利用率，这是一个由 300 个数据点组成的向量（每个数据点是微服务副本的平均值）来计算每个数据点之间不同资源类型的相关系数。消除弱相关或无相关实例，[−0.8,+0.8] 中的任何值都将被丢弃。其他强负相关和强正相关微服务用于生成亲和性和反亲和性规则。资源使用模式会随着工作负载的变化（也称为工作负载转移）而变化，因此如果在随后的 5 分钟时间窗口内强烈的负相关或正相关变化超过 20%（可配置），SHOWAR 将撤销关联（或anti-affinity）规则。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;SHOWAR的开销&lt;/p&gt;
+&lt;p&gt;SHOWAR是作为Kubernetes的控制器构建的，它对于自动缩放器和其他类型的控制器具有高度可插拔性。SHOWAR使用常用的 Kubernetes监控代理（如Prometheus）和一个自定义eBPF指标监控代理。因此，与默认的Kubernetes自动缩放器相比，SHOWAR 不会引入任何额外的开销。此外，自动缩放器被调度在控制器节点上，并且不与调度在工作节点上的应用程序 Pod 共享资源。&lt;/p&gt;
+&lt;/li&gt;
 &lt;/ul&gt;
 </description>
         </item>

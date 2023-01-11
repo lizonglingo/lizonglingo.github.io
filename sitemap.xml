@@ -41,6 +41,12 @@
     <loc>https://lizonglingo.github.io/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/</loc>
     <lastmod>2022-08-01T18:10:59+08:00</lastmod>
   </url><url>
+    <loc>https://lizonglingo.github.io/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/</loc>
+    <lastmod>2022-08-01T18:10:59+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6/</loc>
+    <lastmod>2022-08-01T18:10:59+08:00</lastmod>
+  </url><url>
     <loc>https://lizonglingo.github.io/tags/golang/</loc>
     <lastmod>2022-07-20T20:22:12+08:00</lastmod>
   </url><url>
@@ -56,12 +62,6 @@
     <loc>https://lizonglingo.github.io/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/</loc>
     <lastmod>2022-07-20T20:22:12+08:00</lastmod>
   </url><url>
-    <loc>https://lizonglingo.github.io/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/</loc>
-    <lastmod>2022-07-20T20:22:12+08:00</lastmod>
-  </url><url>
-    <loc>https://lizonglingo.github.io/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6/</loc>
-    <lastmod>2022-07-20T20:22:12+08:00</lastmod>
-  </url><url>
     <loc>https://lizonglingo.github.io/tags/cilium/</loc>
     <lastmod>2022-07-15T14:35:19+08:00</lastmod>
   </url><url>
@@ -74,19 +74,7 @@
     <loc>https://lizonglingo.github.io/categories/coredns/</loc>
     <lastmod>2022-07-15T14:35:19+08:00</lastmod>
   </url><url>
-    <loc>https://lizonglingo.github.io/tags/k8s/</loc>
-    <lastmod>2022-07-15T14:35:19+08:00</lastmod>
-  </url><url>
-    <loc>https://lizonglingo.github.io/categories/k8s/</loc>
-    <lastmod>2022-07-15T14:35:19+08:00</lastmod>
-  </url><url>
     <loc>https://lizonglingo.github.io/p/%E8%AE%B0%E4%B8%80%E6%AC%A1kubernetes%E4%BD%BF%E7%94%A8ciliumcoredns%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E5%A4%B1%E8%B4%A5%E7%9A%84%E6%8E%92%E9%94%99/</loc>
-    <lastmod>2022-07-15T14:35:19+08:00</lastmod>
-  </url><url>
-    <loc>https://lizonglingo.github.io/tags/%E6%8E%92%E9%94%99%E7%AC%94%E8%AE%B0/</loc>
-    <lastmod>2022-07-15T14:35:19+08:00</lastmod>
-  </url><url>
-    <loc>https://lizonglingo.github.io/categories/%E6%8E%92%E9%94%99%E7%AC%94%E8%AE%B0/</loc>
     <lastmod>2022-07-15T14:35:19+08:00</lastmod>
   </url><url>
     <loc>https://lizonglingo.github.io/p/gorm%E7%9A%84%E5%B8%B8%E8%A7%81%E5%9D%91/</loc>

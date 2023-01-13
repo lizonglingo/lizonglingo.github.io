@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='多阶段构建和跨平台镜像 多阶段构建 我们都知道，容器的镜像是一种分层结构，这种结构可以让我们在构建容器镜像时，通过一些方法可以缩小镜像的体积。 体'>
+<meta name="keywords" content="docker, 多阶段构建, 缩小镜像体积, 构建多平台镜像"><title>构建应用时如何缩小容器镜像的体积</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/%E6%9E%84%E5%BB%BA%E5%BA%94%E7%94%A8%E6%97%B6%E5%A6%82%E4%BD%95%E7%BC%A9%E5%B0%8F%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E7%9A%84%E4%BD%93%E7%A7%AF/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='构建应用时如何缩小容器镜像的体积'>
+<meta property='og:description' content='多阶段构建和跨平台镜像 多阶段构建 我们都知道，容器的镜像是一种分层结构，这种结构可以让我们在构建容器镜像时，通过一些方法可以缩小镜像的体积。 体'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/%E6%9E%84%E5%BB%BA%E5%BA%94%E7%94%A8%E6%97%B6%E5%A6%82%E4%BD%95%E7%BC%A9%E5%B0%8F%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E7%9A%84%E4%BD%93%E7%A7%AF/'>
+<meta property='og:site_name' content='fmt.Println(&#34;Li Duo&#34;)'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='docker' /><meta property='article:tag' content='云原生' /><meta property='article:tag' content='Kubernetes' /><meta property='article:published_time' content='2023-01-13T18:18:33&#43;08:00'/><meta property='article:modified_time' content='2023-01-13T18:18:33&#43;08:00'/><meta property='og:image' content='https://lizonglingo.github.io/post-images/image-20230113160652452.png' />
+<meta name="twitter:title" content="构建应用时如何缩小容器镜像的体积">
+<meta name="twitter:description" content="多阶段构建和跨平台镜像 多阶段构建 我们都知道，容器的镜像是一种分层结构，这种结构可以让我们在构建容器镜像时，通过一些方法可以缩小镜像的体积。 体"><meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content='https://lizonglingo.github.io/post-images/image-20230113160652452.png' />
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">fmt.Println(&#34;Li Duo&#34;)</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#多阶段构建">多阶段构建</a>
+      <ul>
+        <li><a href="#体积庞大的困扰">体积庞大的困扰</a></li>
+        <li><a href="#java应用多阶段构建">Java应用多阶段构建</a></li>
+        <li><a href="#golang应用多阶段构建">Golang应用多阶段构建</a></li>
+      </ul>
+    </li>
+    <li><a href="#跨平台构建容器镜像">跨平台构建容器镜像</a>
+      <ul>
+        <li><a href="#为-docker-配置-buildx">为 docker 配置 buildx</a></li>
+        <li><a href="#使用-buildx-构建多平台镜像">使用 buildx 构建多平台镜像</a></li>
+      </ul>
+    </li>
+    <li><a href="#补充-如何选择基础镜像">补充 如何选择基础镜像</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="has-image main-article">
+    <header class="article-header">
+        <div class="article-image">
+            <a href="/p/%E6%9E%84%E5%BB%BA%E5%BA%94%E7%94%A8%E6%97%B6%E5%A6%82%E4%BD%95%E7%BC%A9%E5%B0%8F%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E7%9A%84%E4%BD%93%E7%A7%AF/">
+                
+                    <img src="/post-images/image-20230113160652452.png" loading="lazy" alt="Featured image of post 构建应用时如何缩小容器镜像的体积" />
+                
+            </a>
+        </div>
+    
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/docker/" >
+                docker
+            </a>
+        
+            <a href="/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/" >
+                云原生
+            </a>
+        
+            <a href="/categories/kubernetes/" >
+                Kubernetes
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/%E6%9E%84%E5%BB%BA%E5%BA%94%E7%94%A8%E6%97%B6%E5%A6%82%E4%BD%95%E7%BC%A9%E5%B0%8F%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E7%9A%84%E4%BD%93%E7%A7%AF/">构建应用时如何缩小容器镜像的体积</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jan 13, 2023</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 4 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="多阶段构建和跨平台镜像">多阶段构建和跨平台镜像</h1>
+<h2 id="多阶段构建">多阶段构建</h2>
+<p>我们都知道，容器的镜像是一种分层结构，这种结构可以让我们在构建容器镜像时，通过一些方法可以缩小镜像的体积。</p>
+<h3 id="体积庞大的困扰">体积庞大的困扰</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># docker image ls</span>
+</span></span><span style="display:flex;"><span>REPOSITORY                                                        TAG                    IMAGE ID       CREATED              SIZE
+</span></span><span style="display:flex;"><span>spring-boot                                                       latest                 c706f273de79   About a minute ago   284MB
+</span></span><span style="display:flex;"><span>&lt;none&gt;                                                            &lt;none&gt;                 97bd21dc4f53   <span style="color:#ae81ff">2</span> minutes ago        596MB
+</span></span><span style="display:flex;"><span>eclipse-temurin                                                   17-jre-jammy           5e2265f6166a   <span style="color:#ae81ff">5</span> weeks ago          266MB
+</span></span><span style="display:flex;"><span>eclipse-temurin                                                   17-jdk-jammy           9ef86393bfda   <span style="color:#ae81ff">5</span> weeks ago          455MB
+</span></span><span style="display:flex;"><span>quay.io/cilium/cilium                                             &lt;none&gt;                 c34c54b31628   <span style="color:#ae81ff">2</span> months ago         451MB
+</span></span><span style="display:flex;"><span>quay.io/metallb/speaker                                           v0.13.7                738c5d221d60   <span style="color:#ae81ff">2</span> months ago         106MB
+</span></span><span style="display:flex;"><span>registry.k8s.io/pause                                             3.9                    e6f181688397   <span style="color:#ae81ff">3</span> months ago         744kB
+</span></span><span style="display:flex;"><span>quay.io/cilium/cilium                                             &lt;none&gt;                 743cf6b60787   <span style="color:#ae81ff">4</span> months ago         456MB
+</span></span><span style="display:flex;"><span>dyrnq/ingress-nginx-controller                                    v1.3.1                 b7c8e5e285c0   <span style="color:#ae81ff">4</span> months ago         263MB
+</span></span><span style="display:flex;"><span>quay.io/cilium/cilium                                             &lt;none&gt;                 68413ce8a529   <span style="color:#ae81ff">5</span> months ago         457MB
+</span></span><span style="display:flex;"><span>influxdb                                                          2.3.0                  b24266999a5d   <span style="color:#ae81ff">6</span> months ago         445MB
+</span></span></code></pre></div><p>从上面看出，有许多镜像体积有将近半个GB之多。有时我们使用不同的基础镜像，构建出来的体积也大有不同。镜像过大往往带来：</p>
+<ul>
+<li>上传或拉取镜像速度慢，减慢发布更新流程</li>
+<li>占用很多存储空间</li>
+</ul>
+<p>等问题。一些情况下，我们可以通过<strong>多阶段构建</strong>，来缩减容器镜像的体积。</p>
+<p>大白话说，<strong>多阶段构建</strong>就是：</p>
+<ol>
+<li>先使<strong>用一个大的基础镜像</strong>，这个基础镜像里面<strong>有将源码编译成可执行文件的所有工具和依赖</strong>，利用这个<strong>大镜像把源码构建成可执行文件</strong>；</li>
+<li>再换一个小的基础镜像（它或许没有很多构建源码所需的依赖，但是它足以运行这个可执行文件），把这个应用的可执行文件放到这个小的基础镜像里，在<strong>小基础镜像中运行应用</strong>。</li>
+</ol>
+<p>虽然不够准确，但是多阶段构建容器镜像的思想就是如此，来看两个例子。</p>
+<h3 id="java应用多阶段构建">Java应用多阶段构建</h3>
+<h4 id="将应用构建过程和启动过程分为两个阶段">将应用构建过程和启动过程分为两个阶段</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-dockerfile" data-lang="dockerfile"><span style="display:flex;"><span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> eclipse-temurin:17-jdk-jammy as builder</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /opt/app</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> .mvn/ .mvn<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> mvnw pom.xml ./<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> ./mvnw dependency:go-offline<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> ./src ./src<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> ./mvnw clean install<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> eclipse-temurin:17-jre-jammy</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /opt/app</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">EXPOSE</span><span style="color:#e6db74"> 8080</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#75715e"># 从 构建应用使用的镜像 eclipse-temurin:17-jdk-jammy 中</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#75715e"># 复制可执行文件到 eclipse-temurin:17-jre-jammy</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> --from<span style="color:#f92672">=</span>builder /opt/app/target/*.jar /opt/app/*.jar<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><h4 id="将应用构建延迟到启动时">将应用构建延迟到启动时</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-dockerfile" data-lang="dockerfile"><span style="display:flex;"><span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> eclipse-temurin:17-jdk-jammy</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /app</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> .mvn/ .mvn<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> mvnw pom.xml ./<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> ./mvnw dependency:resolve<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> src ./src<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">CMD</span> [<span style="color:#e6db74">&#34;./mvnw&#34;</span>, <span style="color:#e6db74">&#34;spring-boot:run&#34;</span>]<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>我们来看下，两种方式构建的容器镜像的大小：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># docker image ls | grep spring</span>
+</span></span><span style="display:flex;"><span>spring-boot-big                                                   latest                 a24cbb0ff94d   <span style="color:#ae81ff">4</span> minutes ago    525MB
+</span></span><span style="display:flex;"><span>spring-boot                                                       latest                 c706f273de79   <span style="color:#ae81ff">20</span> minutes ago   284MB
+</span></span></code></pre></div><p>很明显，第2种将应用构建延迟到启动时的容器镜像体积几乎是第一种方式的2倍。</p>
+<p>但是，对于应用程序的运行来说，显然用于编译代码、构建可执行程序的JDK等工具是不需要的。</p>
+<h3 id="golang应用多阶段构建">Golang应用多阶段构建</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-dockerfile" data-lang="dockerfile"><span style="display:flex;"><span><span style="color:#75715e"># 第一阶段</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#75715e"># 非通用的 多用于编译 golang 的镜像 golang:1.16-alpine</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> golang:1.16-alpine AS builder</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> go env -w GO111MODULE<span style="color:#f92672">=</span>on<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> go env -w GOPROXY<span style="color:#f92672">=</span>https://goproxy.cn,direct<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> . /go/src/server<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /go/src/server</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> go install ./server/...<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#75715e"># 第二阶段</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> alpine:3.13</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> --from<span style="color:#f92672">=</span>builder /go/bin/server /bin/server<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ENV</span> ADDR<span style="color:#f92672">=</span>:9090<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ENV</span> WS_ADDR<span style="color:#f92672">=</span>:8080<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">EXPOSE</span><span style="color:#e6db74"> 9090</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">EXPOSE</span><span style="color:#e6db74"> 8080</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#75715e"># 设置服务入口</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ENTRYPOINT</span> [ <span style="color:#e6db74">&#34;/bin/server&#34;</span> ]<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>我们看这两个阶段使用的基础镜像：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ docker image ls | grep alpine
+</span></span><span style="display:flex;"><span>alpine                                                   latest    042a816809aa   <span style="color:#ae81ff">3</span> days ago      7.05MB
+</span></span><span style="display:flex;"><span>$ docker image ls | grep golang
+</span></span><span style="display:flex;"><span>golang                                                            1.19-alpine            feb4bbda921c   <span style="color:#ae81ff">2</span> days ago       354MB
+</span></span></code></pre></div><p>二者的体积相差有50倍之多。而在生产环境中，运行一个golang程序，可能使用体积7M左右的<code>alpine</code>就够了，而在构建过程，还是需要完整的300多M的<code>golang</code>镜像去构建。一些编译型语言往往需要一些工具链去实现源码的编译，但是这些工具在生产环境中会过多占用不必要的空间。通过<strong>多阶段构建</strong>，刚好解决了这个问题。</p>
+<blockquote>
+<p>补充：构建镜像时，尽量复用 docker 构建缓存。</p>
+</blockquote>
+<h2 id="跨平台构建容器镜像">跨平台构建容器镜像</h2>
+<p>Golang的跨平台编译可以做到在单一平台构建不同架构下的可执行文件。对于容器来说，也有这种功能。Docker提供了<code>buildx</code>，来实现这个能力。我们看看如何使用。</p>
+<h3 id="为-docker-配置-buildx">为 docker 配置 buildx</h3>
+<ol>
+<li>创建一个 builder 构建器。</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ docker buildx create --name builder
+</span></span><span style="display:flex;"><span>builder
+</span></span></code></pre></div><ol start="2">
+<li>告诉 docker 使用这个构建器。然后初始化并启动 buildkit 容器。</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ docker buildx use builder
+</span></span><span style="display:flex;"><span>$ docker buildx inspect --bootstrap
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>+<span style="color:#f92672">]</span> Building 106.0s <span style="color:#f92672">(</span>1/1<span style="color:#f92672">)</span> FINISHED
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[</span>internal<span style="color:#f92672">]</span> booting buildkit                                                                                                                        106.0s
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">=</span>&gt; pulling image moby/buildkit:buildx-stable-1                                                                                                     103.7s
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">=</span>&gt; creating container buildx_buildkit_builder0                                                                                                       2.3s
+</span></span><span style="display:flex;"><span>Name:   builder
+</span></span><span style="display:flex;"><span>Driver: docker-container
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Nodes:
+</span></span><span style="display:flex;"><span>Name:      builder0
+</span></span><span style="display:flex;"><span>Endpoint:  unix:///var/run/docker.sock
+</span></span><span style="display:flex;"><span>Status:    running
+</span></span><span style="display:flex;"><span>Buildkit:  v0.11.0
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 这里看到 支持以下平台</span>
+</span></span><span style="display:flex;"><span>Platforms: linux/amd64, linux/amd64/v2, linux/amd64/v3, linux/386
+</span></span></code></pre></div><h3 id="使用-buildx-构建多平台镜像">使用 buildx 构建多平台镜像</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-dockerfile" data-lang="dockerfile"><span style="display:flex;"><span><span style="color:#75715e"># BUILDPLATFORM 		TARGETOS      TARGETARCH</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#75715e"># 平台 如 Linux/amd64    系统 如 Linux  架构 如 amd64</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#75715e"># 这些是内置变量</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#75715e"># --platform=$BUILDPLATFORM 强制使用不同平台的基础镜像 默认本平台基础架构对应的镜像</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> --platform=$BUILDPLATFORM golang:1.18 as build</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#75715e"># 声明 系统和平台</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ARG</span> TARGETOS TARGETARCH<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /opt/app</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> go.* ./<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> go mod download<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> . .<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#75715e"># 将 上述信息告知 golang 的编译工具</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> --mount<span style="color:#f92672">=</span>type<span style="color:#f92672">=</span>cache,target<span style="color:#f92672">=</span>/root/.cache/go-build <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>GOOS<span style="color:#f92672">=</span>$TARGETOS GOARCH<span style="color:#f92672">=</span>$TARGETARCH go build -o /opt/app/example .<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> ubuntu:latest</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /opt/app</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> --from<span style="color:#f92672">=</span>build /opt/app/example ./example<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">CMD</span> [<span style="color:#e6db74">&#34;/opt/app/example&#34;</span>]<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>通过这个 Dockerfile，执行命令：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ docker buildx build --platform linux/amd64,linux/arm64 -t demo:latest .
+</span></span></code></pre></div><p>docker就会构建<code>linux/amd64</code>和<code>linux/arm64</code>两个架构下的镜像了。</p>
+<blockquote>
+<p>本部分简单给出构建多平台镜像的思路，具体细节请看相关文档：</p>
+<p><a class="link" href="https://github.com/docker/buildx"  target="_blank" rel="noopener"
+    >https://github.com/docker/buildx</a></p>
+</blockquote>
+<h2 id="补充-如何选择基础镜像">补充 如何选择基础镜像</h2>
+<p>先看一个情况：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-dockerfile" data-lang="dockerfile"><span style="display:flex;"><span><span style="color:#75715e"># Step 1: build golang binary</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> golang:1.17 as builder</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /opt/app</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> . .<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> go build -o example<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#75715e"># Step 2: copy binary from step1</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> alpine</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /opt/app</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> --from<span style="color:#f92672">=</span>builder /opt/app/example ./example<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">CMD</span> [<span style="color:#e6db74">&#34;/opt/app/example&#34;</span>]<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>如果go程序中我们使用了 CGO，或是包含 C 的底层代码。那么启动这个镜像时容器会报错。</p>
+<p>原因在于：默认情况下，golang 编译成的可执行文件不是真正的 ”静态“，一些 C 语言的库会在执行之前动态链接。而 <strong>alpine 这个基础镜像中，没有 C 语言的 glibc 标准库</strong>，这个标准库正是 golang:1.17 编译时使用的。</p>
+<p>如果我们在编译时让其禁用 CGO，在 Dockerfile 中使用：<code>RUN CGO_ENABLED=0 go build -o example</code>，go 的编译工具就会实现真正的”静态“，将链接编译好的 C 相关的代码打包到可执行程序中。这样一来，使用 alpine 作为第二阶段的镜像也可以正常运行程序了。</p>
+<p>因此，不同阶段的基础镜像如何选择，还是需要根据具体的场景，再尽可能的缩小镜像体积。从易用性、安全性、跨平台等多方面综合考虑。</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/docker/">docker</a>
+        
+            <a href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">云原生</a>
+        
+            <a href="/tags/kubernetes/">Kubernetes</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="has-image">
+    <a href="/p/cri-dockerd%E5%9C%A8kubernetes1.24%E5%90%8E%E7%BB%A7%E7%BB%AD%E4%BD%BF%E7%94%A8docker%E4%BD%9C%E4%B8%BA%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6/">
+        
+        
+            <div class="article-image">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230111161434207.png" loading="lazy" data-key="" data-hash="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230111161434207.png"/>
+                
+            </div>
+        
+
+        <div class="article-details">
+            <h2 class="article-title">cri-dockerd，在kubernetes1.24后继续使用Docker作为容器运行时</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E8%AE%B0%E4%B8%80%E6%AC%A1kubernetes%E4%BD%BF%E7%94%A8ciliumcoredns%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E5%A4%B1%E8%B4%A5%E7%9A%84%E6%8E%92%E9%94%99/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">记一次Kubernetes使用Cilium，coredns健康检查失败的排错</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/sinan-ml-based-and-qos-aware-resource-management-for-cloud-microservices/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Sinan: ML-Based and QoS-Aware Resource Management for Cloud Microservices</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/ieee-cloud-21-%E4%BA%91%E4%B8%8A%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E7%9B%B8%E5%85%B3%E5%90%88%E8%BE%91/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">IEEE CLOUD 21 云上资源管理相关合辑</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/showar-right-sizing-and-efficient-scheduling-of-microservices/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 fmt.Println(&#34;Li Duo&#34;)
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

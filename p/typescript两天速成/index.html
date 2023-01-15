@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='前言 作为后端开发者，很多时候会面对前端开发的需求。就我最常用的 Golang 而言，它的 template 能够快速且简洁的开发一些简单的前端页面。 但是也有很多时候，我们可'>
+<meta name="keywords" content="前端, typescript, 后端程序员学习前端, typescript快速上手"><title>TypeScript两天速成</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/typescript%E4%B8%A4%E5%A4%A9%E9%80%9F%E6%88%90/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='TypeScript两天速成'>
+<meta property='og:description' content='前言 作为后端开发者，很多时候会面对前端开发的需求。就我最常用的 Golang 而言，它的 template 能够快速且简洁的开发一些简单的前端页面。 但是也有很多时候，我们可'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/typescript%E4%B8%A4%E5%A4%A9%E9%80%9F%E6%88%90/'>
+<meta property='og:site_name' content='fmt.Println(&#34;Li Duo&#34;)'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='前端' /><meta property='article:tag' content='typescript' /><meta property='article:published_time' content='2023-01-13T21:24:49&#43;08:00'/><meta property='article:modified_time' content='2023-01-15T15:57:57&#43;08:00'/><meta property='og:image' content='https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230115155449572.png' />
+<meta name="twitter:title" content="TypeScript两天速成">
+<meta name="twitter:description" content="前言 作为后端开发者，很多时候会面对前端开发的需求。就我最常用的 Golang 而言，它的 template 能够快速且简洁的开发一些简单的前端页面。 但是也有很多时候，我们可"><meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content='https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230115155449572.png' />
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-SPJXNM3WZ6"></script>
+<script>
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'G-SPJXNM3WZ6', { 'anonymize_ip': false });
+}
+</script>
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?b30bfbf01ac692ef3da66a21b24e6edb";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+    
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">fmt.Println(&#34;Li Duo&#34;)</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#前言">前言</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#基本数据类型">基本数据类型</a>
+      <ul>
+        <li><a href="#const-和-let">const 和 let</a></li>
+        <li><a href="#literal-数据类型">literal 数据类型</a></li>
+        <li><a href="#union-of-types">Union of Types</a></li>
+        <li><a href="#any">any</a></li>
+        <li><a href="#undefined">undefined</a></li>
+        <li><a href="#枚举">枚举</a></li>
+        <li><a href="#数组类型">数组类型</a></li>
+        <li><a href="#元组">元组</a></li>
+      </ul>
+    </li>
+    <li><a href="#对象">对象</a></li>
+    <li><a href="#逻辑控制">逻辑控制</a>
+      <ul>
+        <li><a href="#ifelse">if/else</a></li>
+        <li><a href="#switch">switch</a></li>
+        <li><a href="#for-和-while">for 和 while</a></li>
+        <li><a href="#trycatch">try/catch</a></li>
+      </ul>
+    </li>
+    <li><a href="#函数">函数</a>
+      <ul>
+        <li><a href="#为对象定义方法">为对象定义方法</a></li>
+      </ul>
+    </li>
+    <li><a href="#函数式编程风格">函数式编程风格</a>
+      <ul>
+        <li><a href="#typescript-中函数是一等公民">Typescript 中，函数是“一等公民”</a></li>
+        <li><a href="#函数的闭包">函数的闭包</a></li>
+      </ul>
+    </li>
+    <li><a href="#promise">Promise</a>
+      <ul>
+        <li><a href="#创建使用串联-promise-和错误捕获">创建、使用、串联 Promise 和错误捕获</a></li>
+        <li><a href="#等待-promise-运行">等待 Promise 运行</a></li>
+        <li><a href="#asyncawait-异步函数">async/await 异步函数</a></li>
+      </ul>
+    </li>
+    <li><a href="#接口">接口</a>
+      <ul>
+        <li><a href="#可选字段串联和非空断言">可选字段串联和非空断言</a></li>
+        <li><a href="#接口的扩展">接口的扩展</a></li>
+        <li><a href="#类型的并断言以及判断">类型的并、断言以及判断</a></li>
+      </ul>
+    </li>
+    <li><a href="#类">类</a>
+      <ul>
+        <li><a href="#用类实现接口">用类实现接口</a></li>
+      </ul>
+    </li>
+    <li><a href="#泛型">泛型</a>
+      <ul>
+        <li><a href="#用接口约束泛型的参数">用接口约束泛型的参数</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="has-image main-article">
+    <header class="article-header">
+        <div class="article-image">
+            <a href="/p/typescript%E4%B8%A4%E5%A4%A9%E9%80%9F%E6%88%90/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230115155449572.png" loading="lazy" alt="Featured image of post TypeScript两天速成" />
+                
+            </a>
+        </div>
+    
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E5%89%8D%E7%AB%AF/" >
+                前端
+            </a>
+        
+            <a href="/categories/typescript/" >
+                typescript
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/typescript%E4%B8%A4%E5%A4%A9%E9%80%9F%E6%88%90/">TypeScript两天速成</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jan 13, 2023</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 13 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="前言">前言</h2>
+<p>作为后端开发者，很多时候会面对前端开发的需求。就我最常用的 Golang 而言，它的 template 能够快速且简洁的开发一些简单的前端页面。</p>
+<p>但是也有很多时候，我们可能想去实现比较复杂一些的前端页面，更好的展示后端功能。因为对于一些软件的使用者，他们并不会像我们一样，使用 CLI 、API 等接口去使用。一个精美的、一目了然的网页更能给他们使用下去的欲望。</p>
+<p>再或者，谁不想向“全栈工程师”更近一步呢？在 CNCF landscape 蓬勃发展的时代，几乎每个项目都会有自己的站点、有 Dashboard。尤其是一些可观测性方面的项目。前端技术让晦涩难懂的代码华丽的展示在人们面前，有时候，仅仅是因为前端做的好看就能够收获一大批用户。在这个人人好像都有全栈开发能力的时代，只会写一些后端代码总感觉差点意思。</p>
+<p>同时，博客框架、站点框架等前端框架，使得我们可以通过改改配置文件、修改几行代码就能将自己的内容以网站的形式展现，这是极为方便的。但无论如何，我们都避免不了去定制化的开发前端内容。</p>
+<p>Vue和React可谓知名度最大的前端框架之二，其开源生态带来的丰富的教程、多样的组件，很大程度上减少了的前端开发的复杂性。对于很少接触前端以及缺少相关理论知识的开发者来说，上手这两个框架还是需要一定的基础。</p>
+<p>我决定在这个寒假正式把前端能力的提升加入日程，目标是在有前端需求时，能够快速的通过 Vue/React 脚手架和开源组件，将前后端分离的技术用于自己的开发中，快速为后端应用搭建一个看的过去的前端页面。</p>
+<h4 id="为什么是-typescript">为什么是 Typescript</h4>
+<p>我常常觉得 Js 代码混乱，没有结构性，不够简洁和优美。可能是因为 Go 写的太多的原因，很少有主流语言像 Go 有这么少的特性、关键字、语法糖了吧，它是静态语言的特点能把尽可能多的问题及时暴露在开发阶段。Typescript 的很大程度上减少了 Javascript 在开发中的不确定性，这种优势能够提高 Debug 的效率和程序运行的确定性。同时，从我的角度，前端开发正在慢慢拥抱 Typescript，它为前端工程带来的优点是有目共睹的。Vue/React 都支持Typescript，相对于 Javascript 来说，可能后端程序员直接以 Typescript 作为自己的第一门 “前端语言” 是不是更好些呢？（我没怎么使用过 Javascript，不敢妄下断论。）</p>
+<p>所以，我决定以 CSS布局:arrow_right:TS:arrow_right:Vue||React 的线路，比较系统把前端开发能力补齐。这个过程肯定有很多东西“不求甚解”，但我想，只要我能够用起来，在前端能够实现自己的想法就够了。</p>
+<p>通过本文，希望可以快速覆盖常用的 TS 知识点，快速上手，为使用框架做铺垫。</p>
+<h2 id="基本数据类型">基本数据类型</h2>
+<blockquote>
+<p>需要理解 Typescript 对于 Javascript 的能力、安全性、可预测性、规范性的能力，绝大部分来自编译器给我们的限制。事实上在底层，Typescript 也是翻译成 Javascript 来运行的。其中一些特性，我们需要带入编译器的角度，即：在翻译成 Javascript 做了什么，便会好理解一些。</p>
+</blockquote>
+<ul>
+<li>number：可以是整数，可以是浮点数</li>
+<li>boolean</li>
+<li>string</li>
+</ul>
+<h3 id="const-和-let">const 和 let</h3>
+<ul>
+<li>const：定义的值不可变，对于<strong>不变的值，我们尽量多用 const 保证变量不被滥用</strong>！</li>
+<li>let：定义的值可变</li>
+<li>定义时可以不告知变量，编译器自己推到：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">string</span>   <span style="color:#f92672">=</span><span style="color:#e6db74">&#39;123&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// const a =&#39;123&#39; ok
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">b</span>: <span style="color:#66d9ef">string</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;23&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// let b = &#39;23&#39; ok
+</span></span></span></code></pre></div><h3 id="literal-数据类型">literal 数据类型</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">ans</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;yes&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;no&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;maybe&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;yes&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">httpStatus</span>: <span style="color:#66d9ef">200</span> <span style="color:#f92672">|</span> <span style="color:#ae81ff">404</span> <span style="color:#f92672">|</span> <span style="color:#ae81ff">500</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">200</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">httpStatusStr</span>: <span style="color:#66d9ef">200</span> <span style="color:#f92672">|</span> <span style="color:#ae81ff">404</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;500&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;502&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;502&#39;</span>
+</span></span></code></pre></div><p>给这个变量限定特定的取值。有点类似枚举。</p>
+<p>literal的值可以赋给其他变量，但是类型必须相同。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">s</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">ans</span>	<span style="color:#75715e">// let s: &#34;yes&#34; 这样 let 类型
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 或者
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">s</span>:<span style="color:#66d9ef">string</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">ans</span>	<span style="color:#75715e">// ok
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">s</span>:<span style="color:#66d9ef">string</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">httpStatusStr</span> <span style="color:#75715e">// ok httpStatusStr 类型是字符串
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// let s:number = httpStatusStr 就不行 因为 httpStatusStr 是字符串
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">s</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;abcd&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 但是 ans = s 就不行
+</span></span></span></code></pre></div><p>那<code>let httpStatusStr: 200 | 404 | '500' | '502' = '502'</code>这种类型怎么理解？</p>
+<h3 id="union-of-types">Union of Types</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">httpStatusStr</span>: <span style="color:#66d9ef">200</span> <span style="color:#f92672">|</span> <span style="color:#ae81ff">404</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;500&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;502&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;502&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">f</span>(<span style="color:#a6e22e">s</span>: <span style="color:#66d9ef">200</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;502&#39;</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> <span style="color:#a6e22e">status</span>: <span style="color:#66d9ef">string</span> <span style="color:#f92672">|</span> <span style="color:#66d9ef">number</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">s</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// let status: string = s 错误
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// let status: number = s 错误
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><p>顾名思义，类型的并集。</p>
+<h3 id="any">any</h3>
+<p>通过<code>any</code>类型，让编译器不进行语法检查。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">a</span>:<span style="color:#66d9ef">any</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;abc&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">123</span> <span style="color:#75715e">// ok
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">a</span> <span style="color:#f92672">=</span> {}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">name</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;jack&#39;</span>
+</span></span></code></pre></div><h3 id="undefined">undefined</h3>
+<p>一旦定义为<code>undefined</code>，值就只能是<code>undefined</code>。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">c</span>:<span style="color:#66d9ef">undefined</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">undefined</span>
+</span></span></code></pre></div><p>一般，用在这种情况，实现可选参数：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">httpStatusStr</span>: <span style="color:#66d9ef">200</span> <span style="color:#f92672">|</span> <span style="color:#ae81ff">404</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;500&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;502&#39;</span> <span style="color:#f92672">|</span> <span style="color:#66d9ef">undefined</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">undefined</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">f</span>(<span style="color:#a6e22e">s</span>: <span style="color:#66d9ef">200</span> <span style="color:#f92672">|</span> <span style="color:#ae81ff">404</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;500&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;502&#39;</span> <span style="color:#f92672">|</span> <span style="color:#66d9ef">undefined</span>) {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="枚举">枚举</h3>
+<ul>
+<li>枚举是 Typescript 特有的类型，JS 没有。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">enum</span> <span style="color:#a6e22e">HTTPStatus</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">OK</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">NOT_FOUND</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">INTERNAL_SERVER_ERROR</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">processeHTTPStatus</span>(<span style="color:#a6e22e">s</span>: <span style="color:#66d9ef">HTTPStatus</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">s</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">processeHTTPStatus</span>(<span style="color:#a6e22e">HTTPStatus</span>.<span style="color:#a6e22e">NOT_FOUND</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// [LOG]: 1 
+</span></span></span></code></pre></div><ul>
+<li>支持定义枚举变量</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">enum</span> <span style="color:#a6e22e">HTTPStatus</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">OK</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">200</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">NOT_FOUND</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">404</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">INTERNAL_SERVER_ERROR</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">500</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>支持和 union of  types 混用</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">enum</span> <span style="color:#a6e22e">TimingFunc</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">LINEAR</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;linear&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">EASE</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;ease&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">EASE_IN</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;ease-in&#39;</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">tf</span>(<span style="color:#a6e22e">timingFunc</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;linear&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;ease&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;ease-in&#39;</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">timingFunc</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">tf</span>(<span style="color:#a6e22e">TimingFunc</span>.<span style="color:#a6e22e">EASE</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// &#34;ease&#34; 
+</span></span></span></code></pre></div><ul>
+<li>从类型值推导回类型，类似 map 结构通过 key 寻找 value</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">tfBack</span>(<span style="color:#a6e22e">timingFunc</span>: <span style="color:#66d9ef">HTTPStatus</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">HTTPStatus</span>[<span style="color:#a6e22e">timingFunc</span>])
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">tfBack</span>(<span style="color:#a6e22e">HTTPStatus</span>.<span style="color:#a6e22e">INTERNAL_SERVER_ERROR</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// &#34;INTERNAL_SERVER_ERROR&#34;
+</span></span></span></code></pre></div><h3 id="数组类型">数组类型</h3>
+<ul>
+<li>使用 const 定义的数组元素是可以修改的</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">nums</span> <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>]
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// or
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">nums</span>: <span style="color:#66d9ef">number</span>[] <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>]
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 或者使用泛型
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">nums</span>: <span style="color:#66d9ef">Array</span>&lt;<span style="color:#f92672">number</span>&gt; <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>]
+</span></span></code></pre></div><ul>
+<li>数组也支持<strong>多种类型</strong></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">nums</span> <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#e6db74">&#39;a&#39;</span>]
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// let nums: (string | number)[]
+</span></span></span></code></pre></div><ul>
+<li>其他基本操作：遍历，长度，从头/尾增加删除，切片</li>
+<li>判断数组是否为空要使用长度来判断</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#75715e">// 遍历
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 长度
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">nums</span>.<span style="color:#a6e22e">length</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 从最右侧追加 类似队列
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">nums</span>.<span style="color:#a6e22e">push</span>(<span style="color:#ae81ff">6</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 去除最右边的值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">nums</span>.<span style="color:#a6e22e">pop</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 从最左侧增加元素
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">nums</span>.<span style="color:#a6e22e">unshift</span>(<span style="color:#ae81ff">7</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 相应的 拿掉最左边的元素
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">nums</span>.<span style="color:#a6e22e">shift</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 切片 像 golang 一样前开后闭
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">num</span> <span style="color:#f92672">=</span> [<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">5</span>,<span style="color:#ae81ff">6</span>,<span style="color:#ae81ff">7</span>]
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">num</span>.<span style="color:#a6e22e">slice</span>(<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">5</span>)	<span style="color:#75715e">// [2,3,4]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">anum</span>.<span style="color:#a6e22e">slice</span>(<span style="color:#ae81ff">2</span>)	<span style="color:#75715e">// [2, 3, 4, 5, 6, 7] 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 删除元素 返回删除的内容
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">delete</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">num</span>.<span style="color:#a6e22e">splice</span>(<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">2</span>)	<span style="color:#75715e">// 从下标 3 开始删除 2 个元素
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 从下标 3 开始删除 2 个元素 然后在对应位置填充 9,8,7 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">delete</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">num</span>.<span style="color:#a6e22e">splice</span>(<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">9</span>,<span style="color:#ae81ff">8</span>,<span style="color:#ae81ff">7</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 查找元素下标
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">idx</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">nums</span>.<span style="color:#a6e22e">indexOf</span>(<span style="color:#ae81ff">2</span>)		<span style="color:#75715e">// 元素值所对应的下标
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">idx</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">nums</span>.<span style="color:#a6e22e">indexOf</span>(<span style="color:#ae81ff">2</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#ae81ff">5</span>)	   <span style="color:#75715e">// 元素值 2 所对应的下标 从下标 5 开始寻找
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">idx</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">nums</span>.<span style="color:#a6e22e">lastIndexOf</span>(<span style="color:#ae81ff">2</span>)	<span style="color:#75715e">// 从后向前找
+</span></span></span></code></pre></div><ul>
+<li>数组排序的 <code>sort()</code> 函数默认使用 ASCII 码顺序排列，具体在后文 函数式编程 部分中说明。</li>
+<li>同时，forEach 遍历数组也在后文章节 <a class="link" href="#%e5%87%bd%e6%95%b0%e7%9a%84%e5%8f%82%e6%95%b0%e5%8f%af%e4%bb%a5%e6%98%af%e5%87%bd%e6%95%b0" >函数的参数可以是函数</a></li>
+</ul>
+<h3 id="元组">元组</h3>
+<ul>
+<li>虽然 Typescript 没有原生的元组语法，但是可以利用数组实现</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">a</span> <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>]
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> [<span style="color:#a6e22e">a1</span>,<span style="color:#a6e22e">a2</span>,<span style="color:#a6e22e">a3</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">a</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">a1</span>,<span style="color:#a6e22e">a2</span>,<span style="color:#a6e22e">a3</span>)	<span style="color:#75715e">// 1,  2,  3 
+</span></span></span></code></pre></div><h2 id="对象">对象</h2>
+<ul>
+<li>快速创建一个对象</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">emp1</span> <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">first</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;li&#39;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">last</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;duo&#39;</span>,
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">gender</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;male&#39;</span> <span style="color:#66d9ef">as</span> <span style="color:#e6db74">&#39;male&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;female&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;other&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">9000</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">bonus</span>: <span style="color:#66d9ef">undefined</span> <span style="color:#66d9ef">as</span> (<span style="color:#66d9ef">number</span> <span style="color:#f92672">|</span> <span style="color:#66d9ef">undefined</span>),
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">badges</span><span style="color:#f92672">:</span> [<span style="color:#e6db74">&#39;a&#39;</span>, <span style="color:#e6db74">&#39;b&#39;</span>],
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">emp1</span>.<span style="color:#a6e22e">bonus</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">100000</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">emp1</span>.<span style="color:#a6e22e">gender</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;other&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">emp1</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// {
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//   &#34;name&#34;: {
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//     &#34;first&#34;: &#34;li&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//     &#34;last&#34;: &#34;duo&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//   },
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//   &#34;gender&#34;: &#34;other&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//   &#34;salary&#34;: 9000,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//   &#34;bonus&#34;: 100000,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//   &#34;badges&#34;: [
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//     &#34;a&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//     &#34;b&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//   ]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// } 
+</span></span></span></code></pre></div><ul>
+<li>对象转 json 字符串 以及 json 字符串转对象</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">s</span>: <span style="color:#66d9ef">string</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">JSON</span>.<span style="color:#a6e22e">stringify</span>(<span style="color:#a6e22e">emp1</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">s</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// &#34;{&#34;name&#34;:{&#34;first&#34;:&#34;li&#34;,&#34;last&#34;:&#34;duo&#34;},&#34;gender&#34;:&#34;other&#34;,&#34;salary&#34;:9000,&#34;bonus&#34;:100000,&#34;badges&#34;:[&#34;a&#34;,&#34;b&#34;]}&#34; 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 再由 json 字符串转回对象
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 但是 这种字符串转换的对象 编译器并不能知道它具体是什么类型 会认为 emp2: any
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">emp2</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">JSON</span>.<span style="color:#a6e22e">parse</span>(<span style="color:#a6e22e">s</span>)
+</span></span></code></pre></div><h2 id="逻辑控制">逻辑控制</h2>
+<h3 id="ifelse">if/else</h3>
+<ul>
+<li>判断相等，一定用<code>===</code></li>
+<li>判断不相等，一定用<code>!==</code></li>
+<li>如果遇到类型组合的参数，就不用担心有意外情况，因为对于类型组合参数来说，非法数值根本无法当作参数，如下面的例子：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">processeHttpStatus</span>(<span style="color:#a6e22e">s</span>:<span style="color:#66d9ef">200</span> <span style="color:#f92672">|</span> <span style="color:#ae81ff">404</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;500&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;502&#39;</span>){
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">s</span><span style="color:#f92672">===</span><span style="color:#ae81ff">200</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;ok&#39;</span>)
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">s</span><span style="color:#f92672">===</span><span style="color:#e6db74">&#39;500&#39;</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;500&#39;</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 不需要 除了 200 | 404 | &#39;500&#39; | &#39;502&#39; 以外的值传不进来
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// else {
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">//    console.log(&#39;unknown&#39;)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// }
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">processeHttpStatus</span>(<span style="color:#ae81ff">200</span>)			<span style="color:#75715e">// &#34;ok&#34; 
+</span></span></span></code></pre></div><h3 id="switch">switch</h3>
+<ul>
+<li>注意，不像 go，需要在每个分支中加 <code>break</code>。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">processeHttpStatus</span>(<span style="color:#a6e22e">s</span>:<span style="color:#66d9ef">200</span> <span style="color:#f92672">|</span> <span style="color:#ae81ff">404</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;500&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;502&#39;</span> <span style="color:#f92672">|</span> <span style="color:#66d9ef">undefined</span>){
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">status</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">typeof</span> <span style="color:#a6e22e">s</span> <span style="color:#f92672">===</span> <span style="color:#e6db74">&#39;string&#39;</span> <span style="color:#f92672">?</span> parseInt(<span style="color:#a6e22e">s</span>) <span style="color:#f92672">:</span> <span style="color:#a6e22e">s</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">switch</span> (<span style="color:#a6e22e">status</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">200</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">console.log</span>(<span style="color:#e6db74">&#39;ok&#39;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">502</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">console.log</span>(<span style="color:#e6db74">&#39;502&#39;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">default</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;unknown&#39;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="for-和-while">for 和 while</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">sum</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">let</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">100</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">sum</span> <span style="color:#f92672">+=</span> <span style="color:#a6e22e">i</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">while</span> (<span style="color:#a6e22e">i</span> <span style="color:#f92672">&lt;=</span> <span style="color:#ae81ff">100</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">sum</span> <span style="color:#f92672">+=</span> <span style="color:#a6e22e">i</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="trycatch">try/catch</h3>
+<ul>
+<li>保护程序在运行中出现错误时还能继续运行下去。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">sum</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">let</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">100</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">sum</span> <span style="color:#f92672">+=</span> <span style="color:#a6e22e">i</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">i</span> <span style="color:#f92672">%</span> <span style="color:#ae81ff">17</span> <span style="color:#f92672">===</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#e6db74">`bad number </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">i</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">catch</span> (<span style="color:#a6e22e">err</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">sum</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// [ERR]: &#34;bad number 0&#34; 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// [ERR]: &#34;bad number 17&#34; 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// [ERR]: &#34;bad number 34&#34; 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// [ERR]: &#34;bad number 51&#34; 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// [ERR]: &#34;bad number 68&#34; 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// [ERR]: &#34;bad number 85&#34; 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// [LOG]: 4950 
+</span></span></span></code></pre></div><h2 id="函数">函数</h2>
+<ul>
+<li>函数定义
+<ul>
+<li>注意<strong>可选参数</strong>的使用，可选参数传入就是 undefined</li>
+<li>注意<strong>默认值</strong>的使用</li>
+<li>注意<strong>可变参数列表</strong>的使用</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">add</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>: <span style="color:#66d9ef">number</span>, 
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">c?</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">d</span>: <span style="color:#66d9ef">number</span><span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>, 
+</span></span><span style="display:flex;"><span>    ...<span style="color:#a6e22e">e</span>: <span style="color:#66d9ef">number</span>[])<span style="color:#f92672">:</span> <span style="color:#66d9ef">number</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> <span style="color:#a6e22e">sum</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">a</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">b</span> <span style="color:#f92672">+</span> (<span style="color:#a6e22e">c</span><span style="color:#f92672">||</span><span style="color:#ae81ff">0</span>) <span style="color:#f92672">+</span> <span style="color:#a6e22e">d</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">let</span> <span style="color:#a6e22e">i</span><span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">&lt;</span> <span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">length</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">sum</span> <span style="color:#f92672">+=</span> <span style="color:#a6e22e">e</span>[<span style="color:#a6e22e">i</span>]
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">sum</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">nums</span> <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">4</span>]
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">4</span>,...<span style="color:#a6e22e">nums</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// add(1,2,3,4,1,2,3,4) 也行 不能直接传 nums 需要加 ...
+</span></span></span></code></pre></div><ul>
+<li>对象类型做参数：使用对象类型做参数使得参数易于理解</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">send</span>(<span style="color:#a6e22e">params</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">url</span>: <span style="color:#66d9ef">string</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">method</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;GET&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;POST&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;PUT&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">header</span>: <span style="color:#66d9ef">object</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">data?</span>: <span style="color:#66d9ef">string</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">ack</span>: <span style="color:#66d9ef">number</span>[]
+</span></span><span style="display:flex;"><span>})<span style="color:#f92672">:</span> <span style="color:#66d9ef">boolean</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">send</span>({
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">url</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;mockurl&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">method</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;GET&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">header</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">contentType</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">ack</span><span style="color:#f92672">:</span> [<span style="color:#ae81ff">101</span>, <span style="color:#ae81ff">102</span>],
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><h3 id="为对象定义方法">为对象定义方法</h3>
+<ul>
+<li>和在对象外定义的不同，在于不需要写 <code>function</code> 关键字，其他的 参数列表、返回值 的定义都相同。</li>
+<li>注意，使用对象的类型需要使用 <code>this.</code> 来告诉编译器使用这个对象中的变量。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">emp1</span> <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">first</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;li&#39;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">last</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;duo&#39;</span>,
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">gender</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;male&#39;</span> <span style="color:#66d9ef">as</span> <span style="color:#e6db74">&#39;male&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;female&#39;</span> <span style="color:#f92672">|</span> <span style="color:#e6db74">&#39;other&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">9000</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">bonus</span>: <span style="color:#66d9ef">undefined</span> <span style="color:#66d9ef">as</span> (<span style="color:#66d9ef">number</span> <span style="color:#f92672">|</span> <span style="color:#66d9ef">undefined</span>),
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">badges</span><span style="color:#f92672">:</span> [<span style="color:#e6db74">&#39;a&#39;</span>, <span style="color:#e6db74">&#39;b&#39;</span>],
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">upDateSalary</span>(<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>)<span style="color:#f92672">:</span> <span style="color:#66d9ef">void</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">salary</span> <span style="color:#f92672">+=</span> <span style="color:#a6e22e">a</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">emp1</span>.<span style="color:#a6e22e">upDateSalary</span>(<span style="color:#ae81ff">2000</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">emp1</span>.<span style="color:#a6e22e">salary</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 11000 
+</span></span></span></code></pre></div><h2 id="函数式编程风格">函数式编程风格</h2>
+<h3 id="typescript-中函数是一等公民">Typescript 中，函数是“一等公民”</h3>
+<p>与 golang 一样。Typescript 天生支持函数式编程。</p>
+<ul>
+<li>lambda 表达式，在 JS/TS 中叫 箭头函数：<code>let comp = (a: number, b:number) =&gt; a-b</code></li>
+<li>注意使用 箭头函数 和使用 <code>function</code> 的区别</li>
+</ul>
+<h4 id="变量的类型可以是函数">变量的类型可以是函数</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">comp</span> <span style="color:#f92672">=</span> (<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>:<span style="color:#66d9ef">number</span>) <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">a</span><span style="color:#f92672">-</span><span style="color:#a6e22e">b</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// or
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">comp</span> <span style="color:#f92672">=</span> (<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>:<span style="color:#66d9ef">number</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">a</span><span style="color:#f92672">-</span><span style="color:#a6e22e">b</span>
+</span></span></code></pre></div><p>等同于：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">comp</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">function</span> (<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>:<span style="color:#66d9ef">number</span>)<span style="color:#f92672">:</span> <span style="color:#66d9ef">number</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">a</span><span style="color:#f92672">-</span><span style="color:#a6e22e">b</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="值-literal-可以是函数">值 (literal) 可以是函数</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">sort</span>((<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>:<span style="color:#66d9ef">number</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">a</span><span style="color:#f92672">-</span><span style="color:#a6e22e">b</span>)
+</span></span></code></pre></div><p>或者，加大括号就要像函数体中一样，需要明确的 <code>return</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">sort</span>((<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>:<span style="color:#66d9ef">number</span>) <span style="color:#f92672">=&gt;</span> { 
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">a</span><span style="color:#f92672">-</span><span style="color:#a6e22e">b</span>
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><h4 id="对象的字段可以是函数">对象的字段可以是函数</h4>
+<p>如 <a class="link" href="#%e4%b8%ba%e5%af%b9%e8%b1%a1%e5%ae%9a%e4%b9%89%e6%96%b9%e6%b3%95" >为对象定义方法</a>。</p>
+<h4 id="函数的参数可以是函数">函数的参数可以是函数</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">a</span> <span style="color:#f92672">=</span> [<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">44</span>,<span style="color:#ae81ff">5</span>,<span style="color:#ae81ff">78</span>,<span style="color:#ae81ff">32</span>,<span style="color:#ae81ff">12</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">sort</span>((<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>:<span style="color:#66d9ef">number</span>) <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">a</span><span style="color:#f92672">-</span><span style="color:#a6e22e">b</span>
+</span></span><span style="display:flex;"><span>})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">a</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// [1, 1, 1, 2, 2, 3, 4, 5, 12, 32, 44, 78]
+</span></span></span></code></pre></div><p>等同于：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">comp</span>(<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>:<span style="color:#66d9ef">number</span>)<span style="color:#f92672">:</span> <span style="color:#66d9ef">number</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">a</span><span style="color:#f92672">-</span><span style="color:#a6e22e">b</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">sort</span>(<span style="color:#a6e22e">comp</span>)
+</span></span></code></pre></div><p>再或者，使用 forEach遍历数组：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">a</span> <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">5</span>,<span style="color:#ae81ff">6</span>,<span style="color:#ae81ff">7</span>,<span style="color:#ae81ff">8</span>,<span style="color:#ae81ff">9</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">b</span>: <span style="color:#66d9ef">number</span>[] <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">forEach</span>((<span style="color:#a6e22e">v</span>) <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">push</span>(<span style="color:#a6e22e">v</span><span style="color:#f92672">*</span><span style="color:#a6e22e">v</span>)
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><h4 id="函数的返回值可以是函数">函数的返回值可以是函数</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">createComp() {</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> (<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>: <span style="color:#66d9ef">number</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">a</span><span style="color:#f92672">-</span><span style="color:#a6e22e">b</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">sort</span>(<span style="color:#a6e22e">createComp</span>())
+</span></span></code></pre></div><p>参数和返回值同时是函数，这里有点类似于 Gin 框架的串联中间件，例如在转发请求之前记录日志：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">createComp() {</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> (<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>: <span style="color:#66d9ef">number</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">a</span><span style="color:#f92672">-</span><span style="color:#a6e22e">b</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">logComp</span>(<span style="color:#a6e22e">comp</span><span style="color:#f92672">:</span> (<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>: <span style="color:#66d9ef">number</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">number</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> (<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>: <span style="color:#66d9ef">number</span>) <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;comp&#39;</span>,<span style="color:#a6e22e">a</span>,<span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">comp</span>(<span style="color:#a6e22e">a</span>, <span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">sort</span>(<span style="color:#a6e22e">c</span>(<span style="color:#a6e22e">logComp</span>()))
+</span></span></code></pre></div><h3 id="函数的闭包">函数的闭包</h3>
+<p>核心思想是：控制变量的可见范围，避免不期望的操作。</p>
+<h4 id="部分应用函数">部分应用函数</h4>
+<p>在参数数量不匹配时，把函数用起来，就使用 函数闭包，实现部分应用函数：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">GoodFactor</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">a</span> <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">5</span>,<span style="color:#ae81ff">6</span>,<span style="color:#ae81ff">7</span>,<span style="color:#ae81ff">8</span>,<span style="color:#ae81ff">9</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 接收两个参数 返回 boolean
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">isGoodNumber</span>(<span style="color:#a6e22e">goodFactor</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">v</span>: <span style="color:#66d9ef">number</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">v</span> <span style="color:#f92672">%</span> <span style="color:#a6e22e">goodFactor</span> <span style="color:#f92672">===</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 接收两个参数 第二个参数是个函数，该函数只有一个参数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">filterArray</span>(<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>[], <span style="color:#a6e22e">f</span><span style="color:#f92672">:</span> (<span style="color:#a6e22e">v</span>: <span style="color:#66d9ef">number</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">boolean</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">filter</span>(<span style="color:#a6e22e">f</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 那么如何使用 filterArray，把 isGoodNumber 作为第二个参数传入呢？
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 利用 函数闭包，给构造一个合法的函数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// (v) =&gt; isGoodNumber(GoodFactor, v) 等同于 (v) =&gt; isGoodNumber(GoodFactor, v) =&gt; boolean 也就相当于 (v) =&gt; boolean
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">filterArray</span>(<span style="color:#a6e22e">a</span>, (<span style="color:#a6e22e">v</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">isGoodNumber</span>(<span style="color:#a6e22e">GoodFactor</span>, <span style="color:#a6e22e">v</span>))
+</span></span></code></pre></div><p>等同于：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">isGoodNumber</span>(<span style="color:#a6e22e">goodFactor</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">v</span>: <span style="color:#66d9ef">number</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">v</span> <span style="color:#f92672">%</span> <span style="color:#a6e22e">goodFactor</span> <span style="color:#f92672">===</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">filterArray</span>(<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>[], <span style="color:#a6e22e">f</span><span style="color:#f92672">:</span> (<span style="color:#a6e22e">v</span>: <span style="color:#66d9ef">number</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">boolean</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">filter</span>(<span style="color:#a6e22e">f</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">GoodFactor</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">a</span> <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">5</span>,<span style="color:#ae81ff">6</span>,<span style="color:#ae81ff">7</span>,<span style="color:#ae81ff">8</span>,<span style="color:#ae81ff">9</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 利用这个函数 把双参数的 isGoodNumber 封装成单参数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">partialApply</span>(<span style="color:#a6e22e">f</span><span style="color:#f92672">:</span> (<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>: <span style="color:#66d9ef">number</span>)<span style="color:#f92672">=&gt;</span><span style="color:#66d9ef">boolean</span>, <span style="color:#a6e22e">gn</span>: <span style="color:#66d9ef">number</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> (<span style="color:#a6e22e">v</span>: <span style="color:#66d9ef">number</span>) <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">f</span>(<span style="color:#a6e22e">gn</span>, <span style="color:#a6e22e">v</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">filterArray</span>(<span style="color:#a6e22e">a</span>, <span style="color:#a6e22e">partialApply</span>(<span style="color:#a6e22e">isGoodNumber</span>, <span style="color:#a6e22e">GoodFactor</span>))
+</span></span></code></pre></div><h2 id="promise">Promise</h2>
+<p>Promise 对应的是前端应用的异步运行机制，为解决程序异步运行而创建出的特性。</p>
+<h3 id="创建使用串联-promise-和错误捕获">创建、使用、串联 Promise 和错误捕获</h3>
+<p>首先，看一个使用回调函数的例子：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">add</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">a</span>:<span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>:<span style="color:#66d9ef">number</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">callback</span><span style="color:#f92672">:</span> (<span style="color:#a6e22e">res</span>: <span style="color:#66d9ef">number</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">void</span>)<span style="color:#f92672">:</span> <span style="color:#66d9ef">void</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 模拟网络请求的延迟
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#a6e22e">setTimeout</span>(()<span style="color:#f92672">=&gt;</span>{
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">callback</span>(<span style="color:#a6e22e">a</span><span style="color:#f92672">+</span><span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span>        }, <span style="color:#ae81ff">2000</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>, <span style="color:#a6e22e">res</span> <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;2+3&#39;</span>, <span style="color:#a6e22e">res</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">add</span>(<span style="color:#a6e22e">res</span>, <span style="color:#ae81ff">4</span>, <span style="color:#a6e22e">res2</span> <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#34;2+3+4&#34;</span>, <span style="color:#a6e22e">res2</span>)
+</span></span><span style="display:flex;"><span>    })
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>这是一个使用 嵌套的回调函数 的例子。模拟网络请求的延迟，嵌套累加遍历。这种写法看起来：</p>
+<ul>
+<li>比较难懂</li>
+<li>当嵌套层数比较深的时候，不容易理解</li>
+</ul>
+<p>下面把它改成 Promise 形式：</p>
+<ul>
+<li>Promise 比回调函数更容易理解</li>
+<li>有更简单的使用和处理方式</li>
+<li>通过 <code>.then</code> 串联，解决繁杂的回调嵌套</li>
+<li>通过 <code>reslove</code> ，<code>reject</code> 返回成功或失败的情况</li>
+<li>通过 <code>catch</code> 捕获错误</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">add</span>( <span style="color:#a6e22e">a</span>:<span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>:<span style="color:#66d9ef">number</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Promise</span>((<span style="color:#a6e22e">reslove</span>, <span style="color:#a6e22e">reject</span>) <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">b</span><span style="color:#f92672">%</span><span style="color:#ae81ff">17</span><span style="color:#f92672">===</span><span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 定义处理失败情况
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#a6e22e">reject</span>(<span style="color:#e6db74">`bad number: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">b</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">setTimeout</span>(()<span style="color:#f92672">=&gt;</span>{
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 处理成功 返回 reslove
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#a6e22e">reslove</span>(<span style="color:#a6e22e">a</span><span style="color:#f92672">+</span><span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span>        }, <span style="color:#ae81ff">2000</span>)
+</span></span><span style="display:flex;"><span>    })
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 通过 .then 调用 好理解 同时易于串联处理
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>).<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">res</span><span style="color:#f92672">=&gt;</span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;2+3&#39;</span>, <span style="color:#a6e22e">res</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">add</span>(<span style="color:#a6e22e">res</span>, <span style="color:#ae81ff">17</span>)
+</span></span><span style="display:flex;"><span>}).<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">res</span><span style="color:#f92672">=&gt;</span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;2+3+4&#39;</span>, <span style="color:#a6e22e">res</span>)
+</span></span><span style="display:flex;"><span>}).<span style="color:#66d9ef">catch</span>(<span style="color:#a6e22e">err</span><span style="color:#f92672">=&gt;</span>{	<span style="color:#75715e">// 通过 catch 捕获 reject 的情况
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;caught error&#39;</span>, <span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>Promise 的定义如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">Promise</span>: <span style="color:#66d9ef">PromiseConstructor</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">new</span> &lt;<span style="color:#f92672">number</span>&gt;(<span style="color:#a6e22e">executor</span><span style="color:#f92672">:</span> (<span style="color:#a6e22e">resolve</span><span style="color:#f92672">:</span> (<span style="color:#a6e22e">value</span>: <span style="color:#66d9ef">number</span> <span style="color:#f92672">|</span> <span style="color:#a6e22e">PromiseLike</span>&lt;<span style="color:#f92672">number</span>&gt;) <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">void</span>, <span style="color:#a6e22e">reject</span><span style="color:#f92672">:</span> (<span style="color:#a6e22e">reason?</span>: <span style="color:#66d9ef">any</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">void</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">void</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt;
+</span></span></code></pre></div><p>Promise 处理成功，以 <code>resolve</code> 返回，如果失败则以 <code>reject</code> 返回。</p>
+<h3 id="等待-promise-运行">等待 Promise 运行</h3>
+<h4 id="所有-promise-都运行完成再进行下一步">所有 Promise 都运行完成再进行下一步</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">add</span>( <span style="color:#a6e22e">a</span>:<span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>:<span style="color:#66d9ef">number</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Promise</span>((<span style="color:#a6e22e">reslove</span>, <span style="color:#a6e22e">reject</span>) <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">b</span><span style="color:#f92672">%</span><span style="color:#ae81ff">17</span><span style="color:#f92672">===</span><span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">reject</span>(<span style="color:#e6db74">`bad number: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">b</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">setTimeout</span>(()<span style="color:#f92672">=&gt;</span>{
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">reslove</span>(<span style="color:#a6e22e">a</span><span style="color:#f92672">+</span><span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span>        }, <span style="color:#ae81ff">2000</span>)
+</span></span><span style="display:flex;"><span>    })
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">p</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">Promise</span>.<span style="color:#a6e22e">all</span>([<span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>), <span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">5</span>)]).<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">res</span><span style="color:#f92672">=&gt;</span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">res</span>[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">*</span><span style="color:#a6e22e">res</span>[<span style="color:#ae81ff">1</span>]) 
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>通过 <code>Promise.all()</code>，可以等待参数中的 Promise 都运行完成再进行下一步操作，<code>Promise.all()</code> 会根据不同的参数形成签名，在这个例子中，的签名是：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#a6e22e">PromiseConstructor</span>.<span style="color:#a6e22e">all</span><span style="color:#f92672">&lt;</span>[<span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt;, <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt;]<span style="color:#f92672">&gt;</span>(<span style="color:#a6e22e">values</span><span style="color:#f92672">:</span> [<span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt;, <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt;])<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span><span style="color:#f92672">&lt;</span>[<span style="color:#66d9ef">number</span>, <span style="color:#66d9ef">number</span>]<span style="color:#f92672">&gt;</span>
+</span></span></code></pre></div><p>它接收了 <code>Promise&lt;number&gt;</code>类型的数组，并返回 <code>number</code> 类型的数组。</p>
+<h4 id="等待多个-promise-中的一个完成就继续">等待多个 Promise 中的一个完成就继续</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">r</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">Promise</span>.<span style="color:#a6e22e">race</span>([<span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>), <span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">5</span>)]).<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">res</span><span style="color:#f92672">=&gt;</span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">res</span>) 
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>使用 <code>Promise.race()</code>   实现这个能力。当然它的返回结果只有一个。本示例中，它的函数签名如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#a6e22e">PromiseConstructor</span>.<span style="color:#a6e22e">race</span><span style="color:#f92672">&lt;</span>[<span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt;, <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt;]<span style="color:#f92672">&gt;</span>(<span style="color:#a6e22e">values</span><span style="color:#f92672">:</span> [<span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt;, <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt;])<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt;
+</span></span></code></pre></div><h3 id="asyncawait-异步函数">async/await 异步函数</h3>
+<p><code>async</code> 和 <code>await</code> 算是 TS 中的一个语法糖，它们的使用可以很好的融入 Promise 语法，实现函数的异步运行：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">add</span>( <span style="color:#a6e22e">a</span>:<span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>:<span style="color:#66d9ef">number</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Promise</span>((<span style="color:#a6e22e">reslove</span>, <span style="color:#a6e22e">reject</span>) <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">b</span><span style="color:#f92672">%</span><span style="color:#ae81ff">17</span><span style="color:#f92672">===</span><span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">reject</span>(<span style="color:#e6db74">`bad number: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">b</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">setTimeout</span>(()<span style="color:#f92672">=&gt;</span>{
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">reslove</span>(<span style="color:#a6e22e">a</span><span style="color:#f92672">+</span><span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span>        }, <span style="color:#ae81ff">2000</span>)
+</span></span><span style="display:flex;"><span>    })
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 在声明函数之前 添加 async 关键字
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 用于异步执行
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">calc() {</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// await 不能在全局范围中使用 只能在局部中/函数中使用
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 用于等待函数执行结果
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">a</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;2+3&#39;</span>, <span style="color:#a6e22e">a</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">b</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">5</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">b</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">calc</span>().<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">res</span> <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">res</span>)
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>其中，函数 <code>calc()</code> 的声明如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">calc</span>()<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt;
+</span></span></code></pre></div><p>它的返回值类型是一个 <code>Promise&lt;number&gt;</code> 。通过 <code>async</code> 和 <code>await</code> ，可以方便的使用 Promise 函数。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">add</span>( <span style="color:#a6e22e">a</span>:<span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>:<span style="color:#66d9ef">number</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Promise</span>((<span style="color:#a6e22e">reslove</span>, <span style="color:#a6e22e">reject</span>) <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">b</span><span style="color:#f92672">%</span><span style="color:#ae81ff">17</span><span style="color:#f92672">===</span><span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">reject</span>(<span style="color:#e6db74">`bad number: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">b</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">setTimeout</span>(()<span style="color:#f92672">=&gt;</span>{
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">reslove</span>(<span style="color:#a6e22e">a</span><span style="color:#f92672">+</span><span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span>        }, <span style="color:#ae81ff">2000</span>)
+</span></span><span style="display:flex;"><span>    })
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">mul</span>(<span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">number</span>, <span style="color:#a6e22e">b</span>:<span style="color:#66d9ef">number</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">Promise</span>&lt;<span style="color:#f92672">number</span>&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Promise</span>((<span style="color:#a6e22e">reslove</span>, <span style="color:#a6e22e">reject</span>) <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">reslove</span>(<span style="color:#a6e22e">a</span><span style="color:#f92672">*</span><span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span>    })
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">calc() {</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 同样的 使用 try-catch 捕获错误
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 在这里依然可以使用 Promise.all() 因为它返回的仍然是 Promise
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">const</span> [<span style="color:#a6e22e">a</span>,<span style="color:#a6e22e">b</span>] <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">Promise</span>.<span style="color:#a6e22e">all</span>([<span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>), <span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">5</span>)])
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">mul</span>(<span style="color:#a6e22e">a</span>,<span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">catch</span> (<span style="color:#a6e22e">err</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;catch err&#39;</span>, <span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">undefined</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">calc</span>().<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">res</span> <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">res</span>)
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><h2 id="接口">接口</h2>
+<p>TS 将接口看为“一种对象形式的规定”，与其他语言不同，它不要求你“实现”一个接口，而是你定义的数据结构“要符合接口的规定”。接口描述一个类型应该有的字段。</p>
+<ul>
+<li><code>readonly</code> 表示只读字段</li>
+<li><code>?</code> 用于标识可选字段</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">Employee</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">readonly</span> <span style="color:#a6e22e">name</span>: <span style="color:#66d9ef">string</span>	<span style="color:#75715e">// readonly 只读字段
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">number</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">bonus?</span>: <span style="color:#66d9ef">number</span>	<span style="color:#75715e">// ? 可选
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">e1</span>: <span style="color:#66d9ef">Employee</span> <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;jack&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">10000</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">e2</span>: <span style="color:#66d9ef">Employee</span> <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">name</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;jack&#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">10000</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">bonus</span>: <span style="color:#66d9ef">3000</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><blockquote>
+<p>接口里面可以定义方法吗？</p>
+<p>当然可以。但是 TS 中的接口大多都只用于定义字段，它的设计并不适用于定义方法。</p>
+</blockquote>
+<h3 id="可选字段串联和非空断言">可选字段串联和非空断言</h3>
+<ul>
+<li>使用 <code>?</code> 标识可选字段，以及在使用时告诉编译器该字段可能没有；</li>
+<li>在使用变量时，利用 <code>!</code> 进行可选字段的非空断言，让编译器认为该可选字段一定有值，忽略空的情况。</li>
+</ul>
+<p>通过代码，这个特性还是比较好理解的：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">Employee</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">name</span><span style="color:#f92672">?:</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">first?</span>: <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">last</span>: <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">number</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">bonus?</span>: <span style="color:#66d9ef">number</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">updateBonus</span>(<span style="color:#a6e22e">p</span>: <span style="color:#66d9ef">number</span>)<span style="color:#f92672">:</span> <span style="color:#66d9ef">void</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">hasAAA</span>(<span style="color:#a6e22e">e</span>: <span style="color:#66d9ef">Employee</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">name</span><span style="color:#f92672">?</span>.<span style="color:#a6e22e">first</span><span style="color:#f92672">?</span>.<span style="color:#a6e22e">startsWith</span>(<span style="color:#e6db74">&#39;AAA&#39;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>对于接口中定义的对象类型，也可以使用 <code>?</code> 标识其可选性。在使用时，通过 <code>field?.</code> 让编译器自动处理字段空/非空的情况，本示例中，<code>hasAAA</code> 的函数签名为：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">hasAAA</span>(<span style="color:#a6e22e">e</span>: <span style="color:#66d9ef">Employee</span>)<span style="color:#f92672">:</span> <span style="color:#66d9ef">boolean</span> <span style="color:#f92672">|</span> <span style="color:#66d9ef">undefined</span>
+</span></span></code></pre></div><p>如果，我们想告诉编译器，保证可选字段一定有值，那么就 使用 <code>!</code>，这样一来，如果出问题，例如实际上可选字段没有赋值，那么出现后果需要自己处理，编译器不会帮我们处理可选字段为空的情况：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">hasAAA</span>(<span style="color:#a6e22e">e</span>: <span style="color:#66d9ef">Employee</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">name</span><span style="color:#f92672">!</span>.<span style="color:#a6e22e">first</span><span style="color:#f92672">!</span>.<span style="color:#a6e22e">startsWith</span>(<span style="color:#e6db74">&#39;AAA&#39;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="接口的扩展">接口的扩展</h3>
+<p>接口之间可以相互扩展，使用 <code>extends</code> 关键字：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">Employee</span> <span style="color:#66d9ef">extends</span> <span style="color:#a6e22e">HasName</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">number</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">bonus?</span>: <span style="color:#66d9ef">number</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">updateBonus</span>(<span style="color:#a6e22e">p</span>: <span style="color:#66d9ef">number</span>)<span style="color:#f92672">:</span> <span style="color:#66d9ef">void</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">HasName</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">name</span><span style="color:#f92672">?:</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">first?</span>: <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">last</span>: <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">hasAAA</span>(<span style="color:#a6e22e">e</span>: <span style="color:#66d9ef">Employee</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">name</span><span style="color:#f92672">?</span>.<span style="color:#a6e22e">first</span><span style="color:#f92672">?</span>.<span style="color:#a6e22e">startsWith</span>(<span style="color:#e6db74">&#39;AAA&#39;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="类型的并断言以及判断">类型的并、断言以及判断</h3>
+<h4 id="类型的并">类型的并</h4>
+<p>和 [Union of Types](#Union of Types) 一样，变量类型可以是多种接口的组合。在使用变量时，只能够 <code>.</code> 出来这些接口公有的字段。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">Button</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">visible</span>: <span style="color:#66d9ef">boolean</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">enabled</span>: <span style="color:#66d9ef">boolean</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">onClick</span>()<span style="color:#f92672">:</span> <span style="color:#66d9ef">void</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">Image</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">visible</span>: <span style="color:#66d9ef">boolean</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">src</span>: <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">processElement</span>(<span style="color:#a6e22e">e</span>: <span style="color:#66d9ef">Button</span> <span style="color:#f92672">|</span> <span style="color:#a6e22e">Image</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 只能 . 出来 visible 字段
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">visible</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="使用-as-进行类型断言">使用 as 进行类型断言</h4>
+<p>上面代码中，如果我们像判断这个变量具体是符合哪一个接口的定义，就需要通过 <code>as</code> 关键字去实现类型断言，告诉编译器它是某个类型。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">processElement</span>(<span style="color:#a6e22e">e</span>: <span style="color:#66d9ef">Button</span> <span style="color:#f92672">|</span> <span style="color:#a6e22e">Image</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> ((<span style="color:#a6e22e">e</span> <span style="color:#66d9ef">as</span> <span style="color:#66d9ef">any</span>).<span style="color:#a6e22e">onClick</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">btn</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">e</span> <span style="color:#66d9ef">as</span> <span style="color:#a6e22e">Button</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">btn</span>.<span style="color:#a6e22e">onClick</span>
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">img</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">e</span> <span style="color:#66d9ef">as</span> <span style="color:#a6e22e">Image</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">img</span>.<span style="color:#a6e22e">src</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>通过 <code>as</code> 关键字，告诉编译器变量的类型。</p>
+<p>此外，还有一种语法也可以实现，即 <code>is</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">isButton</span>(<span style="color:#a6e22e">e</span>: <span style="color:#66d9ef">Button</span> <span style="color:#f92672">|</span> <span style="color:#a6e22e">Image</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">e</span> <span style="color:#66d9ef">is</span> <span style="color:#a6e22e">Button</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> (<span style="color:#a6e22e">e</span> <span style="color:#66d9ef">as</span> <span style="color:#66d9ef">any</span>).<span style="color:#a6e22e">onClick</span> <span style="color:#f92672">!==</span> <span style="color:#66d9ef">undefined</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">processElement</span>(<span style="color:#a6e22e">e</span>: <span style="color:#66d9ef">Button</span> <span style="color:#f92672">|</span> <span style="color:#a6e22e">Image</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">isButton</span>(<span style="color:#a6e22e">e</span>)) {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">onClick</span>
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">src</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这两种方式本质上都是通过 <code>(e as any).onClick</code> 来判断是否有某个接口的属性，来实现接口断言。</p>
+<h2 id="类">类</h2>
+<p>TS 中的类与接口不同，类中的元素必须有初始化的值，通常有两种方式进行初始化</p>
+<ul>
+<li>直接使用 <code>bonus: number = 0</code> 为元素赋初始值。</li>
+<li>使用 <code>constructor</code> 构造函数为元素赋值。同时，在 <code>constructor</code> 中使用 <code>public</code> 或 <code>private</code> ，关键字，可以自动省略显式定义类的元素，相当于定义了相关字段。</li>
+<li>使用 <code>?</code> 可选字段值不需要初始化</li>
+<li>默认字段都是 <code>public</code></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#75715e">// 写法1
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Employee</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">name</span>: <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">number</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#a6e22e">bonus?</span>: <span style="color:#66d9ef">number</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 可选字段 不需要初始化
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">other?</span>: <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">constructor</span>(<span style="color:#a6e22e">name</span>: <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">number</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">name</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">name</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">salary</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">salary</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 写法2
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Employee</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#a6e22e">bonus?</span>: <span style="color:#66d9ef">number</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 使用 public 和 private 后不需要声明
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// name: string
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">// salary: number
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">constructor</span>(<span style="color:#66d9ef">public</span> <span style="color:#a6e22e">name</span>: <span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">private</span> <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">number</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">name</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">name</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">salary</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">salary</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>对于 <code>private</code> 对象，可以定义 <code>set</code>和 <code>get</code> 方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Employee</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#a6e22e">bonus?</span>: <span style="color:#66d9ef">number</span> 
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">constructor</span>(<span style="color:#66d9ef">public</span> <span style="color:#a6e22e">name</span>: <span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">private</span> <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">number</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">name</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">name</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">salary</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">salary</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">set</span> <span style="color:#a6e22e">setBonus</span>(<span style="color:#a6e22e">n</span>: <span style="color:#66d9ef">number</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">bonus</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">n</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 如果直接返回 return this.bonus 这个函数签名就是 Employee.getBonus: number | undefined
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 这里为了避免 undefined 的情况 在 bonus 不存在的情况下返回了 0
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 此时函数签名为 Employee.getBonus: number
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">get</span> <span style="color:#a6e22e">getBonus() {</span> 
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">bonus</span> <span style="color:#f92672">||</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">e</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Employee</span>(<span style="color:#e6db74">&#39;jack&#39;</span>, <span style="color:#ae81ff">8000</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 这里的调用就像赋值一样
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">setBonus</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">10000</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">e</span>)
+</span></span></code></pre></div><p>类也可以继承：</p>
+<ul>
+<li>使用 <code> super()</code> 为其所继承的类赋值，注意这些函数签名的对应字段中不能有 <code>public</code> 和<code>private</code></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Employee</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#a6e22e">bonus?</span>: <span style="color:#66d9ef">number</span> 
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">constructor</span>(<span style="color:#66d9ef">public</span> <span style="color:#a6e22e">name</span>: <span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">number</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">name</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">name</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">salary</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">salary</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">set</span> <span style="color:#a6e22e">setBonus</span>(<span style="color:#a6e22e">n</span>: <span style="color:#66d9ef">number</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">bonus</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">n</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">get</span> <span style="color:#a6e22e">getBonus() {</span> 
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">bonus</span> <span style="color:#f92672">||</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">e</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Employee</span>(<span style="color:#e6db74">&#39;jack&#39;</span>, <span style="color:#ae81ff">8000</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">setBonus</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">10000</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">e</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Manager</span> <span style="color:#66d9ef">extends</span> <span style="color:#a6e22e">Employee</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#a6e22e">reporters</span>: <span style="color:#66d9ef">Employee</span>[] <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 这里的 name salary 前面不能有 public private
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 因为是使用 super 赋值给所继承的类的值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">constructor</span> (<span style="color:#a6e22e">name</span>: <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">number</span>, <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">com</span>: <span style="color:#66d9ef">string</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>(<span style="color:#a6e22e">name</span>, <span style="color:#a6e22e">salary</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">com</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">com</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">addReporter</span>(<span style="color:#a6e22e">e</span>: <span style="color:#66d9ef">Employee</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">reporters</span>.<span style="color:#a6e22e">push</span>(<span style="color:#a6e22e">e</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>} 
+</span></span></code></pre></div><h3 id="用类实现接口">用类实现接口</h3>
+<ul>
+<li>推荐<strong>由接口的使用者去实现接口</strong>，使用<strong>接口的隐式实现</strong></li>
+</ul>
+<p>类如何实现接口？有两种方式：</p>
+<ol>
+<li>
+<p>通过显式的 <code>implements</code> 实现。</p>
+</li>
+<li>
+<p>通过在类中，定义接口所拥有的所有变量，来隐式的实现。</p>
+</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">Employee</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">name</span>: <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">number</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 或者省略 implements 关键字
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">EmployeeImp</span> <span style="color:#66d9ef">implements</span> <span style="color:#a6e22e">Employee</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#a6e22e">bonus?</span>: <span style="color:#66d9ef">number</span> 
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">constructor</span>(<span style="color:#66d9ef">public</span> <span style="color:#a6e22e">name</span>: <span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">salary</span>: <span style="color:#66d9ef">number</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">name</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">name</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">salary</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">salary</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">e</span>: <span style="color:#66d9ef">Employee</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">EmployeeImp</span>(<span style="color:#e6db74">&#39;jack&#39;</span>, <span style="color:#ae81ff">8000</span>)
+</span></span></code></pre></div><h2 id="泛型">泛型</h2>
+<p>泛型的定义是比较抽象的，它用来约束参数类型。例如：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">a</span>: <span style="color:#66d9ef">Array</span>&lt;<span style="color:#f92672">number</span>&gt; <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">p</span>: <span style="color:#66d9ef">Promise</span>&lt;<span style="color:#f92672">number</span>&gt; <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Promise</span>((<span style="color:#a6e22e">reslove</span>, <span style="color:#a6e22e">reject</span>)<span style="color:#f92672">=&gt;</span>{
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>下面是自己定义泛型的一个示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MyArray</span>&lt;<span style="color:#f92672">T</span>&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">data</span>: <span style="color:#66d9ef">T</span>[] <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">add</span>(<span style="color:#a6e22e">t</span>: <span style="color:#66d9ef">T</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">push</span>(<span style="color:#a6e22e">t</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">map</span>&lt;<span style="color:#f92672">U</span>&gt;(<span style="color:#a6e22e">f</span><span style="color:#f92672">:</span> (<span style="color:#a6e22e">v</span>: <span style="color:#66d9ef">T</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">U</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">U</span>[] { 
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">map</span>(<span style="color:#a6e22e">f</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">print() {</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">data</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">a</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">MyArray</span>&lt;<span style="color:#f92672">number</span>&gt;()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">add</span>(<span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 编译器能够知道 此时 map 的类型是 MyArray&lt;number&gt;.map&lt;string&gt;(f: (v: number) =&gt; string): string[]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">map</span>(<span style="color:#a6e22e">v</span><span style="color:#f92672">=&gt;</span><span style="color:#a6e22e">v</span>.<span style="color:#a6e22e">toString</span>()))
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">print</span>()
+</span></span></code></pre></div><h3 id="用接口约束泛型的参数">用接口约束泛型的参数</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">HasWeight</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">weight</span>: <span style="color:#66d9ef">number</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 通过 extends 让泛型的类型中必须含有 HasWeight 接口中的字段
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MyArray</span>&lt;<span style="color:#f92672">T</span> <span style="color:#a6e22e">extends</span> <span style="color:#a6e22e">HasWeight</span>&gt; {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">data</span>: <span style="color:#66d9ef">T</span>[] <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">add</span>(<span style="color:#a6e22e">t</span>: <span style="color:#66d9ef">T</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">push</span>(<span style="color:#a6e22e">t</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">map</span>&lt;<span style="color:#f92672">U</span>&gt;(<span style="color:#a6e22e">f</span><span style="color:#f92672">:</span> (<span style="color:#a6e22e">v</span>: <span style="color:#66d9ef">T</span>) <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">U</span>)<span style="color:#f92672">:</span> <span style="color:#a6e22e">U</span>[] { 
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">map</span>(<span style="color:#a6e22e">f</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">print() {</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">data</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">sortByWeight() {</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">sort</span>((<span style="color:#a6e22e">a</span>,<span style="color:#a6e22e">b</span>)<span style="color:#f92672">=&gt;</span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">weight</span><span style="color:#f92672">-</span><span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">weight</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">WeightedNum</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">constructor</span>(<span style="color:#66d9ef">public</span> <span style="color:#a6e22e">weight</span>: <span style="color:#66d9ef">number</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">weight</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">weight</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">a</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">MyArray</span>&lt;<span style="color:#f92672">WeightedNum</span>&gt;()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">add</span>(<span style="color:#66d9ef">new</span> <span style="color:#a6e22e">WeightedNum</span>(<span style="color:#ae81ff">32</span>))
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">add</span>(<span style="color:#66d9ef">new</span> <span style="color:#a6e22e">WeightedNum</span>(<span style="color:#ae81ff">11</span>))
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">sortByWeight</span>()
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">a</span>)
+</span></span></code></pre></div>
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E5%89%8D%E7%AB%AF/">前端</a>
+        
+            <a href="/tags/typescript/">typescript</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    <section class="article-lastmod">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+        <span>
+            最后更新于 Jan 15, 2023 15:57 CST
+        </span>
+    </section></footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 fmt.Println(&#34;Li Duo&#34;)
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

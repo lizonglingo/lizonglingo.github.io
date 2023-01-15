@@ -6,7 +6,23 @@
         <description>Recent content in Tags on fmt.Println(&#34;Li Duo&#34;)</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-CN</language>
-        <lastBuildDate>Fri, 13 Jan 2023 18:18:33 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 13 Jan 2023 21:24:49 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>typescript</title>
+        <link>https://lizonglingo.github.io/tags/typescript/</link>
+        <pubDate>Fri, 13 Jan 2023 21:24:49 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/tags/typescript/</guid>
+        <description></description>
+        </item>
+        <item>
+        <title>前端</title>
+        <link>https://lizonglingo.github.io/tags/%E5%89%8D%E7%AB%AF/</link>
+        <pubDate>Fri, 13 Jan 2023 21:24:49 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/tags/%E5%89%8D%E7%AB%AF/</guid>
+        <description></description>
+        </item>
+        <item>
         <title>docker</title>
         <link>https://lizonglingo.github.io/tags/docker/</link>
         <pubDate>Fri, 13 Jan 2023 18:18:33 +0800</pubDate>

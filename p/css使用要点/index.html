@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='CSS 使用要点 作为后端程序员，在 CSS 上应付前端需求我认为最重要是盒模型、flex 布局、选择器这几个点。其他的样式、组件啥的，都有现成的库。 同时，在'>
+<meta name="keywords" content="css, 前端, css选择器, flex布局, 盒模型"><title>CSS使用要点</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/css%E4%BD%BF%E7%94%A8%E8%A6%81%E7%82%B9/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='CSS使用要点'>
+<meta property='og:description' content='CSS 使用要点 作为后端程序员，在 CSS 上应付前端需求我认为最重要是盒模型、flex 布局、选择器这几个点。其他的样式、组件啥的，都有现成的库。 同时，在'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/css%E4%BD%BF%E7%94%A8%E8%A6%81%E7%82%B9/'>
+<meta property='og:site_name' content='fmt.Println(&#34;Li Duo&#34;)'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='前端' /><meta property='article:tag' content='css' /><meta property='article:published_time' content='2023-01-18T18:18:33&#43;08:00'/><meta property='article:modified_time' content='2023-01-18T23:39:39&#43;08:00'/><meta property='og:image' content='https://lizonglingo.github.io/post-images/20230118234450.png' />
+<meta name="twitter:title" content="CSS使用要点">
+<meta name="twitter:description" content="CSS 使用要点 作为后端程序员，在 CSS 上应付前端需求我认为最重要是盒模型、flex 布局、选择器这几个点。其他的样式、组件啥的，都有现成的库。 同时，在"><meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content='https://lizonglingo.github.io/post-images/20230118234450.png' />
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-SPJXNM3WZ6"></script>
+<script>
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'G-SPJXNM3WZ6', { 'anonymize_ip': false });
+}
+</script>
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?b30bfbf01ac692ef3da66a21b24e6edb";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+    
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">fmt.Println(&#34;Li Duo&#34;)</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#字体">字体</a></li>
+    <li><a href="#选择器">选择器</a>
+      <ul>
+        <li><a href="#标签选择器">标签选择器</a></li>
+        <li><a href="#id-选择器">id 选择器</a></li>
+        <li><a href="#类选择器">类选择器</a></li>
+        <li><a href="#选择器的组合">选择器的组合</a></li>
+      </ul>
+    </li>
+    <li><a href="#控制元素大小">控制元素大小</a></li>
+    <li><a href="#控制元素的位置">控制元素的位置</a>
+      <ul>
+        <li><a href="#position-属性">position 属性</a></li>
+        <li><a href="#text-align-属性">text-align 属性</a></li>
+        <li><a href="#display-属性">display 属性</a></li>
+        <li><a href="#flex-direction">flex-direction</a></li>
+        <li><a href="#align-items">align-items</a></li>
+        <li><a href="#align-self">align-self</a></li>
+        <li><a href="#justify-content">justify-content</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="has-image main-article">
+    <header class="article-header">
+        <div class="article-image">
+            <a href="/p/css%E4%BD%BF%E7%94%A8%E8%A6%81%E7%82%B9/">
+                
+                    <img src="/post-images/20230118234450.png" loading="lazy" alt="Featured image of post CSS使用要点" />
+                
+            </a>
+        </div>
+    
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E5%89%8D%E7%AB%AF/" >
+                前端
+            </a>
+        
+            <a href="/categories/css/" >
+                css
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/css%E4%BD%BF%E7%94%A8%E8%A6%81%E7%82%B9/">CSS使用要点</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jan 18, 2023</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 5 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="css-使用要点">CSS 使用要点</h1>
+<p>作为后端程序员，在 CSS 上应付前端需求我认为最重要是<strong>盒模型</strong>、<strong>flex 布局</strong>、<strong>选择器</strong>这几个点。其他的样式、组件啥的，都有现成的库。</p>
+<p>同时，在调试样式时，不妨直接在浏览器中修改，达到效果再粘贴回文件，省时省力。</p>
+<h2 id="字体">字体</h2>
+<ul>
+<li><code>font-size</code>：大小</li>
+<li><code>font-family</code>：字体</li>
+<li><code>font-style</code>：斜体等字体风格</li>
+<li><code>font-weight</code>：设置字体粗细</li>
+<li><code>white-space</code>：折行</li>
+<li><code>word-break</code>：截断</li>
+<li><code>text-overflow</code>：溢出</li>
+</ul>
+<h2 id="选择器">选择器</h2>
+<h3 id="标签选择器">标签选择器</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-css" data-lang="css"><span style="display:flex;"><span><span style="color:#f92672">nav</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">padding</span>: <span style="color:#ae81ff">30</span><span style="color:#66d9ef">px</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>直接通过标签名进行选择。</p>
+<h3 id="id-选择器">id 选择器</h3>
+<p>通过 <code>#id</code> 进行选择，例如：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-css" data-lang="css"><span style="display:flex;"><span>#app {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">font-family</span>: Avenir, Helvetica, Arial, <span style="color:#66d9ef">sans-serif</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">-webkit-</span>font-smoothing: antialiased;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">-moz-</span>osx-font-smoothing: grayscale;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">text-align</span>: <span style="color:#66d9ef">center</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">color</span>: <span style="color:#ae81ff">#2c3e50</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="类选择器">类选择器</h3>
+<p>通过 <code>.class</code> 进行选择，例如：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-css" data-lang="css"><span style="display:flex;"><span>.<span style="color:#a6e22e">el-list-leave-active</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">position</span>: <span style="color:#66d9ef">absolute</span> <span style="color:#75715e">!important</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="选择器的组合">选择器的组合</h3>
+<p>同时满足没有空格，父子关系含有空格。</p>
+<h4 id="同时满足不同选择条件">同时满足不同选择条件</h4>
+<ul>
+<li>元素有多个 class，如 <code>class=&quot;class1 class2&quot;</code>，选择多个 class 都满足的元素：<code>.class1.class2</code></li>
+<li>标签下的类，如 <code>&lt;div class=&quot;class&quot;&gt;</code>，使用 <code>div.class</code></li>
+<li>标签下的id，如  <code>&lt;div id=&quot;id&quot;&gt;</code>，使用 <code>div#id</code></li>
+<li>同时符合id和类，如 <code>&lt;div id=&quot;id&quot; class=&quot;class&quot;&gt;</code>，使用 <code>#id.class</code></li>
+<li>&hellip;</li>
+</ul>
+<p>此外，需要根据实际情况使用。</p>
+<h4 id="父子关系的选择器">父子关系的选择器</h4>
+<p>使用空格标识选择子元素。</p>
+<ul>
+<li>某个类下面的标签：<code>.class div</code>，表示 <code>class</code> 类下面的 <code>div</code> 元素</li>
+<li>某个类下面的某个类：<code>.class1 .class2</code>，表示 <code>class1</code> 类下面的 <code>class2</code></li>
+</ul>
+<p>同组合选择器一样，使用时灵活组合。</p>
+<blockquote>
+<p>如果多层嵌套的元素，多层父子关系，还可以选择指定的第几级子元素。</p>
+</blockquote>
+<h2 id="控制元素大小">控制元素大小</h2>
+<blockquote>
+<p><a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Box_Model/Introduction_to_the_CSS_box_model"  target="_blank" rel="noopener"
+    >https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Box_Model/Introduction_to_the_CSS_box_model</a></p>
+</blockquote>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230118210004147.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20230118210004147"
+	
+	
+></p>
+<p>相关属性如下：</p>
+<ul>
+<li>width</li>
+<li>height</li>
+<li>right</li>
+<li>left</li>
+<li>bottom</li>
+<li>top</li>
+<li>margin</li>
+<li>padding</li>
+<li>border</li>
+</ul>
+<p>单位：</p>
+<ul>
+<li>绝对单位：px</li>
+<li>百分比</li>
+</ul>
+<h2 id="控制元素的位置">控制元素的位置</h2>
+<p>⚠️需要注意，这些属性应该放在父元素还是子元素中。</p>
+<h3 id="position-属性">position 属性</h3>
+<p>position熟悉用来控制元素的位置，例如：相对位置、绝对位置等。</p>
+<blockquote>
+<p>具体示例见：https://developer.mozilla.org/zh-CN/docs/Web/CSS/position</p>
+</blockquote>
+<ul>
+<li>
+<p><code>static</code>：元素使用正常的布局行为，即元素在文档常规流中当前的布局位置。此时 <code>top</code>, <code>right</code>, <code>bottom</code>, <code>left</code> 和 <code>z-index</code> 属性无效。</p>
+</li>
+<li>
+<p><code>relative</code>：元素相对于正常布局行为的偏移。</p>
+<p>元素先放置在未添加定位时的位置，再在<strong>不改变页面布局的前提下调整元素位置(例如使用 <code>top</code>, <code>right</code>, <code>bottom</code>, <code>left</code> 等)</strong>（因此会在此元素未添加定位时所在位置留下空白）、</p>
+<p>⭐为父元素定义 <code>relative</code> ，可以使子元素通过 <code>absolute</code> 相对于父元素进行绝对位置的摆放。</p>
+</li>
+<li>
+<p><code>absolute</code>：简单理解为元素相对于整个页面（有时不是相对于整个页面）的偏移。</p>
+<p>元素会被移出正常文档流，并不为元素预留空间，通过指定元素相对于<strong>最近的非 <code>static</code>定位祖先元素的偏移</strong>，来确定元素位置。绝对定位的元素可以设置外边距（margins），且不会与其他边距合并。</p>
+</li>
+<li>
+<p><code>fixed</code>：元素飘在页面上，不会跟着滚动条走。</p>
+<p>元素会被移出正常文档流，并不为元素预留空间，而是通过指定元素相对于屏幕视口（viewport）的位置来指定元素位置。元素的位置在屏幕滚动时不会改变。打印时，元素会出现在的每页的固定位置。<code>fixed</code> 属性会创建新的层叠上下文。当元素祖先的 <code>transform</code>、<code>perspective</code>、<code>filter</code> 或 <code>backdrop-filter</code> 属性非 <code>none</code> 时，容器由视口改为该祖先。</p>
+</li>
+<li>
+<p><code>sticky</code>：随着页面的滚动，元素始终保持它在正常布局时的位置。</p>
+<p>元素根据正常文档流进行定位，然后相对它的<em>最近滚动祖先</em>（nearest scrolling ancestor）和 <a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/Containing_block"  target="_blank" rel="noopener"
+    >containing block</a>（最近块级祖先 nearest block-level ancestor），包括 table-related 元素，基于 <code>top</code>、<code>right</code>、<code>bottom</code> 和 <code>left</code> 的值进行偏移。偏移值不会影响任何其他元素的位置。</p>
+</li>
+</ul>
+<h3 id="text-align-属性">text-align 属性</h3>
+<blockquote>
+<p><a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/text-align"  target="_blank" rel="noopener"
+    >https://developer.mozilla.org/zh-CN/docs/Web/CSS/text-align</a></p>
+</blockquote>
+<p><code>text-align</code> CSS 属性定义<strong>行内内容</strong>（例如文字）如何相对它的块父元素对齐。<code>text-align</code> 并不控制块元素自己的对齐，只控制它的行内内容的对齐。</p>
+<ul>
+<li>
+<p><code>start</code> ：如果内容方向是左至右，则等于<code>left</code>，反之则为<code>right</code>。</p>
+</li>
+<li>
+<p><code>end</code> ：如果内容方向是左至右，则等于<code>right</code>，反之则为<code>left</code>。</p>
+</li>
+<li>
+<p><code>left</code>：行内内容向左侧边对齐。</p>
+</li>
+<li>
+<p><code>right</code>：行内内容向右侧边对齐。</p>
+</li>
+<li>
+<p><code>center</code>：行内内容居中。</p>
+</li>
+<li>
+<p><code>&lt;string&gt;</code> ：第一个出现的该（单字符）字符串被用来对齐。跟随的关键字定义对齐的方向。例如，可用于让数字值根据小数点对齐。</p>
+</li>
+<li>
+<p><code>justify</code>：文字向两侧对齐，对最后一行无效。</p>
+</li>
+<li>
+<p><code>justify-all</code>：和 justify 一致，但是强制使最后一行两端对齐。</p>
+</li>
+<li>
+<p><code>match-parent</code>：和<code>inherit</code>类似，区别在于<code>start</code>和<code>end</code>的值根据父元素的<a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/direction"  target="_blank" rel="noopener"
+    ><code>direction</code></a>确定，并被替换为恰当的<code>left</code>或<code>right</code>。</p>
+</li>
+</ul>
+<h3 id="display-属性">display 属性</h3>
+<blockquote>
+<p><a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/display"  target="_blank" rel="noopener"
+    >https://developer.mozilla.org/zh-CN/docs/Web/CSS/display</a></p>
+</blockquote>
+<p><strong><code>display</code></strong> 属性设置元素是否被视为<a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Flow_Layout"  target="_blank" rel="noopener"
+    >块或者内联元素</a>以及用于子元素的布局，例如<a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Flow_Layout"  target="_blank" rel="noopener"
+    >流式布局</a>、<a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Grid_Layout"  target="_blank" rel="noopener"
+    >网格布局</a>或<a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Flexible_Box_Layout"  target="_blank" rel="noopener"
+    >弹性布局</a>。</p>
+<ul>
+<li>
+<p><code>block</code>：该元素生成一个块级元素盒，在正常的流中，该元素之前和之后产生换行。</p>
+</li>
+<li>
+<p><code>inline</code>：该元素生成一个或多个内联元素盒，它们之前或者之后并不会产生换行。在正常的流中，如果有空间，下一个元素将会在同一行上。</p>
+</li>
+<li>
+<p><code>inline-block</code>：该元素生成块级元素盒，如果它是一个单独的内联盒，它将盒周围的内容一起流动（行为类似于替换元素）。</p>
+</li>
+<li>
+<p><code>flex</code>：该元素的行为类似块级元素并且根据<a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Flexible_Box_Layout"  target="_blank" rel="noopener"
+    >弹性盒模型</a>布局它的内容。⭐这种排布方式是用的比较多的，因此作为重点。</p>
+</li>
+</ul>
+<h3 id="flex-direction">flex-direction</h3>
+<blockquote>
+<p><a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/flex-direction"  target="_blank" rel="noopener"
+    >https://developer.mozilla.org/zh-CN/docs/Web/CSS/flex-direction</a></p>
+</blockquote>
+<p><strong><code>flex-direction</code></strong> 属性指定了内部元素是如何<strong>在 flex 容器中</strong>布局的，定义了主轴的方向 (正方向或反方向)。</p>
+<ul>
+<li>
+<p><code>row</code>：flex 容器的主轴被定义为与文本方向相同。主轴起点和主轴终点与内容方向相同。</p>
+</li>
+<li>
+<p><code>row-reverse</code>：表现和 row 相同，但是置换了主轴起点和主轴终点</p>
+</li>
+<li>
+<p><code>column</code>：flex 容器的主轴和块轴相同。主轴起点与主轴终点和书写模式的前后点相同</p>
+</li>
+<li>
+<p><code>column-reverse</code>：表现和<code>column</code>相同，但是置换了主轴起点和主轴终点</p>
+</li>
+</ul>
+<h3 id="align-items">align-items</h3>
+<blockquote>
+<p><a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/align-items"  target="_blank" rel="noopener"
+    >https://developer.mozilla.org/zh-CN/docs/Web/CSS/align-items</a></p>
+</blockquote>
+<p><code>align-items</code> 属性将所有<strong>直接子节点</strong>上的 <code>align-self</code> 值设置为一个组。<code>align-self</code> 属性设置项目在其包含块中在交叉轴方向上的对齐方式。</p>
+<p>大白话讲，这个属性<strong>用来控制子元素节点垂直与轴方向的元素排布</strong>。</p>
+<h3 id="align-self">align-self</h3>
+<blockquote>
+<p><a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/align-self"  target="_blank" rel="noopener"
+    >https://developer.mozilla.org/zh-CN/docs/Web/CSS/align-self</a></p>
+</blockquote>
+<p>这个属性用来控制<strong>本元素节点</strong>垂直与轴方向的元素排布。例如：在父元素中横向充满。</p>
+<h3 id="justify-content">justify-content</h3>
+<blockquote>
+<p><a class="link" href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/justify-content"  target="_blank" rel="noopener"
+    >https://developer.mozilla.org/zh-CN/docs/Web/CSS/justify-content</a></p>
+</blockquote>
+<p><strong><code>justify-content</code></strong> 属性定义了浏览器之间，如何分配<strong>顺着弹性容器主轴</strong> (或者网格行轴) 的元素之间及其周围的空间。</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/%E5%89%8D%E7%AB%AF/">前端</a>
+        
+            <a href="/tags/css/">css</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    <section class="article-lastmod">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+        <span>
+            最后更新于 Jan 18, 2023 23:39 CST
+        </span>
+    </section><script src="https://utteranc.es/client.js"
+    repo="lizonglingo/lizonglingo.github.io"
+    issue-term="pathname"
+    label="Comment"
+    theme="github-light"
+    crossorigin="anonymous"
+    async>
+    </script>
+</footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="has-image">
+    <a href="/p/typescript%E4%B8%A4%E5%A4%A9%E9%80%9F%E6%88%90/">
+        
+        
+            <div class="article-image">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230115155449572.png" loading="lazy" data-key="" data-hash="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230115155449572.png"/>
+                
+            </div>
+        
+
+        <div class="article-details">
+            <h2 class="article-title">TypeScript两天速成</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 fmt.Println(&#34;Li Duo&#34;)
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

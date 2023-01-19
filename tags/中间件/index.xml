@@ -53,7 +53,7 @@
 &lt;p&gt;之前的博客中我们分享到，搭建集群只需要节点上有docker engine就可以，然后按照&lt;code&gt;kubeadm&lt;/code&gt;，&lt;code&gt;kubelet&lt;/code&gt;，&lt;code&gt;kubectl&lt;/code&gt;就可以了，不会去刻意、显式的配置容器运行时。那是因为k8s内置的dockershim自动帮我们完成了这个工作。&lt;/p&gt;
 &lt;p&gt;在1.24.0之后，我们在创建集群之前，也要像安装CNI那样先配置我们的容器运行时，才可以正常初始化k8s集群。&lt;/p&gt;
 &lt;h3 id=&#34;安装并配置cri-dockerd&#34;&gt;安装并配置cri-dockerd&lt;/h3&gt;
-&lt;p&gt;:warning:这需要节点上有正常运行的docker engine。同时要在所有节点上安装cri-dockerd。&lt;/p&gt;
+&lt;p&gt;⚠️这需要节点上有正常运行的docker engine。同时要在所有节点上安装cri-dockerd。&lt;/p&gt;
 &lt;p&gt;我们这里使用Ubuntu22.04作为环境，直接在&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd/releases&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;release&lt;/a&gt;下载构建好的对应Ubuntu版本的&lt;code&gt;.deb&lt;/code&gt;安装文件。&lt;/p&gt;
 &lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202207311437400.png&#34;

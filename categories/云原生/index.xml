@@ -230,7 +230,7 @@
 &lt;p&gt;之前的博客中我们分享到，搭建集群只需要节点上有docker engine就可以，然后按照&lt;code&gt;kubeadm&lt;/code&gt;，&lt;code&gt;kubelet&lt;/code&gt;，&lt;code&gt;kubectl&lt;/code&gt;就可以了，不会去刻意、显式的配置容器运行时。那是因为k8s内置的dockershim自动帮我们完成了这个工作。&lt;/p&gt;
 &lt;p&gt;在1.24.0之后，我们在创建集群之前，也要像安装CNI那样先配置我们的容器运行时，才可以正常初始化k8s集群。&lt;/p&gt;
 &lt;h3 id=&#34;安装并配置cri-dockerd&#34;&gt;安装并配置cri-dockerd&lt;/h3&gt;
-&lt;p&gt;:warning:这需要节点上有正常运行的docker engine。同时要在所有节点上安装cri-dockerd。&lt;/p&gt;
+&lt;p&gt;⚠️这需要节点上有正常运行的docker engine。同时要在所有节点上安装cri-dockerd。&lt;/p&gt;
 &lt;p&gt;我们这里使用Ubuntu22.04作为环境，直接在&lt;a class=&#34;link&#34; href=&#34;https://github.com/Mirantis/cri-dockerd/releases&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;release&lt;/a&gt;下载构建好的对应Ubuntu版本的&lt;code&gt;.deb&lt;/code&gt;安装文件。&lt;/p&gt;
 &lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202207311437400.png&#34;
@@ -1356,9 +1356,9 @@ net.ipv4.conf.all.rp_filter = 0
 &lt;p&gt;不同于单模型推理任务，&lt;code&gt;ensemble learning&lt;/code&gt;集成学习可以进一步提高服务精确度。（如，多模型的图片分类任务会提高最终的精确度）&lt;/p&gt;
 &lt;p&gt;然而，对于集成，由于&lt;strong&gt;每个请求都需要运行大量的模型[27,56]而导致的非常高的资源占用，加剧了公共云的部署成本，并导致延迟的高度变化&lt;/strong&gt;。&lt;/p&gt;
 &lt;p&gt;因此，本文解决的主要问题为：&lt;/p&gt;
-&lt;p&gt;:star:集成单一的模型推理服务；&lt;/p&gt;
-&lt;p&gt;:star:同时提高模型服务的准确度；&lt;/p&gt;
-&lt;p&gt;:star:并最小化部署成本。&lt;/p&gt;
+&lt;p&gt;⭐集成单一的模型推理服务；&lt;/p&gt;
+&lt;p&gt;⭐同时提高模型服务的准确度；&lt;/p&gt;
+&lt;p&gt;⭐并最小化部署成本。&lt;/p&gt;
 &lt;h3 id=&#34;现有技术的不足&#34;&gt;现有技术的不足&lt;/h3&gt;
 &lt;p&gt;对最先进的集成模型服务框架进行分析，存在如下不足：&lt;/p&gt;
 &lt;ul&gt;
@@ -1368,7 +1368,7 @@ net.ipv4.conf.all.rp_filter = 0
 &lt;li&gt;对单一模型的&lt;strong&gt;资源管理模采用的策略不能直接扩展到集成系统中&lt;/strong&gt;。&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;因此，重复之前亟待解决的问题：&lt;/p&gt;
-&lt;p&gt;:warning:&lt;strong&gt;如何解决集成框架的成本、精度和延迟等复杂优化问题？&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;⚠️&lt;strong&gt;如何解决集成框架的成本、精度和延迟等复杂优化问题？&lt;/strong&gt;&lt;/p&gt;
 &lt;h3 id=&#34;本文工作-1&#34;&gt;本文工作&lt;/h3&gt;
 &lt;p&gt;&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;，首个&lt;strong&gt;成本友好&lt;/strong&gt;、&lt;strong&gt;集成多模型&lt;/strong&gt;的ML服务框架，&lt;strong&gt;针对于分类推理任务&lt;/strong&gt;，有很好的&lt;strong&gt;精确度和低延迟&lt;/strong&gt;表现。&lt;/p&gt;
 &lt;!-- raw HTML omitted --&gt;
@@ -1436,16 +1436,16 @@ net.ipv4.conf.all.rp_filter = 0
 	
 	
 &gt;&lt;/p&gt;
-&lt;p&gt;:one:现有的集成模型案例：&lt;/p&gt;
+&lt;p&gt;1️⃣现有的集成模型案例：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;Azure ML-studio：最初集成了5个模型，现在逐渐扩展到200个模型。&lt;/li&gt;
 &lt;li&gt;AWS Autogluon：集成了6-12个模型。&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;用户可以手动选择模型数量规模。&lt;/p&gt;
 &lt;p&gt;与它们不同的是，&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;的模型选择策略试图在给定延迟的情况下选择合适的集合大小，同时最大化准确性。&lt;/p&gt;
-&lt;p&gt;:two:云上模型服务：&lt;/p&gt;
+&lt;p&gt;2️⃣云上模型服务：&lt;/p&gt;
 &lt;p&gt;InFaas、Clipper 、FrugalML、MArk 、Rafiki、 TF-Serving、 SageMaker、AzureML 、Deep-Studio等。&lt;/p&gt;
-&lt;p&gt;:three:公有云自动缩放：&lt;/p&gt;
+&lt;p&gt;3️⃣公有云自动缩放：&lt;/p&gt;
 &lt;p&gt;现有相关的资源配置策略能分为两类：&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;多路复用不同的实例类型；&lt;/li&gt;
@@ -1455,10 +1455,10 @@ net.ipv4.conf.all.rp_filter = 0
 &lt;p&gt;&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;的自动缩放策略与Swayam[34]的分布式自动缩放策略有相似之处；然而，我们进一步引入了新颖的&lt;strong&gt;重要采样技术&lt;/strong&gt;，以减少未充分利用的模型的过度供应&lt;/p&gt;
 &lt;h2 id=&#34;引出cocktail&#34;&gt;引出Cocktail&lt;/h2&gt;
 &lt;p&gt;首先回答两个问题：&lt;/p&gt;
-&lt;p&gt;:one:如何减少资源占用:question:&lt;/p&gt;
+&lt;p&gt;1️⃣如何减少资源占用❓&lt;/p&gt;
 &lt;p&gt;通过最小化模型集成数量，减少资源使用。文章通过实验，选取精度前50%的模型进行集成。&lt;/p&gt;
 &lt;p&gt;完全集成的模型选择是一种过度的行为，而静态集成则会导致精度的损失。这就需要一个动态的模型选择策略，该策略可以根据模型选择策略的准确性和可伸缩性准确地确定所需的模型数量。&lt;/p&gt;
-&lt;p&gt;:two:如何减少部署成本:question:&lt;/p&gt;
+&lt;p&gt;2️⃣如何减少部署成本❓&lt;/p&gt;
 &lt;p&gt;大多数云提供商提供瞬态虚拟机，如Amazon Spot实例[69]、谷歌preemptible VMs[9]和Azure Low-priority VMs[7]，可以降低高达10倍的云计算成本。文章**利用这些瞬态VMs(如spot实例)**来大幅降低部署集成模型框架的成本。&lt;/p&gt;
 &lt;h2 id=&#34;cocktail整体设计&#34;&gt;Cocktail整体设计&lt;/h2&gt;
 &lt;p&gt;&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;架构如下：&lt;/p&gt;
@@ -1587,7 +1587,7 @@ net.ipv4.conf.all.rp_filter = 0
 &lt;p&gt;本篇整理自IEEE CLOUD&#39;21会议中的文章，主题为云背景下的资源管理。&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;h2 id=&#34;runwild-resource-management-system-withgeneralized-modeling-for-microservices-on-cloud&#34;&gt;RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud&lt;/h2&gt;
-&lt;h3 id=&#34;star摘要&#34;&gt;:star:摘要&lt;/h3&gt;
+&lt;h3 id=&#34;摘要&#34;&gt;⭐摘要&lt;/h3&gt;
 &lt;h4 id=&#34;问题背景&#34;&gt;问题背景&lt;/h4&gt;
 &lt;p&gt;&lt;strong&gt;微服务内部通信的复杂性，必须考虑资源利用、调度策略和请求均衡之间的平衡，以防止跨微服务级联的服务质量下降。&lt;/strong&gt;&lt;/p&gt;
 &lt;h4 id=&#34;文章做了什么&#34;&gt;文章做了什么&lt;/h4&gt;
@@ -1607,7 +1607,7 @@ net.ipv4.conf.all.rp_filter = 0
 &lt;li&gt;微服务间交互指标：一个称为内聚的指标反映了在同一个&lt;strong&gt;节点上放置高度相互通信的微服务的优势&lt;/strong&gt;；&lt;/li&gt;
 &lt;li&gt;通过&lt;strong&gt;Service Mesh&lt;/strong&gt;对运行时工作负载进行分区：利用服务网格操作流量路由，用其控制能力来划分工作负载以匹配资源的分配。&lt;/li&gt;
 &lt;/ol&gt;
-&lt;h3 id=&#34;star现有技术存在的问题&#34;&gt;:star:现有技术存在的问题&lt;/h3&gt;
+&lt;h3 id=&#34;现有技术存在的问题&#34;&gt;⭐现有技术存在的问题&lt;/h3&gt;
 &lt;h4 id=&#34;水平伸缩&#34;&gt;水平伸缩&lt;/h4&gt;
 &lt;ul&gt;
 &lt;li&gt;超过某个阈值时，实例的增多与性能表现的增长不匹配，正如收益递减定律所解释的那样；&lt;/li&gt;
@@ -1648,9 +1648,9 @@ net.ipv4.conf.all.rp_filter = 0
 &lt;p&gt;该文会精读，请关注最新的文章。&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;h2 id=&#34;fast-and-efficient-performance-tuning-of-microservices&#34;&gt;Fast and Efficient Performance Tuning of Microservices&lt;/h2&gt;
-&lt;h3 id=&#34;star摘要-1&#34;&gt;:star:摘要&lt;/h3&gt;
+&lt;h3 id=&#34;摘要-1&#34;&gt;⭐摘要&lt;/h3&gt;
 &lt;p&gt;针对使用&lt;strong&gt;容器部署的微服务架构应用&lt;/strong&gt;，&lt;strong&gt;以Kubernetes、Docker Swarm容器管理平台为依托&lt;/strong&gt;。在应用正式部署上线之前，也就是在&lt;strong&gt;pre-deployment&lt;/strong&gt;阶段，&lt;strong&gt;迭代的根据资源使用相关指标&lt;/strong&gt;，结合&lt;strong&gt;类多目标优化算法(文章称为heuristic optimization algorithm)&lt;strong&gt;对&lt;/strong&gt;资源分配进行调优&lt;/strong&gt;。&lt;/p&gt;
-&lt;h3 id=&#34;star系统架构&#34;&gt;:star:系统架构&lt;/h3&gt;
+&lt;h3 id=&#34;系统架构&#34;&gt;⭐系统架构&lt;/h3&gt;
 &lt;!-- raw HTML omitted --&gt;
 &lt;ol&gt;
 &lt;li&gt;将应用部署到云平台；&lt;/li&gt;
@@ -1662,9 +1662,9 @@ net.ipv4.conf.all.rp_filter = 0
 &lt;li&gt;将这些信息存储到Tuning数据库中；&lt;/li&gt;
 &lt;li&gt;编排器根据这些信息对服务进行迭代部署。&lt;/li&gt;
 &lt;/ol&gt;
-&lt;h3 id=&#34;star测量优化的依赖指标&#34;&gt;:star:测量、优化的依赖指标&lt;/h3&gt;
+&lt;h3 id=&#34;测量优化的依赖指标&#34;&gt;⭐测量、优化的依赖指标&lt;/h3&gt;
 &lt;p&gt;需要对服务进行&lt;strong&gt;请求的注入&lt;/strong&gt;来进行测量，主要指标是&lt;strong&gt;服务响应时间&lt;/strong&gt;。涉及到&lt;strong&gt;链路追踪、性能监控&lt;/strong&gt;。&lt;/p&gt;
-&lt;h3 id=&#34;star调优模型抽象&#34;&gt;:star:调优模型抽象&lt;/h3&gt;
+&lt;h3 id=&#34;调优模型抽象&#34;&gt;⭐调优模型抽象&lt;/h3&gt;
 &lt;h4 id=&#34;小背景前提和假设&#34;&gt;小背景、前提和假设&lt;/h4&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;应用需要一些特定的工作负载$W$&lt;/strong&gt;，这些工作负载发生在特定的情境，例如在线商城的Black Friday。因此，调优过程可以对其他感兴趣的工作负载重放，从而产生一系列特定于工作负载的配置，可以在部署应用程序时适当地使用。&lt;/li&gt;
@@ -1685,7 +1685,7 @@ net.ipv4.conf.all.rp_filter = 0
 &lt;li&gt;其中响应时间$R_c$是工作负载$W$和对$K$个服务CPU配额的函数；&lt;/li&gt;
 &lt;li&gt;最后限制CPU需求总额是有限的。&lt;/li&gt;
 &lt;/ol&gt;
-&lt;h3 id=&#34;star应用案例及实验&#34;&gt;:star:应用案例及实验&lt;/h3&gt;
+&lt;h3 id=&#34;应用案例及实验&#34;&gt;⭐应用案例及实验&lt;/h3&gt;
 &lt;p&gt;使用的微服务案例&lt;strong&gt;Bookstore&lt;/strong&gt;。&lt;/p&gt;
 &lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220419153253242.png&#34;
 	
@@ -1697,11 +1697,11 @@ net.ipv4.conf.all.rp_filter = 0
 	
 	
 &gt;&lt;/p&gt;
-&lt;h3 id=&#34;star我的问题&#34;&gt;:star:我的问题&lt;/h3&gt;
+&lt;h3 id=&#34;我的问题&#34;&gt;⭐我的问题&lt;/h3&gt;
 &lt;p&gt;&lt;strong&gt;工作负载的模拟具体如何实现？&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;有哪些开源微服务应用真正可用又具有一定的代表性？&lt;/strong&gt;&lt;/p&gt;
 &lt;h2 id=&#34;skynet-performance-driven-resource-management-for-dynamic-workloads&#34;&gt;Skynet: Performance-driven Resource Management for Dynamic Workloads&lt;/h2&gt;
-&lt;h3 id=&#34;star摘要-2&#34;&gt;:star:摘要&lt;/h3&gt;
+&lt;h3 id=&#34;摘要-2&#34;&gt;⭐摘要&lt;/h3&gt;
 &lt;h4 id=&#34;问题背景和主要矛盾&#34;&gt;问题背景和主要矛盾&lt;/h4&gt;
 &lt;p&gt;云环境下，资源利用率和应用的性能表现之间的矛盾。&lt;/p&gt;
 &lt;h4 id=&#34;难点&#34;&gt;难点&lt;/h4&gt;
@@ -1723,7 +1723,7 @@ net.ipv4.conf.all.rp_filter = 0
 &lt;p&gt;&lt;strong&gt;实现和评估&lt;/strong&gt;：在&lt;strong&gt;kubernetes中将skynetas实现为端到端的定制调度程序&lt;/strong&gt;，并在5个节点的私有集群和60个裸金属服务器AWS上使用真实的工作负载对其进行评估。以K8s为基线，PLO违规降低7.4倍，资源利用提高两倍。&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
-&lt;h3 id=&#34;star系统架构-1&#34;&gt;:star:系统架构&lt;/h3&gt;
+&lt;h3 id=&#34;系统架构-1&#34;&gt;⭐系统架构&lt;/h3&gt;
 &lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220421114835655.png&#34;
 	
 	
@@ -1789,7 +1789,7 @@ net.ipv4.conf.all.rp_filter = 0
 	
 &gt;&lt;/p&gt;
 &lt;p&gt;使用Golang实现自定义调度器。使用Prometheus进行监控。代码开源[11]。&lt;/p&gt;
-&lt;h3 id=&#34;star我的问题-1&#34;&gt;:star:我的问题&lt;/h3&gt;
+&lt;h3 id=&#34;我的问题-1&#34;&gt;⭐我的问题&lt;/h3&gt;
 &lt;h4 id=&#34;关于pid控制理论的补充&#34;&gt;关于PID控制理论的补充&lt;/h4&gt;
 &lt;p&gt;已经不止一次在论文中看到使用PID来调整资源分配了。&lt;/p&gt;
 &lt;blockquote&gt;
@@ -1800,7 +1800,7 @@ net.ipv4.conf.all.rp_filter = 0
 &lt;p&gt;获得监控数据后具体怎处理？&lt;/p&gt;
 &lt;p&gt;分配资源的具体方法？&lt;/p&gt;
 &lt;h2 id=&#34;konveyor-move2kube-automatedreplatforming-of-applications-to-kubernetes&#34;&gt;Konveyor Move2Kube: AutomatedReplatforming of Applications to Kubernetes&lt;/h2&gt;
-&lt;h3 id=&#34;star摘要-3&#34;&gt;:star:摘要&lt;/h3&gt;
+&lt;h3 id=&#34;摘要-3&#34;&gt;⭐摘要&lt;/h3&gt;
 &lt;p&gt;文章提出Move2Kube，一个再部署框架，能够自动调整部署细节，并通过部署pipeline&lt;strong&gt;将非Kubernetes平台部署的应用转移到Kubernetes平台上&lt;/strong&gt;，同时最小限度修改应用架构和实现。&lt;/p&gt;
 &lt;p&gt;此外，文章提出&lt;/p&gt;
 &lt;ul&gt;

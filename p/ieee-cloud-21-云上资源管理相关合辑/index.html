@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="zh-CN" dir="ltr">
     <head><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='本篇整理自IEEE CLOUD&#39;21会议中的文章，主题为云背景下的资源管理。 RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud :star:摘要 问题背景 微服务内部通信的复杂性'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='本篇整理自IEEE CLOUD&#39;21会议中的文章，主题为云背景下的资源管理。 RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud ⭐摘要 问题背景 微服务内部通信的复杂性，必须考虑'>
 <title>IEEE CLOUD 21 云上资源管理相关合辑</title>
 
 <link rel='canonical' href='https://lizonglingo.github.io/p/ieee-cloud-21-%E4%BA%91%E4%B8%8A%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E7%9B%B8%E5%85%B3%E5%90%88%E8%BE%91/'>
 
 <link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='IEEE CLOUD 21 云上资源管理相关合辑'>
-<meta property='og:description' content='本篇整理自IEEE CLOUD&#39;21会议中的文章，主题为云背景下的资源管理。 RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud :star:摘要 问题背景 微服务内部通信的复杂性'>
+<meta property='og:description' content='本篇整理自IEEE CLOUD&#39;21会议中的文章，主题为云背景下的资源管理。 RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud ⭐摘要 问题背景 微服务内部通信的复杂性，必须考虑'>
 <meta property='og:url' content='https://lizonglingo.github.io/p/ieee-cloud-21-%E4%BA%91%E4%B8%8A%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E7%9B%B8%E5%85%B3%E5%90%88%E8%BE%91/'>
 <meta property='og:site_name' content='fmt.Println(&#34;Li Duo&#34;)'>
 <meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='资源调度' /><meta property='article:tag' content='可观测性' /><meta property='article:tag' content='云原生' /><meta property='article:tag' content='笔记' /><meta property='article:tag' content='Kubernetes' /><meta property='article:published_time' content='2022-04-21T14:33:47&#43;08:00'/><meta property='article:modified_time' content='2022-04-21T14:33:47&#43;08:00'/>
 <meta name="twitter:title" content="IEEE CLOUD 21 云上资源管理相关合辑">
-<meta name="twitter:description" content="本篇整理自IEEE CLOUD&#39;21会议中的文章，主题为云背景下的资源管理。 RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud :star:摘要 问题背景 微服务内部通信的复杂性">
+<meta name="twitter:description" content="本篇整理自IEEE CLOUD&#39;21会议中的文章，主题为云背景下的资源管理。 RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud ⭐摘要 问题背景 微服务内部通信的复杂性，必须考虑">
     <link rel="shortcut icon" href="/favicon.ico" />
 
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-SPJXNM3WZ6"></script>
@@ -287,30 +287,30 @@ if (!doNotTrack) {
   <ul>
     <li><a href="#runwild-resource-management-system-withgeneralized-modeling-for-microservices-on-cloud">RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud</a>
       <ul>
-        <li><a href="#star摘要">:star:摘要</a></li>
-        <li><a href="#star现有技术存在的问题">:star:现有技术存在的问题</a></li>
+        <li><a href="#摘要">⭐摘要</a></li>
+        <li><a href="#现有技术存在的问题">⭐现有技术存在的问题</a></li>
       </ul>
     </li>
     <li><a href="#fast-and-efficient-performance-tuning-of-microservices">Fast and Efficient Performance Tuning of Microservices</a>
       <ul>
-        <li><a href="#star摘要-1">:star:摘要</a></li>
-        <li><a href="#star系统架构">:star:系统架构</a></li>
-        <li><a href="#star测量优化的依赖指标">:star:测量、优化的依赖指标</a></li>
-        <li><a href="#star调优模型抽象">:star:调优模型抽象</a></li>
-        <li><a href="#star应用案例及实验">:star:应用案例及实验</a></li>
-        <li><a href="#star我的问题">:star:我的问题</a></li>
+        <li><a href="#摘要-1">⭐摘要</a></li>
+        <li><a href="#系统架构">⭐系统架构</a></li>
+        <li><a href="#测量优化的依赖指标">⭐测量、优化的依赖指标</a></li>
+        <li><a href="#调优模型抽象">⭐调优模型抽象</a></li>
+        <li><a href="#应用案例及实验">⭐应用案例及实验</a></li>
+        <li><a href="#我的问题">⭐我的问题</a></li>
       </ul>
     </li>
     <li><a href="#skynet-performance-driven-resource-management-for-dynamic-workloads">Skynet: Performance-driven Resource Management for Dynamic Workloads</a>
       <ul>
-        <li><a href="#star摘要-2">:star:摘要</a></li>
-        <li><a href="#star系统架构-1">:star:系统架构</a></li>
-        <li><a href="#star我的问题-1">:star:我的问题</a></li>
+        <li><a href="#摘要-2">⭐摘要</a></li>
+        <li><a href="#系统架构-1">⭐系统架构</a></li>
+        <li><a href="#我的问题-1">⭐我的问题</a></li>
       </ul>
     </li>
     <li><a href="#konveyor-move2kube-automatedreplatforming-of-applications-to-kubernetes">Konveyor Move2Kube: AutomatedReplatforming of Applications to Kubernetes</a>
       <ul>
-        <li><a href="#star摘要-3">:star:摘要</a></li>
+        <li><a href="#摘要-3">⭐摘要</a></li>
       </ul>
     </li>
   </ul>
@@ -412,7 +412,7 @@ if (!doNotTrack) {
 <p>本篇整理自IEEE CLOUD'21会议中的文章，主题为云背景下的资源管理。</p>
 </blockquote>
 <h2 id="runwild-resource-management-system-withgeneralized-modeling-for-microservices-on-cloud">RunWild: Resource Management System withGeneralized Modeling for Microservices on Cloud</h2>
-<h3 id="star摘要">:star:摘要</h3>
+<h3 id="摘要">⭐摘要</h3>
 <h4 id="问题背景">问题背景</h4>
 <p><strong>微服务内部通信的复杂性，必须考虑资源利用、调度策略和请求均衡之间的平衡，以防止跨微服务级联的服务质量下降。</strong></p>
 <h4 id="文章做了什么">文章做了什么</h4>
@@ -432,7 +432,7 @@ if (!doNotTrack) {
 <li>微服务间交互指标：一个称为内聚的指标反映了在同一个<strong>节点上放置高度相互通信的微服务的优势</strong>；</li>
 <li>通过<strong>Service Mesh</strong>对运行时工作负载进行分区：利用服务网格操作流量路由，用其控制能力来划分工作负载以匹配资源的分配。</li>
 </ol>
-<h3 id="star现有技术存在的问题">:star:现有技术存在的问题</h3>
+<h3 id="现有技术存在的问题">⭐现有技术存在的问题</h3>
 <h4 id="水平伸缩">水平伸缩</h4>
 <ul>
 <li>超过某个阈值时，实例的增多与性能表现的增长不匹配，正如收益递减定律所解释的那样；</li>
@@ -473,9 +473,9 @@ if (!doNotTrack) {
 <p>该文会精读，请关注最新的文章。</p>
 </blockquote>
 <h2 id="fast-and-efficient-performance-tuning-of-microservices">Fast and Efficient Performance Tuning of Microservices</h2>
-<h3 id="star摘要-1">:star:摘要</h3>
+<h3 id="摘要-1">⭐摘要</h3>
 <p>针对使用<strong>容器部署的微服务架构应用</strong>，<strong>以Kubernetes、Docker Swarm容器管理平台为依托</strong>。在应用正式部署上线之前，也就是在<strong>pre-deployment</strong>阶段，<strong>迭代的根据资源使用相关指标</strong>，结合<strong>类多目标优化算法(文章称为heuristic optimization algorithm)<strong>对</strong>资源分配进行调优</strong>。</p>
-<h3 id="star系统架构">:star:系统架构</h3>
+<h3 id="系统架构">⭐系统架构</h3>
 <!-- raw HTML omitted -->
 <ol>
 <li>将应用部署到云平台；</li>
@@ -487,9 +487,9 @@ if (!doNotTrack) {
 <li>将这些信息存储到Tuning数据库中；</li>
 <li>编排器根据这些信息对服务进行迭代部署。</li>
 </ol>
-<h3 id="star测量优化的依赖指标">:star:测量、优化的依赖指标</h3>
+<h3 id="测量优化的依赖指标">⭐测量、优化的依赖指标</h3>
 <p>需要对服务进行<strong>请求的注入</strong>来进行测量，主要指标是<strong>服务响应时间</strong>。涉及到<strong>链路追踪、性能监控</strong>。</p>
-<h3 id="star调优模型抽象">:star:调优模型抽象</h3>
+<h3 id="调优模型抽象">⭐调优模型抽象</h3>
 <h4 id="小背景前提和假设">小背景、前提和假设</h4>
 <ul>
 <li><strong>应用需要一些特定的工作负载$W$</strong>，这些工作负载发生在特定的情境，例如在线商城的Black Friday。因此，调优过程可以对其他感兴趣的工作负载重放，从而产生一系列特定于工作负载的配置，可以在部署应用程序时适当地使用。</li>
@@ -510,7 +510,7 @@ if (!doNotTrack) {
 <li>其中响应时间$R_c$是工作负载$W$和对$K$个服务CPU配额的函数；</li>
 <li>最后限制CPU需求总额是有限的。</li>
 </ol>
-<h3 id="star应用案例及实验">:star:应用案例及实验</h3>
+<h3 id="应用案例及实验">⭐应用案例及实验</h3>
 <p>使用的微服务案例<strong>Bookstore</strong>。</p>
 <p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220419153253242.png"
 	
@@ -522,11 +522,11 @@ if (!doNotTrack) {
 	
 	
 ></p>
-<h3 id="star我的问题">:star:我的问题</h3>
+<h3 id="我的问题">⭐我的问题</h3>
 <p><strong>工作负载的模拟具体如何实现？</strong></p>
 <p><strong>有哪些开源微服务应用真正可用又具有一定的代表性？</strong></p>
 <h2 id="skynet-performance-driven-resource-management-for-dynamic-workloads">Skynet: Performance-driven Resource Management for Dynamic Workloads</h2>
-<h3 id="star摘要-2">:star:摘要</h3>
+<h3 id="摘要-2">⭐摘要</h3>
 <h4 id="问题背景和主要矛盾">问题背景和主要矛盾</h4>
 <p>云环境下，资源利用率和应用的性能表现之间的矛盾。</p>
 <h4 id="难点">难点</h4>
@@ -548,7 +548,7 @@ if (!doNotTrack) {
 <p><strong>实现和评估</strong>：在<strong>kubernetes中将skynetas实现为端到端的定制调度程序</strong>，并在5个节点的私有集群和60个裸金属服务器AWS上使用真实的工作负载对其进行评估。以K8s为基线，PLO违规降低7.4倍，资源利用提高两倍。</p>
 </li>
 </ul>
-<h3 id="star系统架构-1">:star:系统架构</h3>
+<h3 id="系统架构-1">⭐系统架构</h3>
 <p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20220421114835655.png"
 	
 	
@@ -614,7 +614,7 @@ if (!doNotTrack) {
 	
 ></p>
 <p>使用Golang实现自定义调度器。使用Prometheus进行监控。代码开源[11]。</p>
-<h3 id="star我的问题-1">:star:我的问题</h3>
+<h3 id="我的问题-1">⭐我的问题</h3>
 <h4 id="关于pid控制理论的补充">关于PID控制理论的补充</h4>
 <p>已经不止一次在论文中看到使用PID来调整资源分配了。</p>
 <blockquote>
@@ -625,7 +625,7 @@ if (!doNotTrack) {
 <p>获得监控数据后具体怎处理？</p>
 <p>分配资源的具体方法？</p>
 <h2 id="konveyor-move2kube-automatedreplatforming-of-applications-to-kubernetes">Konveyor Move2Kube: AutomatedReplatforming of Applications to Kubernetes</h2>
-<h3 id="star摘要-3">:star:摘要</h3>
+<h3 id="摘要-3">⭐摘要</h3>
 <p>文章提出Move2Kube，一个再部署框架，能够自动调整部署细节，并通过部署pipeline<strong>将非Kubernetes平台部署的应用转移到Kubernetes平台上</strong>，同时最小限度修改应用架构和实现。</p>
 <p>此外，文章提出</p>
 <ul>

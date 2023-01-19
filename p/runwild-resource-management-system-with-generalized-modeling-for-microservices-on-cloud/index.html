@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="zh-CN" dir="ltr">
     <head><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='来源：IEEE CLOUD&#39;21 作者：IBM :star:摘要 问题背景 微服务内部通信的复杂性，必须考虑资源利用、调度策略和请求均衡之间的平衡，以防止跨微服务级'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='来源：IEEE CLOUD&#39;21 作者：IBM ⭐摘要 问题背景 微服务内部通信的复杂性，必须考虑资源利用、调度策略和请求均衡之间的平衡，以防止跨微服务级联的服务质'>
 <title>RunWild: Resource Management System with Generalized Modeling for Microservices on Cloud</title>
 
 <link rel='canonical' href='https://lizonglingo.github.io/p/runwild-resource-management-system-with-generalized-modeling-for-microservices-on-cloud/'>
 
 <link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='RunWild: Resource Management System with Generalized Modeling for Microservices on Cloud'>
-<meta property='og:description' content='来源：IEEE CLOUD&#39;21 作者：IBM :star:摘要 问题背景 微服务内部通信的复杂性，必须考虑资源利用、调度策略和请求均衡之间的平衡，以防止跨微服务级'>
+<meta property='og:description' content='来源：IEEE CLOUD&#39;21 作者：IBM ⭐摘要 问题背景 微服务内部通信的复杂性，必须考虑资源利用、调度策略和请求均衡之间的平衡，以防止跨微服务级联的服务质'>
 <meta property='og:url' content='https://lizonglingo.github.io/p/runwild-resource-management-system-with-generalized-modeling-for-microservices-on-cloud/'>
 <meta property='og:site_name' content='fmt.Println(&#34;Li Duo&#34;)'>
 <meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='资源调度' /><meta property='article:tag' content='Kubernetes' /><meta property='article:tag' content='笔记' /><meta property='article:published_time' content='2022-04-24T15:17:07&#43;08:00'/><meta property='article:modified_time' content='2022-04-24T15:17:07&#43;08:00'/>
 <meta name="twitter:title" content="RunWild: Resource Management System with Generalized Modeling for Microservices on Cloud">
-<meta name="twitter:description" content="来源：IEEE CLOUD&#39;21 作者：IBM :star:摘要 问题背景 微服务内部通信的复杂性，必须考虑资源利用、调度策略和请求均衡之间的平衡，以防止跨微服务级">
+<meta name="twitter:description" content="来源：IEEE CLOUD&#39;21 作者：IBM ⭐摘要 问题背景 微服务内部通信的复杂性，必须考虑资源利用、调度策略和请求均衡之间的平衡，以防止跨微服务级联的服务质">
     <link rel="shortcut icon" href="/favicon.ico" />
 
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-SPJXNM3WZ6"></script>
@@ -285,27 +285,27 @@ if (!doNotTrack) {
         <div class="widget--toc">
             <nav id="TableOfContents">
   <ul>
-    <li><a href="#star摘要">:star:摘要</a>
+    <li><a href="#摘要">⭐摘要</a>
       <ul>
         <li><a href="#问题背景">问题背景</a></li>
         <li><a href="#文章做了什么">文章做了什么</a></li>
         <li><a href="#贡献">贡献</a></li>
       </ul>
     </li>
-    <li><a href="#star现有技术存在的问题">:star:现有技术存在的问题</a>
+    <li><a href="#现有技术存在的问题">⭐现有技术存在的问题</a>
       <ul>
         <li><a href="#水平伸缩">水平伸缩</a></li>
         <li><a href="#垂直伸缩">垂直伸缩</a></li>
         <li><a href="#部署的三个角度">部署的三个角度</a></li>
       </ul>
     </li>
-    <li><a href="#starrunwild">:star:RunWild</a>
+    <li><a href="#runwild">⭐RunWild</a>
       <ul>
         <li><a href="#系统架构">系统架构</a></li>
         <li><a href="#系统实现">系统实现</a></li>
       </ul>
     </li>
-    <li><a href="#star实验测试">:star:实验测试</a></li>
+    <li><a href="#实验测试">⭐实验测试</a></li>
   </ul>
 </nav>
         </div>
@@ -397,7 +397,7 @@ if (!doNotTrack) {
 <p>来源：IEEE CLOUD'21</p>
 <p>作者：IBM</p>
 </blockquote>
-<h2 id="star摘要">:star:摘要</h2>
+<h2 id="摘要">⭐摘要</h2>
 <h3 id="问题背景">问题背景</h3>
 <p><strong>微服务内部通信的复杂性，必须考虑资源利用、调度策略和请求均衡之间的平衡，以防止跨微服务级联的服务质量下降。</strong></p>
 <h3 id="文章做了什么">文章做了什么</h3>
@@ -417,7 +417,7 @@ if (!doNotTrack) {
 <li>微服务间交互指标：一个称为内聚的指标反映了在同一个<strong>节点上放置高度相互通信的微服务的优势</strong>；</li>
 <li>通过<strong>Service Mesh</strong>对运行时工作负载进行分区：利用服务网格操作流量路由，用其控制能力来划分工作负载以匹配资源的分配。</li>
 </ol>
-<h2 id="star现有技术存在的问题">:star:现有技术存在的问题</h2>
+<h2 id="现有技术存在的问题">⭐现有技术存在的问题</h2>
 <h3 id="水平伸缩">水平伸缩</h3>
 <ul>
 <li>超过某个阈值时，实例的增多与性能表现的增长不匹配，正如收益递减定律所解释的那样；</li>
@@ -454,7 +454,7 @@ if (!doNotTrack) {
 	
 	
 ></p>
-<h2 id="starrunwild">:star:RunWild</h2>
+<h2 id="runwild">⭐RunWild</h2>
 <p>RunWild主要解决：决定实例数量，决定在哪个节点放置实例，如何对工作负载进行分区，如何根据众多资源类型和情景优化部署？</p>
 <p>涉及到的技术有：</p>
 <ol>
@@ -504,7 +504,7 @@ if (!doNotTrack) {
 	
 	
 ></p>
-<h2 id="star实验测试">:star:实验测试</h2>
+<h2 id="实验测试">⭐实验测试</h2>
 <p>集群包含8个节点，每个节点4vCPU，16GB内存，并部署了Istio和Prometheus。</p>
 <p>部署70个微服务，600个容器实例，收集了3天的数据。</p>
 

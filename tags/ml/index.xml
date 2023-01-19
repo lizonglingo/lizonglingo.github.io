@@ -183,9 +183,9 @@
 &lt;p&gt;不同于单模型推理任务，&lt;code&gt;ensemble learning&lt;/code&gt;集成学习可以进一步提高服务精确度。（如，多模型的图片分类任务会提高最终的精确度）&lt;/p&gt;
 &lt;p&gt;然而，对于集成，由于&lt;strong&gt;每个请求都需要运行大量的模型[27,56]而导致的非常高的资源占用，加剧了公共云的部署成本，并导致延迟的高度变化&lt;/strong&gt;。&lt;/p&gt;
 &lt;p&gt;因此，本文解决的主要问题为：&lt;/p&gt;
-&lt;p&gt;:star:集成单一的模型推理服务；&lt;/p&gt;
-&lt;p&gt;:star:同时提高模型服务的准确度；&lt;/p&gt;
-&lt;p&gt;:star:并最小化部署成本。&lt;/p&gt;
+&lt;p&gt;⭐集成单一的模型推理服务；&lt;/p&gt;
+&lt;p&gt;⭐同时提高模型服务的准确度；&lt;/p&gt;
+&lt;p&gt;⭐并最小化部署成本。&lt;/p&gt;
 &lt;h3 id=&#34;现有技术的不足&#34;&gt;现有技术的不足&lt;/h3&gt;
 &lt;p&gt;对最先进的集成模型服务框架进行分析，存在如下不足：&lt;/p&gt;
 &lt;ul&gt;
@@ -195,7 +195,7 @@
 &lt;li&gt;对单一模型的&lt;strong&gt;资源管理模采用的策略不能直接扩展到集成系统中&lt;/strong&gt;。&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;因此，重复之前亟待解决的问题：&lt;/p&gt;
-&lt;p&gt;:warning:&lt;strong&gt;如何解决集成框架的成本、精度和延迟等复杂优化问题？&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;⚠️&lt;strong&gt;如何解决集成框架的成本、精度和延迟等复杂优化问题？&lt;/strong&gt;&lt;/p&gt;
 &lt;h3 id=&#34;本文工作-1&#34;&gt;本文工作&lt;/h3&gt;
 &lt;p&gt;&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;，首个&lt;strong&gt;成本友好&lt;/strong&gt;、&lt;strong&gt;集成多模型&lt;/strong&gt;的ML服务框架，&lt;strong&gt;针对于分类推理任务&lt;/strong&gt;，有很好的&lt;strong&gt;精确度和低延迟&lt;/strong&gt;表现。&lt;/p&gt;
 &lt;!-- raw HTML omitted --&gt;
@@ -263,16 +263,16 @@
 	
 	
 &gt;&lt;/p&gt;
-&lt;p&gt;:one:现有的集成模型案例：&lt;/p&gt;
+&lt;p&gt;1️⃣现有的集成模型案例：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;Azure ML-studio：最初集成了5个模型，现在逐渐扩展到200个模型。&lt;/li&gt;
 &lt;li&gt;AWS Autogluon：集成了6-12个模型。&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;用户可以手动选择模型数量规模。&lt;/p&gt;
 &lt;p&gt;与它们不同的是，&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;的模型选择策略试图在给定延迟的情况下选择合适的集合大小，同时最大化准确性。&lt;/p&gt;
-&lt;p&gt;:two:云上模型服务：&lt;/p&gt;
+&lt;p&gt;2️⃣云上模型服务：&lt;/p&gt;
 &lt;p&gt;InFaas、Clipper 、FrugalML、MArk 、Rafiki、 TF-Serving、 SageMaker、AzureML 、Deep-Studio等。&lt;/p&gt;
-&lt;p&gt;:three:公有云自动缩放：&lt;/p&gt;
+&lt;p&gt;3️⃣公有云自动缩放：&lt;/p&gt;
 &lt;p&gt;现有相关的资源配置策略能分为两类：&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;多路复用不同的实例类型；&lt;/li&gt;
@@ -282,10 +282,10 @@
 &lt;p&gt;&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;的自动缩放策略与Swayam[34]的分布式自动缩放策略有相似之处；然而，我们进一步引入了新颖的&lt;strong&gt;重要采样技术&lt;/strong&gt;，以减少未充分利用的模型的过度供应&lt;/p&gt;
 &lt;h2 id=&#34;引出cocktail&#34;&gt;引出Cocktail&lt;/h2&gt;
 &lt;p&gt;首先回答两个问题：&lt;/p&gt;
-&lt;p&gt;:one:如何减少资源占用:question:&lt;/p&gt;
+&lt;p&gt;1️⃣如何减少资源占用❓&lt;/p&gt;
 &lt;p&gt;通过最小化模型集成数量，减少资源使用。文章通过实验，选取精度前50%的模型进行集成。&lt;/p&gt;
 &lt;p&gt;完全集成的模型选择是一种过度的行为，而静态集成则会导致精度的损失。这就需要一个动态的模型选择策略，该策略可以根据模型选择策略的准确性和可伸缩性准确地确定所需的模型数量。&lt;/p&gt;
-&lt;p&gt;:two:如何减少部署成本:question:&lt;/p&gt;
+&lt;p&gt;2️⃣如何减少部署成本❓&lt;/p&gt;
 &lt;p&gt;大多数云提供商提供瞬态虚拟机，如Amazon Spot实例[69]、谷歌preemptible VMs[9]和Azure Low-priority VMs[7]，可以降低高达10倍的云计算成本。文章**利用这些瞬态VMs(如spot实例)**来大幅降低部署集成模型框架的成本。&lt;/p&gt;
 &lt;h2 id=&#34;cocktail整体设计&#34;&gt;Cocktail整体设计&lt;/h2&gt;
 &lt;p&gt;&lt;em&gt;&lt;strong&gt;Cocktail&lt;/strong&gt;&lt;/em&gt;架构如下：&lt;/p&gt;

@@ -436,9 +436,9 @@ if (!doNotTrack) {
 <p>不同于单模型推理任务，<code>ensemble learning</code>集成学习可以进一步提高服务精确度。（如，多模型的图片分类任务会提高最终的精确度）</p>
 <p>然而，对于集成，由于<strong>每个请求都需要运行大量的模型[27,56]而导致的非常高的资源占用，加剧了公共云的部署成本，并导致延迟的高度变化</strong>。</p>
 <p>因此，本文解决的主要问题为：</p>
-<p>:star:集成单一的模型推理服务；</p>
-<p>:star:同时提高模型服务的准确度；</p>
-<p>:star:并最小化部署成本。</p>
+<p>⭐集成单一的模型推理服务；</p>
+<p>⭐同时提高模型服务的准确度；</p>
+<p>⭐并最小化部署成本。</p>
 <h3 id="现有技术的不足">现有技术的不足</h3>
 <p>对最先进的集成模型服务框架进行分析，存在如下不足：</p>
 <ul>
@@ -448,7 +448,7 @@ if (!doNotTrack) {
 <li>对单一模型的<strong>资源管理模采用的策略不能直接扩展到集成系统中</strong>。</li>
 </ul>
 <p>因此，重复之前亟待解决的问题：</p>
-<p>:warning:<strong>如何解决集成框架的成本、精度和延迟等复杂优化问题？</strong></p>
+<p>⚠️<strong>如何解决集成框架的成本、精度和延迟等复杂优化问题？</strong></p>
 <h3 id="本文工作-1">本文工作</h3>
 <p><em><strong>Cocktail</strong></em>，首个<strong>成本友好</strong>、<strong>集成多模型</strong>的ML服务框架，<strong>针对于分类推理任务</strong>，有很好的<strong>精确度和低延迟</strong>表现。</p>
 <!-- raw HTML omitted -->
@@ -516,16 +516,16 @@ if (!doNotTrack) {
 	
 	
 ></p>
-<p>:one:现有的集成模型案例：</p>
+<p>1️⃣现有的集成模型案例：</p>
 <ul>
 <li>Azure ML-studio：最初集成了5个模型，现在逐渐扩展到200个模型。</li>
 <li>AWS Autogluon：集成了6-12个模型。</li>
 </ul>
 <p>用户可以手动选择模型数量规模。</p>
 <p>与它们不同的是，<em><strong>Cocktail</strong></em>的模型选择策略试图在给定延迟的情况下选择合适的集合大小，同时最大化准确性。</p>
-<p>:two:云上模型服务：</p>
+<p>2️⃣云上模型服务：</p>
 <p>InFaas、Clipper 、FrugalML、MArk 、Rafiki、 TF-Serving、 SageMaker、AzureML 、Deep-Studio等。</p>
-<p>:three:公有云自动缩放：</p>
+<p>3️⃣公有云自动缩放：</p>
 <p>现有相关的资源配置策略能分为两类：</p>
 <ol>
 <li>多路复用不同的实例类型；</li>
@@ -535,10 +535,10 @@ if (!doNotTrack) {
 <p><em><strong>Cocktail</strong></em>的自动缩放策略与Swayam[34]的分布式自动缩放策略有相似之处；然而，我们进一步引入了新颖的<strong>重要采样技术</strong>，以减少未充分利用的模型的过度供应</p>
 <h2 id="引出cocktail">引出Cocktail</h2>
 <p>首先回答两个问题：</p>
-<p>:one:如何减少资源占用:question:</p>
+<p>1️⃣如何减少资源占用❓</p>
 <p>通过最小化模型集成数量，减少资源使用。文章通过实验，选取精度前50%的模型进行集成。</p>
 <p>完全集成的模型选择是一种过度的行为，而静态集成则会导致精度的损失。这就需要一个动态的模型选择策略，该策略可以根据模型选择策略的准确性和可伸缩性准确地确定所需的模型数量。</p>
-<p>:two:如何减少部署成本:question:</p>
+<p>2️⃣如何减少部署成本❓</p>
 <p>大多数云提供商提供瞬态虚拟机，如Amazon Spot实例[69]、谷歌preemptible VMs[9]和Azure Low-priority VMs[7]，可以降低高达10倍的云计算成本。文章**利用这些瞬态VMs(如spot实例)**来大幅降低部署集成模型框架的成本。</p>
 <h2 id="cocktail整体设计">Cocktail整体设计</h2>
 <p><em><strong>Cocktail</strong></em>架构如下：</p>

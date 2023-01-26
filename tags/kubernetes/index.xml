@@ -6,7 +6,394 @@
         <description>Recent content in Kubernetes on fmt.Println(&#34;Li Duo&#34;)</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-CN</language>
-        <lastBuildDate>Fri, 13 Jan 2023 18:18:33 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/kubernetes/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Thu, 26 Jan 2023 17:51:33 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/kubernetes/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Loadbalancer与Ingress</title>
+        <link>https://lizonglingo.github.io/p/loadbalancer%E4%B8%8Eingress/</link>
+        <pubDate>Thu, 26 Jan 2023 17:51:33 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/loadbalancer%E4%B8%8Eingress/</guid>
+        <description>&lt;img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126181500003.png" alt="Featured image of post Loadbalancer与Ingress" /&gt;&lt;h1 id=&#34;前言&#34;&gt;前言&lt;/h1&gt;
+&lt;h2 id=&#34;kubernetes-service&#34;&gt;Kubernetes Service&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;在平时开发或者本地环境中，我们常用的服务类型可能是：&lt;code&gt;ClusterIP&lt;/code&gt;, &lt;code&gt;NodePort&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;但是，还有两种重要的服务类型：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;LoadBalancer&lt;/code&gt;：使用云提供商的负载均衡器向外部暴露服务。 外部负载均衡器可以将流量路由到自动创建的 &lt;code&gt;NodePort&lt;/code&gt; 服务和 &lt;code&gt;ClusterIP&lt;/code&gt; 服务上。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExternalName&lt;/code&gt;: 通过返回 &lt;code&gt;CNAME&lt;/code&gt; 记录和对应值，可以将服务映射到 &lt;code&gt;externalName&lt;/code&gt; 字段的内容（例如，&lt;code&gt;foo.bar.example.com&lt;/code&gt;）。 无需创建任何类型代理。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这里先简单说一下 &lt;code&gt;ExternalName&lt;/code&gt; 的使用情景，如下面的 yaml 定义：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;apiVersion&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;v1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;kind&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;Service&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;metadata&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;backend-service&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;namespace&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;default&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;spec&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;type&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;ExternalName&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;externalName&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;backend-service.example.svc.cluster.local&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;与其他 Service 类型不同，&lt;code&gt;ExternalName&lt;/code&gt; 类型不通过 Pod 选择器关联 Pod ，而是将 Service 和另外一个域名关联起来。这种方式可以实现：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;配置服务管理另一个命名空间中的服务，屏蔽服务在不同命名空间的调用差异，使得两个服务看起来像是在同一个命名空间下；&lt;/li&gt;
+&lt;li&gt;通过 Service 名称的方式请求外部服务时，例如请求在集群外的数据库服务，也可以使用这种方法&lt;/li&gt;
+&lt;li&gt;将微服务依赖的中间件地址配置为 &lt;code&gt;ExternalName&lt;/code&gt; 类型，进一步把服务和使用的中间件解耦（将一些中间件服务地址直接用集群访问地址表示），在实际部署的时候通过 &lt;code&gt;ExternalName&lt;/code&gt; 方式让微服务访问其他中间件&lt;/li&gt;
+&lt;li&gt;&amp;hellip;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;ingress&#34;&gt;Ingress&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&amp;ldquo;Ingress 是对集群中服务的外部访问进行管理的 API 对象，典型的访问方式是 HTTP。可以提供负载均衡、SSL 终结和基于名称的虚拟托管。&amp;rdquo;&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;在生产中，Ingress 常与 LoadBalancer 配合使用。&lt;/p&gt;
+&lt;h1 id=&#34;loadbalancer&#34;&gt;Loadbalancer&lt;/h1&gt;
+&lt;p&gt;Loadbalancer 通过负载均衡器来暴露 Service，通过云厂商的负载均衡器提供的外网 IP 来进行访问业务。&lt;/p&gt;
+&lt;p&gt;而在实际的业务中，通常将 Loadbalancer 与 Ingress 结合使用。原因有以下几点：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;云厂商的 Loadbalancer 提供的公网 IP 和流量带宽是收费的，通常有多个服务需要暴露，没有必要创建多个 Loadbalancer ，这会增加开销。&lt;/li&gt;
+&lt;li&gt;每一个服务都用一个公网 IP 也不灵活。&lt;/li&gt;
+&lt;li&gt;而 Ingress 通过配置域名和路径规则，在一个入口统一接收外部请求，能够转发到不同的集群内部服务中，可以灵活实现集群服务的暴露。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Loadbalancer 类型的服务定义如下：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;apiVersion&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;v1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;kind&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;Service&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;metadata&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;my-service&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;spec&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;selector&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;app.kubernetes.io/name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;MyApp&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;ports&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#f92672&#34;&gt;protocol&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;TCP&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;port&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;80&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;targetPort&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;9376&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;clusterIP&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;10.0.171.239&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;type&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;LoadBalancer&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;它由 &lt;code&gt;type: LoadBalancer&lt;/code&gt; 确定。LoadBalancer 的具体实现依赖云厂商。&lt;/p&gt;
+&lt;p&gt;那么在本地集群想使用 LoadBalancer 怎么办呢？我们都知道 LoadBalancer 都是作为云厂商 IaaS 平台的一部分实现的，如果我们的集群没有使用这些公有云，LoadBalancers 类型的服务就会无限处于 &lt;code&gt;Pending&lt;/code&gt; 状态。&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://metallb.universe.tf/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;MetalLB&lt;/a&gt; 解决的就是这个问题。&lt;/p&gt;
+&lt;h2 id=&#34;metallb&#34;&gt;MetalLB&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://metallb.universe.tf/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://metallb.universe.tf/&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;目前，对于本地 Kubernetes 集群的一种称呼是 “裸金属集群”，或许 MetalLB 就是这个意思，在裸金属集群上配置本地的 LoadBalancer。它目前是 CNCF 的沙盒项目，使用标准路由协议实现裸金属集群的 load-balancer。&lt;/p&gt;
+&lt;p&gt;通过 MetalLB，我们在本地集群或者私有云中，也可以使用到 LoadBalancer 的能力。&lt;/p&gt;
+&lt;h3 id=&#34;概念&#34;&gt;概念&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://metallb.universe.tf/concepts/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://metallb.universe.tf/concepts/&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&#34;address-allocation&#34;&gt;Address Allocation&lt;/h4&gt;
+&lt;p&gt;公有云会为 LoadBalancer 类型的服务自动分配一个 IP 地址。MetalLB 不能凭空把这些地址创建出来，&lt;strong&gt;我们需要为 MetalLB 分配一个 IP 地址池&lt;/strong&gt;，这通常取决于我们的内网环境，例如在 192.168.0.0/24 中分配 192.168.0.128/26 作为可用 IP 地址池。这些本地地址都是内网地址，因此需要符合 RFC 1918 规范。&lt;/p&gt;
+&lt;p&gt;这样 MetalLB 就可以自动把地址池中的地址分配给服务。&lt;/p&gt;
+&lt;h4 id=&#34;external-announcement&#34;&gt;External Announcement&lt;/h4&gt;
+&lt;p&gt;在 LoadBalancer 类型的服务被分到地址之后，我们必须让内网的其他设备知道，这个 IP 的存在。这就像是内网的两个服务器可以知道彼此的 IP 一样。即：&lt;strong&gt;此时，这个内网服务器的，k8s集群中的，Service 对外的网络应该表现为，一个内网服务器在网络中的位置&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;MetalLB 使用&lt;strong&gt;标准的网络或路由协议&lt;/strong&gt;来实现这一点，具体取决于使用哪种模式，如：ARP、NDP或BGP协议。&lt;/p&gt;
+&lt;h3 id=&#34;安装-metallb&#34;&gt;安装 MetalLB&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://metallb.universe.tf/installation/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://metallb.universe.tf/installation/&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&#34;前置条件&#34;&gt;前置条件&lt;/h4&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://metallb.universe.tf/#requirements&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://metallb.universe.tf/#requirements&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;注意 Kubernetes 网络插件的兼容性，常用的网络组件 Cilium、Flannel等都是兼容的。&lt;/p&gt;
+&lt;h4 id=&#34;使用-manifest-安装&#34;&gt;使用 Manifest 安装&lt;/h4&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;在对应命名空间下有两种组件：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ k get po -n metallb-system
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME                          READY   STATUS    RESTARTS        AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;controller-7597dd4f7b-kzhqd   1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               7h54m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;speaker-g4rhm                 1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               7h54m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;speaker-m6xtr                 1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;6h38m ago&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;   7h54m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;speaker-pmt5w                 1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               7h54m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;speaker-wvvz6                 1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;               7h54m
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;metallb-system/controller&lt;/code&gt;：这是处理 IP 地址分配的，集群维度的控制器。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;metallb-system/speaker&lt;/code&gt;：是 daemonset 类型。这个组件使用我们所选择的协议，使服务可达。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;配置二层模式下的-loadbalancer&#34;&gt;配置二层模式下的 LoadBalancer&lt;/h3&gt;
+&lt;p&gt;这是最简单且常用的模式。我们只需要分配一个 IP 空间作为 IP 池，然后将其告知 &lt;code&gt;L2Advertisement&lt;/code&gt; 即可，&lt;code&gt;L2Advertisement&lt;/code&gt; 将这个 IP 池发布出去：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;apiVersion&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;metallb.io/v1beta1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;kind&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;IPAddressPool&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;metadata&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;first-pool&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;namespace&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;metallb-system&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;spec&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;addresses&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# 我的内网环境是 192.168.0.0/24&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# 分配地址范围&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - &lt;span style=&#34;color:#ae81ff&#34;&gt;192.168.0.201-192.168.0.233&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;---
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;apiVersion&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;metallb.io/v1beta1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;kind&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;L2Advertisement&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;metadata&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;example&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;namespace&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;metallb-system&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;spec&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;ipAddressPools&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  - &lt;span style=&#34;color:#ae81ff&#34;&gt;first-pool&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;创建-loadbalancer-类型的服务&#34;&gt;创建 LoadBalancer 类型的服务&lt;/h3&gt;
+&lt;p&gt;这里使用 Tekton 的 Dashboard 为例：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;apiVersion&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;v1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;kind&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;Service&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;metadata&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;labels&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#ae81ff&#34;&gt;...&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;tekton-dashboard&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;namespace&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;tekton-pipelines&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;spec&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;ports&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;http&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;port&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;9097&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;protocol&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;TCP&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;targetPort&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;9097&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# 配置为 LoadBalancer 类型&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;type&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;LoadBalancer&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;创建后：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ k get svc -n tekton-pipelines
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME                                TYPE           CLUSTER-IP       EXTERNAL-IP     PORT&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;S&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;                              AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;tekton-dashboard                    LoadBalancer   10.100.157.67    192.168.0.201   9097:32176/TCP                       18s
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Metallb 为其分配了 &lt;code&gt;192.168.0.201&lt;/code&gt; 这个地址，有两个端口 &lt;code&gt;9097&lt;/code&gt; 和 &lt;code&gt;32176&lt;/code&gt;。当然，&lt;code&gt;9097&lt;/code&gt; 是我们指定的，那 &lt;code&gt;32176&lt;/code&gt; 是怎么来的呢？&lt;/p&gt;
+&lt;p&gt;先试着访问一下 &lt;code&gt;192.168.0.201:9097&lt;/code&gt; 和&lt;code&gt;192.168.0.201:32176&lt;/code&gt;：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126203748156.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230126203748156&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;发现，&lt;code&gt;192.168.0.201:32176&lt;/code&gt; 这个地址不能访问到我们的服务，那它为什么会存在呢？&lt;/p&gt;
+&lt;h4 id=&#34;loadbalancer-的端口&#34;&gt;LoadBalancer 的端口&lt;/h4&gt;
+&lt;p&gt;为了解决这个疑惑，我重新检查了我的 yaml 文件，发现确实没有 &lt;code&gt;32176&lt;/code&gt; 这个端口相关的配置，它像是一个 &lt;code&gt;NodePort&lt;/code&gt; 类型服务所有的端口。&lt;/p&gt;
+&lt;p&gt;在查询文档后，我想应该是这个原因：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&amp;ldquo;要实现 &lt;code&gt;type: LoadBalancer&lt;/code&gt; 的服务，Kubernetes 通常首先进行与请求 &lt;code&gt;type: NodePort&lt;/code&gt; 服务等效的更改。 cloud-controller-manager 组件然后配置外部负载均衡器以将流量转发到已分配的节点端口。&amp;rdquo;&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/#type-nodeport&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/#type-nodeport&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;我们的负载均衡器先是使用一个 NodePort 端口，然后将 LB 服务从 EXTERNAL IP 来的外部流量转发到这个 NodePort ，也就是 &lt;code&gt;32176&lt;/code&gt; 中。&lt;/p&gt;
+&lt;p&gt;为什么需要一个 NodePort 作为 LB 的中间端口呢？如果不用这个端口，那么 LB 会直接将流量转发到 Pod 中。我觉得应该是需要节点的 NodePort 做一层负载均衡吧。&lt;/p&gt;
+&lt;p&gt;于是，我尝试访问集群中工作节点的 &lt;code&gt;32176&lt;/code&gt;，端口，果然，所有节点的该端口都可以访问到服务：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126205831162.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230126205831162&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126205857312.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230126205857312&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126205912808.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230126205912808&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;它就是 NodePort。&lt;/p&gt;
+&lt;p&gt;LB 类型服务将来自 EXTERNAL-IP:Port 的流量，通过 NodePort 负载均衡到 Pod 中。这可能也是 LoadBalancer 名字的意思？&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;spec&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;ports&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;http&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;port&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;9097&lt;/span&gt;	&lt;span style=&#34;color:#75715e&#34;&gt;# EXTERNAL-IP 的端口是这个&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;protocol&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;TCP&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;targetPort&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;9097&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/blockquote&gt;
+&lt;p&gt;我进一步尝试 &lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/#load-balancer-nodeport-allocation&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;禁用负载均衡器节点端口分配&lt;/a&gt;，首先把之前的 Service 删除，修改 yaml，再 apply：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;apiVersion&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;v1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;kind&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;Service&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;metadata&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  ,,,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;tekton-dashboard&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;namespace&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;tekton-pipelines&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;spec&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#75715e&#34;&gt;# 在 spec 中加上这个字段 不再为其分配 NodePort&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;allocateLoadBalancerNodePorts&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;false&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;ports&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;http&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;port&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;9097&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;protocol&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;TCP&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#f92672&#34;&gt;targetPort&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;9097&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;type&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;LoadBalancer&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ae81ff&#34;&gt;...&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;果然，NodePort 没有了，也进一步验证了之前猜想：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ k get svc -n tekton-pipelines
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME                                TYPE           CLUSTER-IP       EXTERNAL-IP     PORT&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;S&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;                              AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;tekton-dashboard                    LoadBalancer   10.111.86.40     192.168.0.201   9097/TCP                             3s
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;小结&#34;&gt;小结&lt;/h2&gt;
+&lt;p&gt;我们稍微讨论了关于 Loadbalancer 这一类型的服务，包括：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;本地集群/裸金属/私有云通过 MetaLB 实现 Loadbalancer；&lt;/li&gt;
+&lt;li&gt;MetaLB 的部署、配置、使用；&lt;/li&gt;
+&lt;li&gt;Loadbalancer 它的两个端口，以及通过 NodePort 进行负载均衡；&lt;/li&gt;
+&lt;li&gt;还有不常用的 &lt;code&gt;ExternalName&lt;/code&gt; 类型服务。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h1 id=&#34;ingress-1&#34;&gt;Ingress&lt;/h1&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;从官网这张图来看，Ingress 的作用就比较清晰了，通过一组路由规则，将集群外的请求负载均衡到内部服务，实现集群流量统一接入。&lt;/p&gt;
+&lt;p&gt;我们将上文中 tekton-dashboard 服务修改为 ClusterIP，然后通过 Ingress 暴露服务，完成我们这部分的实践。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ k get svc -n tekton-pipelines
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME                                TYPE        CLUSTER-IP       EXTERNAL-IP   PORT&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;S&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;                              AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;tekton-dashboard                    ClusterIP   10.101.20.90     &amp;lt;none&amp;gt;        9097/TCP                             5s
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这里使用 &lt;a class=&#34;link&#34; href=&#34;https://kubernetes.github.io/ingress-nginx/deploy/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Ingress-Nginx&lt;/a&gt; 作为我们集群的 ingress。&lt;/p&gt;
+&lt;h2 id=&#34;ingress-nginx&#34;&gt;Ingress-Nginx&lt;/h2&gt;
+&lt;h3 id=&#34;安装-ingress-nginx&#34;&gt;安装 Ingress-Nginx&lt;/h3&gt;
+&lt;p&gt;Nginx 实现的 Ingress Controller 提供了 Cloud 和 Metal 版本的 manifest。主要的区别是 Cloud 版本使用 LB 暴露服务，而 Metal 使用 NodePort 暴露服务。如果你跟随上文，部署了 MetaLB 在本地集群，就推荐使用 Cloud 版本的 manifest。&lt;/p&gt;
+&lt;p&gt;注意，原始 manifest 中包含 registry.k8s.io 的镜像，可能不方便拉取，我更换了 docker hub 中对应的镜像，主要有三处地方，共两个镜像：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;dyrnq/ingress-nginx-controller:v1.4.0&lt;/li&gt;
+&lt;li&gt;liangjw/kube-webhook-certgen:v1.1.1&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ kubectl apply -f https://ghproxy.com/https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.4.0/deploy/static/provider/cloud/deploy.yam
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;如果镜像无法拉取，注意修改其中的镜像仓库。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ k get po -n ingress-nginx
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME                                        READY   STATUS      RESTARTS   AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ingress-nginx-admission-create-ptg6f        0/1     Completed   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          19m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ingress-nginx-admission-patch-lndpj         0/1     Completed   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          19m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ingress-nginx-controller-8445cd49cf-l4q4r   1/1     Running     &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          19m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ k get svc -n ingress-nginx
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME                                 TYPE           CLUSTER-IP      EXTERNAL-IP     PORT&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;S&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;                      AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ingress-nginx-controller             LoadBalancer   10.106.83.156   192.168.0.201   80:31527/TCP,443:32376/TCP   20m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ingress-nginx-controller-admission   ClusterIP      10.97.1.125     &amp;lt;none&amp;gt;          443/TCP                      20m
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;部署完成后，看到 LB 分配的 IP 是 &lt;code&gt;192.168.0.201&lt;/code&gt;。接下来我们配置 ingress，从 &lt;code&gt;192.168.0.201:80&lt;/code&gt; 端口访问我们想要的服务。&lt;/p&gt;
+&lt;h3 id=&#34;配置-ingress-暴露-tekton-dashboard-服务&#34;&gt;配置 Ingress 暴露 Tekton Dashboard 服务&lt;/h3&gt;
+&lt;p&gt;首先确保我们的 Tekton Dashboard 服务以及创建。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ k get svc -n tekton-pipelines
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME                                TYPE        CLUSTER-IP       EXTERNAL-IP   PORT&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;S&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;                              AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;tekton-dashboard                    ClusterIP   10.101.20.90     &amp;lt;none&amp;gt;        9097/TCP                             5s
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;一个 Ingress 的配置文件如下：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;apiVersion: networking.k8s.io/v1
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;kind: Ingress
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;metadata:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  name: ingress-resource
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  namespace: tekton-pipelines
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  annotations:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    kubernetes.io/ingress.class: nginx
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    nginx.ingress.kubernetes.io/ssl-redirect: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;false&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;spec:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  rules:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  	&lt;span style=&#34;color:#75715e&#34;&gt;# 我们为其设置了域名 但是公网 DNS 可不会解析它&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  	&lt;span style=&#34;color:#75715e&#34;&gt;# 需要在我们本地配置 host 来正确解析&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - host: tekton.k8s.local
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      http:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        paths:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          - path: /
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            pathType: Prefix
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            backend:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;              service:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                name: tekton-dashboard
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                port:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                  number: &lt;span style=&#34;color:#ae81ff&#34;&gt;9097&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;部署：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ k apply -f dashboard-ingress.yaml
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;部署完成之后，我们&lt;strong&gt;需要在本地配置域名解析&lt;/strong&gt;，让 &lt;code&gt;tekton.k8s.local&lt;/code&gt; 能够解析到 &lt;code&gt;192.168.0.201&lt;/code&gt; 。&lt;/p&gt;
+&lt;p&gt;然后通过浏览器访问 &lt;code&gt;http://tekton.k8s.local/&lt;/code&gt;。在浏览器中默认解析到 &lt;code&gt;192.168.0.201:80&lt;/code&gt; 的根 &lt;code&gt;/ &lt;/code&gt; 路由路径下。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126223316998.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230126223316998&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;这样就实现了通过 ingress 暴露集群内部服务。&lt;/p&gt;
+&lt;h3 id=&#34;关于配置-host&#34;&gt;关于配置 host&lt;/h3&gt;
+&lt;p&gt;我们在 ingress 的配置中指定了 host 字段，并配置了本地域名解析去访问这个域名：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;spec&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;rules&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#f92672&#34;&gt;host&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;tekton.k8s.local&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	  &lt;span style=&#34;color:#ae81ff&#34;&gt;...&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;虽然我们知道 ingress 暴露的 IP 是 &lt;code&gt;192.168.0.201:80&lt;/code&gt; ，但是直接访问这个地址并不能找到服务：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126224456243.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230126224456243&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;如果我们先通过 IP:Port 的形式，而不通过域名，就不能在 &lt;code&gt;spec.rules&lt;/code&gt; 中为其配置 host，也就是使用这种配置：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/#ingress-rules&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/#ingress-rules&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&amp;ldquo;未指定 &lt;code&gt;host&lt;/code&gt; 的规则适用于通过指定 IP 地址的所有入站 HTTP 通信&amp;rdquo;。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;apiVersion&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;networking.k8s.io/v1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;kind&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;Ingress&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;...
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;spec&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;rules&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  	&lt;span style=&#34;color:#75715e&#34;&gt;# 不指定 host&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;#- host: tekton.k8s.local&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    - &lt;span style=&#34;color:#f92672&#34;&gt;http&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;paths&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          - &lt;span style=&#34;color:#f92672&#34;&gt;path&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;/&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            &lt;span style=&#34;color:#f92672&#34;&gt;pathType&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;Prefix&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            &lt;span style=&#34;color:#f92672&#34;&gt;backend&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;              &lt;span style=&#34;color:#f92672&#34;&gt;service&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;tekton-dashboard&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                &lt;span style=&#34;color:#f92672&#34;&gt;port&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                  &lt;span style=&#34;color:#f92672&#34;&gt;number&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;9097&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这样进行部署，就可以直接通过 ingress 控制器的 LB 地址和端口 (默认 http 为 80)，从其根路径下访问到我们的服务了。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126223824349.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230126223824349&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;小结-1&#34;&gt;小结&lt;/h2&gt;
+&lt;p&gt;本部分我们简单介绍和实践了 Ingress，主要有以下内容：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;简要阐述 cloud 和 metal 环境下，ingress-nginx 控制器 service 类型的不同；&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;安装 LoadBalancer 类型的 ingress-nginx 控制器；&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;为 ClusterIP 类型的 Tekton Dashboard 服务配置 ingress 规则；&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;关于配置 ingress 中 host，使用 域名/IP 访问的小坑。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
         <title>构建应用时如何缩小容器镜像的体积</title>
         <link>https://lizonglingo.github.io/p/%E6%9E%84%E5%BB%BA%E5%BA%94%E7%94%A8%E6%97%B6%E5%A6%82%E4%BD%95%E7%BC%A9%E5%B0%8F%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E7%9A%84%E4%BD%93%E7%A7%AF/</link>
         <pubDate>Fri, 13 Jan 2023 18:18:33 +0800</pubDate>

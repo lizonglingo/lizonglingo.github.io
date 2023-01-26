@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='前言 Kubernetes Service https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/ 在平时开发或者本地环境中，我们常用的服务类型可能是：ClusterIP, NodePort。 但是，还有两种重要的服务类型： LoadB'>
+<meta name="keywords" content="Loadbalancer, Ingress, Kubernetes Service, Kubernetes, MetalLB"><title>Loadbalancer与Ingress</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/loadbalancer%E4%B8%8Eingress/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='Loadbalancer与Ingress'>
+<meta property='og:description' content='前言 Kubernetes Service https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/ 在平时开发或者本地环境中，我们常用的服务类型可能是：ClusterIP, NodePort。 但是，还有两种重要的服务类型： LoadB'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/loadbalancer%E4%B8%8Eingress/'>
+<meta property='og:site_name' content='fmt.Println(&#34;Li Duo&#34;)'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='Kubernetes' /><meta property='article:tag' content='云原生' /><meta property='article:tag' content='中间件' /><meta property='article:published_time' content='2023-01-26T17:51:33&#43;08:00'/><meta property='article:modified_time' content='2023-01-26T23:03:33&#43;08:00'/><meta property='og:image' content='https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126181500003.png' />
+<meta name="twitter:title" content="Loadbalancer与Ingress">
+<meta name="twitter:description" content="前言 Kubernetes Service https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/ 在平时开发或者本地环境中，我们常用的服务类型可能是：ClusterIP, NodePort。 但是，还有两种重要的服务类型： LoadB"><meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content='https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126181500003.png' />
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-SPJXNM3WZ6"></script>
+<script>
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'G-SPJXNM3WZ6', { 'anonymize_ip': false });
+}
+</script>
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?b30bfbf01ac692ef3da66a21b24e6edb";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+    
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">fmt.Println(&#34;Li Duo&#34;)</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#kubernetes-service">Kubernetes Service</a></li>
+    <li><a href="#ingress">Ingress</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#metallb">MetalLB</a>
+      <ul>
+        <li><a href="#概念">概念</a></li>
+        <li><a href="#安装-metallb">安装 MetalLB</a></li>
+        <li><a href="#配置二层模式下的-loadbalancer">配置二层模式下的 LoadBalancer</a></li>
+        <li><a href="#创建-loadbalancer-类型的服务">创建 LoadBalancer 类型的服务</a></li>
+      </ul>
+    </li>
+    <li><a href="#小结">小结</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#ingress-nginx">Ingress-Nginx</a>
+      <ul>
+        <li><a href="#安装-ingress-nginx">安装 Ingress-Nginx</a></li>
+        <li><a href="#配置-ingress-暴露-tekton-dashboard-服务">配置 Ingress 暴露 Tekton Dashboard 服务</a></li>
+        <li><a href="#关于配置-host">关于配置 host</a></li>
+      </ul>
+    </li>
+    <li><a href="#小结-1">小结</a></li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="has-image main-article">
+    <header class="article-header">
+        <div class="article-image">
+            <a href="/p/loadbalancer%E4%B8%8Eingress/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126181500003.png" loading="lazy" alt="Featured image of post Loadbalancer与Ingress" />
+                
+            </a>
+        </div>
+    
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/kubernetes/" >
+                Kubernetes
+            </a>
+        
+            <a href="/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/" >
+                云原生
+            </a>
+        
+            <a href="/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6/" >
+                中间件
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/loadbalancer%E4%B8%8Eingress/">Loadbalancer与Ingress</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jan 26, 2023</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 7 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="前言">前言</h1>
+<h2 id="kubernetes-service">Kubernetes Service</h2>
+<blockquote>
+<p><a class="link" href="https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/"  target="_blank" rel="noopener"
+    >https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/</a></p>
+</blockquote>
+<p>在平时开发或者本地环境中，我们常用的服务类型可能是：<code>ClusterIP</code>, <code>NodePort</code>。</p>
+<p>但是，还有两种重要的服务类型：</p>
+<ul>
+<li><code>LoadBalancer</code>：使用云提供商的负载均衡器向外部暴露服务。 外部负载均衡器可以将流量路由到自动创建的 <code>NodePort</code> 服务和 <code>ClusterIP</code> 服务上。</li>
+<li><code>ExternalName</code>: 通过返回 <code>CNAME</code> 记录和对应值，可以将服务映射到 <code>externalName</code> 字段的内容（例如，<code>foo.bar.example.com</code>）。 无需创建任何类型代理。</li>
+</ul>
+<p>这里先简单说一下 <code>ExternalName</code> 的使用情景，如下面的 yaml 定义：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Service</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">backend-service</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">default</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">type</span>: <span style="color:#ae81ff">ExternalName</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">externalName</span>: <span style="color:#ae81ff">backend-service.example.svc.cluster.local</span>
+</span></span></code></pre></div><p>与其他 Service 类型不同，<code>ExternalName</code> 类型不通过 Pod 选择器关联 Pod ，而是将 Service 和另外一个域名关联起来。这种方式可以实现：</p>
+<ul>
+<li>配置服务管理另一个命名空间中的服务，屏蔽服务在不同命名空间的调用差异，使得两个服务看起来像是在同一个命名空间下；</li>
+<li>通过 Service 名称的方式请求外部服务时，例如请求在集群外的数据库服务，也可以使用这种方法</li>
+<li>将微服务依赖的中间件地址配置为 <code>ExternalName</code> 类型，进一步把服务和使用的中间件解耦（将一些中间件服务地址直接用集群访问地址表示），在实际部署的时候通过 <code>ExternalName</code> 方式让微服务访问其他中间件</li>
+<li>&hellip;</li>
+</ul>
+<h2 id="ingress">Ingress</h2>
+<blockquote>
+<p>&ldquo;Ingress 是对集群中服务的外部访问进行管理的 API 对象，典型的访问方式是 HTTP。可以提供负载均衡、SSL 终结和基于名称的虚拟托管。&rdquo;</p>
+<p><a class="link" href="https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/"  target="_blank" rel="noopener"
+    >https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/</a></p>
+</blockquote>
+<p>在生产中，Ingress 常与 LoadBalancer 配合使用。</p>
+<h1 id="loadbalancer">Loadbalancer</h1>
+<p>Loadbalancer 通过负载均衡器来暴露 Service，通过云厂商的负载均衡器提供的外网 IP 来进行访问业务。</p>
+<p>而在实际的业务中，通常将 Loadbalancer 与 Ingress 结合使用。原因有以下几点：</p>
+<ol>
+<li>云厂商的 Loadbalancer 提供的公网 IP 和流量带宽是收费的，通常有多个服务需要暴露，没有必要创建多个 Loadbalancer ，这会增加开销。</li>
+<li>每一个服务都用一个公网 IP 也不灵活。</li>
+<li>而 Ingress 通过配置域名和路径规则，在一个入口统一接收外部请求，能够转发到不同的集群内部服务中，可以灵活实现集群服务的暴露。</li>
+</ol>
+<p>Loadbalancer 类型的服务定义如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Service</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">my-service</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">selector</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">app.kubernetes.io/name</span>: <span style="color:#ae81ff">MyApp</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ports</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">protocol</span>: <span style="color:#ae81ff">TCP</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">port</span>: <span style="color:#ae81ff">80</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">targetPort</span>: <span style="color:#ae81ff">9376</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">clusterIP</span>: <span style="color:#ae81ff">10.0.171.239</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">type</span>: <span style="color:#ae81ff">LoadBalancer</span>
+</span></span></code></pre></div><p>它由 <code>type: LoadBalancer</code> 确定。LoadBalancer 的具体实现依赖云厂商。</p>
+<p>那么在本地集群想使用 LoadBalancer 怎么办呢？我们都知道 LoadBalancer 都是作为云厂商 IaaS 平台的一部分实现的，如果我们的集群没有使用这些公有云，LoadBalancers 类型的服务就会无限处于 <code>Pending</code> 状态。</p>
+<p><a class="link" href="https://metallb.universe.tf/"  target="_blank" rel="noopener"
+    >MetalLB</a> 解决的就是这个问题。</p>
+<h2 id="metallb">MetalLB</h2>
+<blockquote>
+<p><a class="link" href="https://metallb.universe.tf/"  target="_blank" rel="noopener"
+    >https://metallb.universe.tf/</a></p>
+</blockquote>
+<p>目前，对于本地 Kubernetes 集群的一种称呼是 “裸金属集群”，或许 MetalLB 就是这个意思，在裸金属集群上配置本地的 LoadBalancer。它目前是 CNCF 的沙盒项目，使用标准路由协议实现裸金属集群的 load-balancer。</p>
+<p>通过 MetalLB，我们在本地集群或者私有云中，也可以使用到 LoadBalancer 的能力。</p>
+<h3 id="概念">概念</h3>
+<blockquote>
+<p><a class="link" href="https://metallb.universe.tf/concepts/"  target="_blank" rel="noopener"
+    >https://metallb.universe.tf/concepts/</a></p>
+</blockquote>
+<h4 id="address-allocation">Address Allocation</h4>
+<p>公有云会为 LoadBalancer 类型的服务自动分配一个 IP 地址。MetalLB 不能凭空把这些地址创建出来，<strong>我们需要为 MetalLB 分配一个 IP 地址池</strong>，这通常取决于我们的内网环境，例如在 192.168.0.0/24 中分配 192.168.0.128/26 作为可用 IP 地址池。这些本地地址都是内网地址，因此需要符合 RFC 1918 规范。</p>
+<p>这样 MetalLB 就可以自动把地址池中的地址分配给服务。</p>
+<h4 id="external-announcement">External Announcement</h4>
+<p>在 LoadBalancer 类型的服务被分到地址之后，我们必须让内网的其他设备知道，这个 IP 的存在。这就像是内网的两个服务器可以知道彼此的 IP 一样。即：<strong>此时，这个内网服务器的，k8s集群中的，Service 对外的网络应该表现为，一个内网服务器在网络中的位置</strong>。</p>
+<p>MetalLB 使用<strong>标准的网络或路由协议</strong>来实现这一点，具体取决于使用哪种模式，如：ARP、NDP或BGP协议。</p>
+<h3 id="安装-metallb">安装 MetalLB</h3>
+<blockquote>
+<p><a class="link" href="https://metallb.universe.tf/installation/"  target="_blank" rel="noopener"
+    >https://metallb.universe.tf/installation/</a></p>
+</blockquote>
+<h4 id="前置条件">前置条件</h4>
+<blockquote>
+<p><a class="link" href="https://metallb.universe.tf/#requirements"  target="_blank" rel="noopener"
+    >https://metallb.universe.tf/#requirements</a></p>
+</blockquote>
+<p>注意 Kubernetes 网络插件的兼容性，常用的网络组件 Cilium、Flannel等都是兼容的。</p>
+<h4 id="使用-manifest-安装">使用 Manifest 安装</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+</span></span></code></pre></div><p>在对应命名空间下有两种组件：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ k get po -n metallb-system
+</span></span><span style="display:flex;"><span>NAME                          READY   STATUS    RESTARTS        AGE
+</span></span><span style="display:flex;"><span>controller-7597dd4f7b-kzhqd   1/1     Running   <span style="color:#ae81ff">0</span>               7h54m
+</span></span><span style="display:flex;"><span>speaker-g4rhm                 1/1     Running   <span style="color:#ae81ff">0</span>               7h54m
+</span></span><span style="display:flex;"><span>speaker-m6xtr                 1/1     Running   <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>6h38m ago<span style="color:#f92672">)</span>   7h54m
+</span></span><span style="display:flex;"><span>speaker-pmt5w                 1/1     Running   <span style="color:#ae81ff">0</span>               7h54m
+</span></span><span style="display:flex;"><span>speaker-wvvz6                 1/1     Running   <span style="color:#ae81ff">0</span>               7h54m
+</span></span></code></pre></div><ul>
+<li><code>metallb-system/controller</code>：这是处理 IP 地址分配的，集群维度的控制器。</li>
+<li><code>metallb-system/speaker</code>：是 daemonset 类型。这个组件使用我们所选择的协议，使服务可达。</li>
+</ul>
+<h3 id="配置二层模式下的-loadbalancer">配置二层模式下的 LoadBalancer</h3>
+<p>这是最简单且常用的模式。我们只需要分配一个 IP 空间作为 IP 池，然后将其告知 <code>L2Advertisement</code> 即可，<code>L2Advertisement</code> 将这个 IP 池发布出去：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">metallb.io/v1beta1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">IPAddressPool</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">first-pool</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">metallb-system</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">addresses</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># 我的内网环境是 192.168.0.0/24</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># 分配地址范围</span>
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">192.168.0.201-192.168.0.233</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">metallb.io/v1beta1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">L2Advertisement</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">example</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">metallb-system</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ipAddressPools</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">first-pool</span>
+</span></span></code></pre></div><h3 id="创建-loadbalancer-类型的服务">创建 LoadBalancer 类型的服务</h3>
+<p>这里使用 Tekton 的 Dashboard 为例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Service</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>	<span style="color:#ae81ff">...</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">tekton-dashboard</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">tekton-pipelines</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ports</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">http</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">port</span>: <span style="color:#ae81ff">9097</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">protocol</span>: <span style="color:#ae81ff">TCP</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">targetPort</span>: <span style="color:#ae81ff">9097</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># 配置为 LoadBalancer 类型</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">type</span>: <span style="color:#ae81ff">LoadBalancer</span>
+</span></span></code></pre></div><p>创建后：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ k get svc -n tekton-pipelines
+</span></span><span style="display:flex;"><span>NAME                                TYPE           CLUSTER-IP       EXTERNAL-IP     PORT<span style="color:#f92672">(</span>S<span style="color:#f92672">)</span>                              AGE
+</span></span><span style="display:flex;"><span>tekton-dashboard                    LoadBalancer   10.100.157.67    192.168.0.201   9097:32176/TCP                       18s
+</span></span></code></pre></div><p>Metallb 为其分配了 <code>192.168.0.201</code> 这个地址，有两个端口 <code>9097</code> 和 <code>32176</code>。当然，<code>9097</code> 是我们指定的，那 <code>32176</code> 是怎么来的呢？</p>
+<p>先试着访问一下 <code>192.168.0.201:9097</code> 和<code>192.168.0.201:32176</code>：</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126203748156.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20230126203748156"
+	
+	
+></p>
+<!-- raw HTML omitted -->
+<p>发现，<code>192.168.0.201:32176</code> 这个地址不能访问到我们的服务，那它为什么会存在呢？</p>
+<h4 id="loadbalancer-的端口">LoadBalancer 的端口</h4>
+<p>为了解决这个疑惑，我重新检查了我的 yaml 文件，发现确实没有 <code>32176</code> 这个端口相关的配置，它像是一个 <code>NodePort</code> 类型服务所有的端口。</p>
+<p>在查询文档后，我想应该是这个原因：</p>
+<blockquote>
+<p>&ldquo;要实现 <code>type: LoadBalancer</code> 的服务，Kubernetes 通常首先进行与请求 <code>type: NodePort</code> 服务等效的更改。 cloud-controller-manager 组件然后配置外部负载均衡器以将流量转发到已分配的节点端口。&rdquo;</p>
+<p><a class="link" href="https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/#type-nodeport"  target="_blank" rel="noopener"
+    >https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/#type-nodeport</a></p>
+</blockquote>
+<p>我们的负载均衡器先是使用一个 NodePort 端口，然后将 LB 服务从 EXTERNAL IP 来的外部流量转发到这个 NodePort ，也就是 <code>32176</code> 中。</p>
+<p>为什么需要一个 NodePort 作为 LB 的中间端口呢？如果不用这个端口，那么 LB 会直接将流量转发到 Pod 中。我觉得应该是需要节点的 NodePort 做一层负载均衡吧。</p>
+<p>于是，我尝试访问集群中工作节点的 <code>32176</code>，端口，果然，所有节点的该端口都可以访问到服务：</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126205831162.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20230126205831162"
+	
+	
+></p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126205857312.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20230126205857312"
+	
+	
+></p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126205912808.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20230126205912808"
+	
+	
+></p>
+<p>它就是 NodePort。</p>
+<p>LB 类型服务将来自 EXTERNAL-IP:Port 的流量，通过 NodePort 负载均衡到 Pod 中。这可能也是 LoadBalancer 名字的意思？</p>
+<blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ports</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">http</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">port</span>: <span style="color:#ae81ff">9097</span>	<span style="color:#75715e"># EXTERNAL-IP 的端口是这个</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">protocol</span>: <span style="color:#ae81ff">TCP</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">targetPort</span>: <span style="color:#ae81ff">9097</span>
+</span></span></code></pre></div></blockquote>
+<p>我进一步尝试 <a class="link" href="https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/#load-balancer-nodeport-allocation"  target="_blank" rel="noopener"
+    >禁用负载均衡器节点端口分配</a>，首先把之前的 Service 删除，修改 yaml，再 apply：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Service</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  ,,,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">tekton-dashboard</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">tekton-pipelines</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># 在 spec 中加上这个字段 不再为其分配 NodePort</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">allocateLoadBalancerNodePorts</span>: <span style="color:#66d9ef">false</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ports</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">http</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">port</span>: <span style="color:#ae81ff">9097</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">protocol</span>: <span style="color:#ae81ff">TCP</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">targetPort</span>: <span style="color:#ae81ff">9097</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">type</span>: <span style="color:#ae81ff">LoadBalancer</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">...</span>
+</span></span></code></pre></div><p>果然，NodePort 没有了，也进一步验证了之前猜想：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ k get svc -n tekton-pipelines
+</span></span><span style="display:flex;"><span>NAME                                TYPE           CLUSTER-IP       EXTERNAL-IP     PORT<span style="color:#f92672">(</span>S<span style="color:#f92672">)</span>                              AGE
+</span></span><span style="display:flex;"><span>tekton-dashboard                    LoadBalancer   10.111.86.40     192.168.0.201   9097/TCP                             3s
+</span></span></code></pre></div><h2 id="小结">小结</h2>
+<p>我们稍微讨论了关于 Loadbalancer 这一类型的服务，包括：</p>
+<ul>
+<li>本地集群/裸金属/私有云通过 MetaLB 实现 Loadbalancer；</li>
+<li>MetaLB 的部署、配置、使用；</li>
+<li>Loadbalancer 它的两个端口，以及通过 NodePort 进行负载均衡；</li>
+<li>还有不常用的 <code>ExternalName</code> 类型服务。</li>
+</ul>
+<h1 id="ingress-1">Ingress</h1>
+<!-- raw HTML omitted -->
+<p>从官网这张图来看，Ingress 的作用就比较清晰了，通过一组路由规则，将集群外的请求负载均衡到内部服务，实现集群流量统一接入。</p>
+<p>我们将上文中 tekton-dashboard 服务修改为 ClusterIP，然后通过 Ingress 暴露服务，完成我们这部分的实践。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ k get svc -n tekton-pipelines
+</span></span><span style="display:flex;"><span>NAME                                TYPE        CLUSTER-IP       EXTERNAL-IP   PORT<span style="color:#f92672">(</span>S<span style="color:#f92672">)</span>                              AGE
+</span></span><span style="display:flex;"><span>tekton-dashboard                    ClusterIP   10.101.20.90     &lt;none&gt;        9097/TCP                             5s
+</span></span></code></pre></div><p>这里使用 <a class="link" href="https://kubernetes.github.io/ingress-nginx/deploy/"  target="_blank" rel="noopener"
+    >Ingress-Nginx</a> 作为我们集群的 ingress。</p>
+<h2 id="ingress-nginx">Ingress-Nginx</h2>
+<h3 id="安装-ingress-nginx">安装 Ingress-Nginx</h3>
+<p>Nginx 实现的 Ingress Controller 提供了 Cloud 和 Metal 版本的 manifest。主要的区别是 Cloud 版本使用 LB 暴露服务，而 Metal 使用 NodePort 暴露服务。如果你跟随上文，部署了 MetaLB 在本地集群，就推荐使用 Cloud 版本的 manifest。</p>
+<p>注意，原始 manifest 中包含 registry.k8s.io 的镜像，可能不方便拉取，我更换了 docker hub 中对应的镜像，主要有三处地方，共两个镜像：</p>
+<ul>
+<li>dyrnq/ingress-nginx-controller:v1.4.0</li>
+<li>liangjw/kube-webhook-certgen:v1.1.1</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ kubectl apply -f https://ghproxy.com/https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.4.0/deploy/static/provider/cloud/deploy.yam
+</span></span></code></pre></div><p>如果镜像无法拉取，注意修改其中的镜像仓库。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ k get po -n ingress-nginx
+</span></span><span style="display:flex;"><span>NAME                                        READY   STATUS      RESTARTS   AGE
+</span></span><span style="display:flex;"><span>ingress-nginx-admission-create-ptg6f        0/1     Completed   <span style="color:#ae81ff">0</span>          19m
+</span></span><span style="display:flex;"><span>ingress-nginx-admission-patch-lndpj         0/1     Completed   <span style="color:#ae81ff">0</span>          19m
+</span></span><span style="display:flex;"><span>ingress-nginx-controller-8445cd49cf-l4q4r   1/1     Running     <span style="color:#ae81ff">0</span>          19m
+</span></span><span style="display:flex;"><span>$ k get svc -n ingress-nginx
+</span></span><span style="display:flex;"><span>NAME                                 TYPE           CLUSTER-IP      EXTERNAL-IP     PORT<span style="color:#f92672">(</span>S<span style="color:#f92672">)</span>                      AGE
+</span></span><span style="display:flex;"><span>ingress-nginx-controller             LoadBalancer   10.106.83.156   192.168.0.201   80:31527/TCP,443:32376/TCP   20m
+</span></span><span style="display:flex;"><span>ingress-nginx-controller-admission   ClusterIP      10.97.1.125     &lt;none&gt;          443/TCP                      20m
+</span></span></code></pre></div><p>部署完成后，看到 LB 分配的 IP 是 <code>192.168.0.201</code>。接下来我们配置 ingress，从 <code>192.168.0.201:80</code> 端口访问我们想要的服务。</p>
+<h3 id="配置-ingress-暴露-tekton-dashboard-服务">配置 Ingress 暴露 Tekton Dashboard 服务</h3>
+<p>首先确保我们的 Tekton Dashboard 服务以及创建。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ k get svc -n tekton-pipelines
+</span></span><span style="display:flex;"><span>NAME                                TYPE        CLUSTER-IP       EXTERNAL-IP   PORT<span style="color:#f92672">(</span>S<span style="color:#f92672">)</span>                              AGE
+</span></span><span style="display:flex;"><span>tekton-dashboard                    ClusterIP   10.101.20.90     &lt;none&gt;        9097/TCP                             5s
+</span></span></code></pre></div><p>一个 Ingress 的配置文件如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>apiVersion: networking.k8s.io/v1
+</span></span><span style="display:flex;"><span>kind: Ingress
+</span></span><span style="display:flex;"><span>metadata:
+</span></span><span style="display:flex;"><span>  name: ingress-resource
+</span></span><span style="display:flex;"><span>  namespace: tekton-pipelines
+</span></span><span style="display:flex;"><span>  annotations:
+</span></span><span style="display:flex;"><span>    kubernetes.io/ingress.class: nginx
+</span></span><span style="display:flex;"><span>    nginx.ingress.kubernetes.io/ssl-redirect: <span style="color:#e6db74">&#34;false&#34;</span>
+</span></span><span style="display:flex;"><span>spec:
+</span></span><span style="display:flex;"><span>  rules:
+</span></span><span style="display:flex;"><span>  	<span style="color:#75715e"># 我们为其设置了域名 但是公网 DNS 可不会解析它</span>
+</span></span><span style="display:flex;"><span>  	<span style="color:#75715e"># 需要在我们本地配置 host 来正确解析</span>
+</span></span><span style="display:flex;"><span>    - host: tekton.k8s.local
+</span></span><span style="display:flex;"><span>      http:
+</span></span><span style="display:flex;"><span>        paths:
+</span></span><span style="display:flex;"><span>          - path: /
+</span></span><span style="display:flex;"><span>            pathType: Prefix
+</span></span><span style="display:flex;"><span>            backend:
+</span></span><span style="display:flex;"><span>              service:
+</span></span><span style="display:flex;"><span>                name: tekton-dashboard
+</span></span><span style="display:flex;"><span>                port:
+</span></span><span style="display:flex;"><span>                  number: <span style="color:#ae81ff">9097</span>
+</span></span></code></pre></div><p>部署：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ k apply -f dashboard-ingress.yaml
+</span></span></code></pre></div><p>部署完成之后，我们<strong>需要在本地配置域名解析</strong>，让 <code>tekton.k8s.local</code> 能够解析到 <code>192.168.0.201</code> 。</p>
+<p>然后通过浏览器访问 <code>http://tekton.k8s.local/</code>。在浏览器中默认解析到 <code>192.168.0.201:80</code> 的根 <code>/ </code> 路由路径下。</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126223316998.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20230126223316998"
+	
+	
+></p>
+<p>这样就实现了通过 ingress 暴露集群内部服务。</p>
+<h3 id="关于配置-host">关于配置 host</h3>
+<p>我们在 ingress 的配置中指定了 host 字段，并配置了本地域名解析去访问这个域名：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">rules</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">host</span>: <span style="color:#ae81ff">tekton.k8s.local</span>
+</span></span><span style="display:flex;"><span>	  <span style="color:#ae81ff">...</span>
+</span></span></code></pre></div><p>虽然我们知道 ingress 暴露的 IP 是 <code>192.168.0.201:80</code> ，但是直接访问这个地址并不能找到服务：</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126224456243.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20230126224456243"
+	
+	
+></p>
+<p>如果我们先通过 IP:Port 的形式，而不通过域名，就不能在 <code>spec.rules</code> 中为其配置 host，也就是使用这种配置：</p>
+<blockquote>
+<p><a class="link" href="https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/#ingress-rules"  target="_blank" rel="noopener"
+    >https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/#ingress-rules</a></p>
+<p>&ldquo;未指定 <code>host</code> 的规则适用于通过指定 IP 地址的所有入站 HTTP 通信&rdquo;。</p>
+</blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">networking.k8s.io/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Ingress</span>
+</span></span><span style="display:flex;"><span>...
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">rules</span>:
+</span></span><span style="display:flex;"><span>  	<span style="color:#75715e"># 不指定 host</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">#- host: tekton.k8s.local</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">http</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">paths</span>:
+</span></span><span style="display:flex;"><span>          - <span style="color:#f92672">path</span>: <span style="color:#ae81ff">/</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">pathType</span>: <span style="color:#ae81ff">Prefix</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">backend</span>:
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">service</span>:
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">name</span>: <span style="color:#ae81ff">tekton-dashboard</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">port</span>:
+</span></span><span style="display:flex;"><span>                  <span style="color:#f92672">number</span>: <span style="color:#ae81ff">9097</span>
+</span></span></code></pre></div><p>这样进行部署，就可以直接通过 ingress 控制器的 LB 地址和端口 (默认 http 为 80)，从其根路径下访问到我们的服务了。</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126223824349.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20230126223824349"
+	
+	
+></p>
+<h2 id="小结-1">小结</h2>
+<p>本部分我们简单介绍和实践了 Ingress，主要有以下内容：</p>
+<ul>
+<li>
+<p>简要阐述 cloud 和 metal 环境下，ingress-nginx 控制器 service 类型的不同；</p>
+</li>
+<li>
+<p>安装 LoadBalancer 类型的 ingress-nginx 控制器；</p>
+</li>
+<li>
+<p>为 ClusterIP 类型的 Tekton Dashboard 服务配置 ingress 规则；</p>
+</li>
+<li>
+<p>关于配置 ingress 中 host，使用 域名/IP 访问的小坑。</p>
+</li>
+</ul>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/kubernetes/">Kubernetes</a>
+        
+            <a href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">云原生</a>
+        
+            <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/">中间件</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    <section class="article-lastmod">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+        <span>
+            最后更新于 Jan 26, 2023 23:03 CST
+        </span>
+    </section><script src="https://utteranc.es/client.js"
+    repo="lizonglingo/lizonglingo.github.io"
+    issue-term="pathname"
+    label="Comment"
+    theme="github-light"
+    crossorigin="anonymous"
+    async>
+    </script>
+</footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="has-image">
+    <a href="/p/cri-dockerd%E5%9C%A8kubernetes1.24%E5%90%8E%E7%BB%A7%E7%BB%AD%E4%BD%BF%E7%94%A8docker%E4%BD%9C%E4%B8%BA%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6/">
+        
+        
+            <div class="article-image">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230111161434207.png" loading="lazy" data-key="" data-hash="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230111161434207.png"/>
+                
+            </div>
+        
+
+        <div class="article-details">
+            <h2 class="article-title">cri-dockerd，在kubernetes1.24后继续使用Docker作为容器运行时</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E8%AE%B0%E4%B8%80%E6%AC%A1kubernetes%E4%BD%BF%E7%94%A8ciliumcoredns%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E5%A4%B1%E8%B4%A5%E7%9A%84%E6%8E%92%E9%94%99/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">记一次Kubernetes使用Cilium，coredns健康检查失败的排错</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="has-image">
+    <a href="/p/%E6%9E%84%E5%BB%BA%E5%BA%94%E7%94%A8%E6%97%B6%E5%A6%82%E4%BD%95%E7%BC%A9%E5%B0%8F%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E7%9A%84%E4%BD%93%E7%A7%AF/">
+        
+        
+            <div class="article-image">
+                
+                    <img src="/post-images/image-20230113160652452.png" loading="lazy" data-key="" data-hash="/post-images/image-20230113160652452.png"/>
+                
+            </div>
+        
+
+        <div class="article-details">
+            <h2 class="article-title">构建应用时如何缩小容器镜像的体积</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/ieee-cloud-21-%E4%BA%91%E4%B8%8A%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E7%9B%B8%E5%85%B3%E5%90%88%E8%BE%91/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">IEEE CLOUD 21 云上资源管理相关合辑</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/showar-right-sizing-and-efficient-scheduling-of-microservices/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">SHOWAR: Right-Sizing And Efficient Scheduling of Microservices</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 fmt.Println(&#34;Li Duo&#34;)
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

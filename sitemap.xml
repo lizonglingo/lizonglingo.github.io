@@ -3,10 +3,46 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://lizonglingo.github.io/</loc>
-    <lastmod>2023-01-18T23:39:39+08:00</lastmod>
+    <lastmod>2023-01-26T23:03:33+08:00</lastmod>
   </url><url>
     <loc>https://lizonglingo.github.io/categories/</loc>
-    <lastmod>2023-01-18T23:39:39+08:00</lastmod>
+    <lastmod>2023-01-26T23:03:33+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/tags/kubernetes/</loc>
+    <lastmod>2023-01-26T23:03:33+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/categories/kubernetes/</loc>
+    <lastmod>2023-01-26T23:03:33+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/p/loadbalancer%E4%B8%8Eingress/</loc>
+    <lastmod>2023-01-26T23:03:33+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/post/</loc>
+    <lastmod>2023-01-26T23:03:33+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/tags/</loc>
+    <lastmod>2023-01-26T23:03:33+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/</loc>
+    <lastmod>2023-01-26T23:03:33+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/</loc>
+    <lastmod>2023-01-26T23:03:33+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/</loc>
+    <lastmod>2023-01-26T23:03:33+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6/</loc>
+    <lastmod>2023-01-26T23:03:33+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/p/ci-%E8%87%AA%E5%8A%A8%E6%9E%84%E5%BB%BA%E9%95%9C%E5%83%8F/</loc>
+    <lastmod>2023-01-25T22:59:33+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/tags/docker/</loc>
+    <lastmod>2023-01-25T22:59:33+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/categories/docker/</loc>
+    <lastmod>2023-01-25T22:59:33+08:00</lastmod>
   </url><url>
     <loc>https://lizonglingo.github.io/tags/css/</loc>
     <lastmod>2023-01-18T23:39:39+08:00</lastmod>
@@ -15,12 +51,6 @@
     <lastmod>2023-01-18T23:39:39+08:00</lastmod>
   </url><url>
     <loc>https://lizonglingo.github.io/p/css%E4%BD%BF%E7%94%A8%E8%A6%81%E7%82%B9/</loc>
-    <lastmod>2023-01-18T23:39:39+08:00</lastmod>
-  </url><url>
-    <loc>https://lizonglingo.github.io/post/</loc>
-    <lastmod>2023-01-18T23:39:39+08:00</lastmod>
-  </url><url>
-    <loc>https://lizonglingo.github.io/tags/</loc>
     <lastmod>2023-01-18T23:39:39+08:00</lastmod>
   </url><url>
     <loc>https://lizonglingo.github.io/tags/%E5%89%8D%E7%AB%AF/</loc>
@@ -38,25 +68,7 @@
     <loc>https://lizonglingo.github.io/p/typescript%E4%B8%A4%E5%A4%A9%E9%80%9F%E6%88%90/</loc>
     <lastmod>2023-01-15T15:57:57+08:00</lastmod>
   </url><url>
-    <loc>https://lizonglingo.github.io/tags/docker/</loc>
-    <lastmod>2023-01-15T17:17:57+08:00</lastmod>
-  </url><url>
-    <loc>https://lizonglingo.github.io/categories/docker/</loc>
-    <lastmod>2023-01-15T17:17:57+08:00</lastmod>
-  </url><url>
-    <loc>https://lizonglingo.github.io/tags/kubernetes/</loc>
-    <lastmod>2023-01-15T17:17:57+08:00</lastmod>
-  </url><url>
-    <loc>https://lizonglingo.github.io/categories/kubernetes/</loc>
-    <lastmod>2023-01-15T17:17:57+08:00</lastmod>
-  </url><url>
     <loc>https://lizonglingo.github.io/p/%E6%9E%84%E5%BB%BA%E5%BA%94%E7%94%A8%E6%97%B6%E5%A6%82%E4%BD%95%E7%BC%A9%E5%B0%8F%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E7%9A%84%E4%BD%93%E7%A7%AF/</loc>
-    <lastmod>2023-01-15T17:17:57+08:00</lastmod>
-  </url><url>
-    <loc>https://lizonglingo.github.io/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/</loc>
-    <lastmod>2023-01-15T17:17:57+08:00</lastmod>
-  </url><url>
-    <loc>https://lizonglingo.github.io/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/</loc>
     <lastmod>2023-01-15T17:17:57+08:00</lastmod>
   </url><url>
     <loc>https://lizonglingo.github.io/p/cri-dockerd%E5%9C%A8kubernetes1.24%E5%90%8E%E7%BB%A7%E7%BB%AD%E4%BD%BF%E7%94%A8docker%E4%BD%9C%E4%B8%BA%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6/</loc>
@@ -66,12 +78,6 @@
     <lastmod>2022-08-01T18:10:59+08:00</lastmod>
   </url><url>
     <loc>https://lizonglingo.github.io/categories/%E7%AC%94%E8%AE%B0/</loc>
-    <lastmod>2022-08-01T18:10:59+08:00</lastmod>
-  </url><url>
-    <loc>https://lizonglingo.github.io/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/</loc>
-    <lastmod>2022-08-01T18:10:59+08:00</lastmod>
-  </url><url>
-    <loc>https://lizonglingo.github.io/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6/</loc>
     <lastmod>2022-08-01T18:10:59+08:00</lastmod>
   </url><url>
     <loc>https://lizonglingo.github.io/tags/golang/</loc>
@@ -505,6 +511,10 @@
   </url><url>
     <loc>https://lizonglingo.github.io/p/c-%E5%9F%BA%E7%A1%80%E5%A4%8D%E4%B9%A0-%E7%B1%BB%E4%B8%8E%E5%AF%B9%E8%B1%A1/</loc>
     <lastmod>2018-11-26T16:25:57+08:00</lastmod>
+  </url><url>
+    <loc>https://lizonglingo.github.io/tags/ci/cd/</loc>
+  </url><url>
+    <loc>https://lizonglingo.github.io/categories/ci/cd/</loc>
   </url><url>
     <loc>https://lizonglingo.github.io/test/</loc>
   </url><url>

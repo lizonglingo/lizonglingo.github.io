@@ -6,7 +6,170 @@
         <description>Recent content in docker on fmt.Println(&#34;Li Duo&#34;)</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-CN</language>
-        <lastBuildDate>Fri, 13 Jan 2023 18:18:33 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/docker/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Wed, 25 Jan 2023 22:59:33 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/docker/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>CI-自动构建镜像</title>
+        <link>https://lizonglingo.github.io/p/ci-%E8%87%AA%E5%8A%A8%E6%9E%84%E5%BB%BA%E9%95%9C%E5%83%8F/</link>
+        <pubDate>Wed, 25 Jan 2023 22:59:33 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/ci-%E8%87%AA%E5%8A%A8%E6%9E%84%E5%BB%BA%E9%95%9C%E5%83%8F/</guid>
+        <description>&lt;img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/20230126175426.png" alt="Featured image of post CI-自动构建镜像" /&gt;&lt;h1 id=&#34;ci-自动构建镜像&#34;&gt;CI-自动构建镜像&lt;/h1&gt;
+&lt;p&gt;CI/CD 已经成为目前开发工作中必须掌握的技能。利用 CI/CD 工具能够大幅提高软件发布和交付速度，同时自动化流程能最大限度减少人工过多参与导致的不确定性。&lt;/p&gt;
+&lt;p&gt;本文从 CI 工作流中的镜像自动化构建开始，探索 CI/CD 如何实现 DevOps 理念。通过使用 Github Action 和 Docker Hub 实现镜像自动化构建和发布，开启 CI/CD 学习之路。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;关于 DevOps、GitOps、CI/CD 的理解：&lt;/p&gt;
+&lt;p&gt;从我目前的认知和了解，我理解的 DevOps 更多的是较为概括性、统筹的一种理念，或者说是一种思想。而 CI/CD 工具则是对这种思想的具体实现。当然，GitOps 可以把它理解成在 DevOps 理念中，以 Git 作为主线、主要工具，围绕 Git 打造一套 CI/CD 工作流，实际上也是 DevOps 的一种实现形式、或是这种理念 “更具体” 的表述形式。&lt;/p&gt;
+&lt;p&gt;由于目前还没有接触到一线的生产工作，对此的理解会有欠缺。希望在以后工作中能对自动化软件交付有更深入的理解。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;github-actions&#34;&gt;Github Actions&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;我们可以在这个文档中学习详细的信息：https://docs.github.com/zh/actions&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://docs.github.com/zh/actions/publishing-packages/publishing-docker-images&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://docs.github.com/zh/actions/publishing-packages/publishing-docker-images&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&amp;ldquo;在 GitHub Actions 的仓库中自动化、自定义和执行软件开发工作流程。 您可以发现、创建和共享操作以执行您喜欢的任何作业（包括 CI/CD），并将操作合并到完全自定义的工作流程中。&amp;rdquo;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;在使用 Github Page 托管 Hugo 时，就涉及到使用 Github Actions 自动化发布静态网站的步骤。Github Action 是 GitOps 中重要一环。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230125232728243.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230125232728243&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&amp;ldquo;GitHub Actions 工作流，使其在存储库中发生事件（例如打开拉取请求或创建问题）时触发 。 工作流包含一个或多个可按顺序或并行运行的作业。 每个作业都将在其自己的虚拟机运行器中或在容器中运行，并具有一个或多个步骤，用于运行定义的脚本或运行动作。&amp;rdquo;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Github Actions 工作流主要包含以下几个概念：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Event：这是触发工作流特定活动。例如创建拉取请求、提交推送等。&lt;/li&gt;
+&lt;li&gt;Runner：运行 Job，执行工作流的服务器，每个 Runner 一次可以运行一个作业。这些 Runner 是在云上的虚拟机。&lt;/li&gt;
+&lt;li&gt;Job：工作流中在同一机器上执行的一组 Step，这些 Step 按照顺序执行，相互依赖。&lt;/li&gt;
+&lt;li&gt;Step：组成 Job 的执行单元，可以是脚本、命令等操作。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;workflow示例&#34;&gt;Workflow示例&lt;/h2&gt;
+&lt;p&gt;Github Actions 的 workflow 放在项目根文件夹 (.git所在的目录) 中的 &lt;code&gt;.github/workflows/&lt;/code&gt; 里面。通过 yaml 文件定义。我们先创建一个 &lt;code&gt;build.yaml&lt;/code&gt; 来实现提交代码触发镜像自动构建和上传镜像仓库操作。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ ll
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;total &lt;span style=&#34;color:#ae81ff&#34;&gt;28&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;drwxrwxr-x  &lt;span style=&#34;color:#ae81ff&#34;&gt;5&lt;/span&gt; lzl  lzl  &lt;span style=&#34;color:#ae81ff&#34;&gt;4096&lt;/span&gt;  1月 &lt;span style=&#34;color:#ae81ff&#34;&gt;25&lt;/span&gt; 23:34 ./
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;drwxrwxrwx &lt;span style=&#34;color:#ae81ff&#34;&gt;19&lt;/span&gt; root root &lt;span style=&#34;color:#ae81ff&#34;&gt;4096&lt;/span&gt;  1月 &lt;span style=&#34;color:#ae81ff&#34;&gt;21&lt;/span&gt; 21:44 ../
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;drwxrwxr-x  &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt; lzl  lzl  &lt;span style=&#34;color:#ae81ff&#34;&gt;4096&lt;/span&gt;  1月  &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt; 17:30 .git/
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;-rw-rw-r--  &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; lzl  lzl    &lt;span style=&#34;color:#ae81ff&#34;&gt;66&lt;/span&gt;  1月  &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; 22:17 .gitattributes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;-rw-rw-r--  &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt; lzl  lzl    &lt;span style=&#34;color:#ae81ff&#34;&gt;43&lt;/span&gt;  1月  &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt; 17:30 .gitignore
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;drwxr-xr-x  &lt;span style=&#34;color:#ae81ff&#34;&gt;7&lt;/span&gt; root root &lt;span style=&#34;color:#ae81ff&#34;&gt;4096&lt;/span&gt;  1月  &lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt; 12:06 k8s-practice/
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/GitOps# mkdir -p .github/workflows
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@nm:/work-place/GitOps# vim .github/workflows/build.yaml
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;build.yaml&lt;/code&gt;文件如下：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# name 表示工作流名称 会展示在 Github 网页上&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;build&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# on.push.branches 表示 main 有新的提交后 触发工作流&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;on&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;push&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;branches&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;main&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 通过 env 我们可以为本次 action 设置环境变量 用在后续各个 steps 中&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 这里我们设置 DOCKERHUB_USERNAME 用于镜像前缀&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# Docker Hub 要求个人镜像仓库中的镜像有 username 这个前缀&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;env&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;DOCKERHUB_USERNAME&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;username&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# jobs 定义任务&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;jobs&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;docker&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  	&lt;span style=&#34;color:#75715e&#34;&gt;# 设置这个任务的运行环境&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;runs-on&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;ubuntu-latest&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#75715e&#34;&gt;# steps 是一个列表 定义了每一个步骤&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;steps&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;Checkout	# Checkout 将代码检出到运行环境&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;uses&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;actions/checkout@v3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;Set outputs	# 用来生成本次的短 sha 哈希 用于后面的镜像 tag&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;id&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;vars&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;run&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;echo &amp;#34;::set-output name=sha_short::$(git rev-parse --short HEAD)&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      	&lt;span style=&#34;color:#75715e&#34;&gt;# 初始化 Docker 构建工具链&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;Set up QEMU&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;uses&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;docker/setup-qemu-action@v2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;Set up Docker Buildx&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;uses&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;docker/setup-buildx-action@v2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#75715e&#34;&gt;# 登录到 Docker Hub&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;Login to Docker Hub&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;uses&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;docker/login-action@v2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#ae81ff&#34;&gt;with:	# 通过 with 字段向插件提供参数&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          &lt;span style=&#34;color:#75715e&#34;&gt;# env 使用我们上述定义的 env&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          &lt;span style=&#34;color:#f92672&#34;&gt;username&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;${{ env.DOCKERHUB_USERNAME }}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          &lt;span style=&#34;color:#75715e&#34;&gt;# secrets 则是存储在 Github 仓库中的 secrets 稍后会进行配置说明&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          &lt;span style=&#34;color:#f92672&#34;&gt;password&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;${{ secrets.DOCKERHUB_TOKEN }}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;Build backend and push&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;uses&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;docker/build-push-action@v3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;with&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          &lt;span style=&#34;color:#75715e&#34;&gt;# context 定义构建镜像所需目录上下文 不一定是 Dockerfile 的目录&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          &lt;span style=&#34;color:#f92672&#34;&gt;context&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;./k8s-practice/demo-app/kubernetes-example/backend&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          &lt;span style=&#34;color:#f92672&#34;&gt;push&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          &lt;span style=&#34;color:#f92672&#34;&gt;tags&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;${{ env.DOCKERHUB_USERNAME }}/backend:${{ steps.vars.outputs.sha_short }}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      - &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;Build frontend and push&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;uses&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;docker/build-push-action@v3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#f92672&#34;&gt;with&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          &lt;span style=&#34;color:#f92672&#34;&gt;context&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;./k8s-practice/demo-app/kubernetes-example/frontend&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          &lt;span style=&#34;color:#f92672&#34;&gt;push&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;          &lt;span style=&#34;color:#f92672&#34;&gt;tags&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;${{ env.DOCKERHUB_USERNAME }}/frontend:${{ steps.vars.outputs.sha_short }}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;不难发现，每一个 Step 都会依赖插件，也就是 &lt;code&gt;uses&lt;/code&gt; 字段。Github Actions &lt;a class=&#34;link&#34; href=&#34;https://github.com/marketplace?type=actions&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;插件市场&lt;/a&gt; 为我们提供了生产所需的各种插件，每个插件都有对应的文档。&lt;/p&gt;
+&lt;h2 id=&#34;secret&#34;&gt;Secret&lt;/h2&gt;
+&lt;h3 id=&#34;docker-hub-secret&#34;&gt;Docker Hub Secret&lt;/h3&gt;
+&lt;p&gt;由于我们的私有仓库需要身份认证才能获得上传镜像等准入权限，因此需要告知 Github Actions 我们 Docker Hub 的凭证。我们需要创建一个 Access Token。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230125235506526.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h3 id=&#34;actions-secrets&#34;&gt;Actions secrets&lt;/h3&gt;
+&lt;p&gt;然后，将 Docker Hub 的 Access Token 填到 Github 仓库中的 Actions secrets 中。注意 Name 应该和 workflow 文件中的对应，即：&lt;code&gt;DOCKERHUB_TOKEN&lt;/code&gt;。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# secrets 则是存储在 Github 仓库中的 secrets 稍后会进行配置说明&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;password&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;${{ secrets.DOCKERHUB_TOKEN }}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230125235847305.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230125235847305&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;提交代码触发工作流&#34;&gt;提交代码触发工作流&lt;/h2&gt;
+&lt;p&gt;最后，将我们的代码改动提交main分支，我们能在仓库的 Actions 中看到工作流。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;同时，能够查看每一个 Step 的详细过程，以便定位排查问题。&lt;/p&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126004206797.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230126004206797&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;在工作流成功执行完成后，在 Docker Hub 的仓库中也看到了对应的新镜像。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230126004440509.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230126004440509&#34;
+	
+	
+&gt;&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>构建应用时如何缩小容器镜像的体积</title>
         <link>https://lizonglingo.github.io/p/%E6%9E%84%E5%BB%BA%E5%BA%94%E7%94%A8%E6%97%B6%E5%A6%82%E4%BD%95%E7%BC%A9%E5%B0%8F%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E7%9A%84%E4%BD%93%E7%A7%AF/</link>
         <pubDate>Fri, 13 Jan 2023 18:18:33 +0800</pubDate>

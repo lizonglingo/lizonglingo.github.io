@@ -6,7 +6,31 @@
         <description>Recent content in Categories on fmt.Println(&#34;Li Duo&#34;)</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-CN</language>
-        <lastBuildDate>Thu, 26 Jan 2023 17:51:33 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/categories/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 24 Feb 2023 00:10:12 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/categories/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Golang</title>
+        <link>https://lizonglingo.github.io/categories/golang/</link>
+        <pubDate>Fri, 24 Feb 2023 00:10:12 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/categories/golang/</guid>
+        <description></description>
+        </item>
+        <item>
+        <title>gRPC</title>
+        <link>https://lizonglingo.github.io/categories/grpc/</link>
+        <pubDate>Fri, 24 Feb 2023 00:10:12 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/categories/grpc/</guid>
+        <description></description>
+        </item>
+        <item>
+        <title>微服务</title>
+        <link>https://lizonglingo.github.io/categories/%E5%BE%AE%E6%9C%8D%E5%8A%A1/</link>
+        <pubDate>Fri, 24 Feb 2023 00:10:12 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/categories/%E5%BE%AE%E6%9C%8D%E5%8A%A1/</guid>
+        <description></description>
+        </item>
+        <item>
         <title>Kubernetes</title>
         <link>https://lizonglingo.github.io/categories/kubernetes/</link>
         <pubDate>Thu, 26 Jan 2023 17:51:33 +0800</pubDate>
@@ -71,14 +95,6 @@
         <description></description>
         </item>
         <item>
-        <title>Golang</title>
-        <link>https://lizonglingo.github.io/categories/golang/</link>
-        <pubDate>Wed, 20 Jul 2022 20:22:12 +0800</pubDate>
-        
-        <guid>https://lizonglingo.github.io/categories/golang/</guid>
-        <description></description>
-        </item>
-        <item>
         <title>数据库</title>
         <link>https://lizonglingo.github.io/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/</link>
         <pubDate>Wed, 20 Jul 2022 20:22:12 +0800</pubDate>
@@ -108,14 +124,6 @@
         <pubDate>Sun, 26 Jun 2022 15:00:34 +0800</pubDate>
         
         <guid>https://lizonglingo.github.io/categories/ml/</guid>
-        <description></description>
-        </item>
-        <item>
-        <title>微服务</title>
-        <link>https://lizonglingo.github.io/categories/%E5%BE%AE%E6%9C%8D%E5%8A%A1/</link>
-        <pubDate>Sun, 26 Jun 2022 15:00:34 +0800</pubDate>
-        
-        <guid>https://lizonglingo.github.io/categories/%E5%BE%AE%E6%9C%8D%E5%8A%A1/</guid>
         <description></description>
         </item>
         <item>

@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='今天在复习之前的项目时，看到这个知识点觉得还是有必要记录一下的，因为： 平时自己看官方文档或者写 Web 方面的 Demo 项目，很少会去专门考虑身份验证这个问'>
+<meta name="keywords" content="gRPC, 微服务, Golang"><title>gRPC拦截器在JWT验证场景下的使用</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/grpc%E6%8B%A6%E6%88%AA%E5%99%A8%E5%9C%A8jwt%E9%AA%8C%E8%AF%81%E5%9C%BA%E6%99%AF%E4%B8%8B%E7%9A%84%E4%BD%BF%E7%94%A8/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='gRPC拦截器在JWT验证场景下的使用'>
+<meta property='og:description' content='今天在复习之前的项目时，看到这个知识点觉得还是有必要记录一下的，因为： 平时自己看官方文档或者写 Web 方面的 Demo 项目，很少会去专门考虑身份验证这个问'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/grpc%E6%8B%A6%E6%88%AA%E5%99%A8%E5%9C%A8jwt%E9%AA%8C%E8%AF%81%E5%9C%BA%E6%99%AF%E4%B8%8B%E7%9A%84%E4%BD%BF%E7%94%A8/'>
+<meta property='og:site_name' content='fmt.Println(&#34;Li Duo&#34;)'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='gRPC' /><meta property='article:tag' content='微服务' /><meta property='article:tag' content='Golang' /><meta property='article:published_time' content='2023-02-24T00:10:12&#43;08:00'/><meta property='article:modified_time' content='2023-02-24T02:31:12&#43;08:00'/><meta property='og:image' content='https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230224023552733.png' />
+<meta name="twitter:title" content="gRPC拦截器在JWT验证场景下的使用">
+<meta name="twitter:description" content="今天在复习之前的项目时，看到这个知识点觉得还是有必要记录一下的，因为： 平时自己看官方文档或者写 Web 方面的 Demo 项目，很少会去专门考虑身份验证这个问"><meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content='https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230224023552733.png' />
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-SPJXNM3WZ6"></script>
+<script>
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'G-SPJXNM3WZ6', { 'anonymize_ip': false });
+}
+</script>
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?b30bfbf01ac692ef3da66a21b24e6edb";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+    
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">fmt.Println(&#34;Li Duo&#34;)</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#jwt-token原理">JWT Token原理</a>
+      <ul>
+        <li><a href="#jwt-的一些概念">JWT 的一些概念</a></li>
+        <li><a href="#rsa-非对称加密">RSA 非对称加密</a></li>
+      </ul>
+    </li>
+    <li><a href="#golang-实现-jwt-的-token-颁发和验证">Golang 实现 JWT 的 token 颁发和验证</a>
+      <ul>
+        <li><a href="#生成-jwt">生成 JWT</a></li>
+        <li><a href="#验证-jwt">验证 JWT</a></li>
+      </ul>
+    </li>
+    <li><a href="#使用-grpc-拦截器--context-机制将验证接入公共逻辑">使用 gRPC 拦截器 + Context 机制将验证接入公共逻辑</a>
+      <ul>
+        <li><a href="#引入-grpc-interceptor">引入 gRPC Interceptor</a></li>
+        <li><a href="#一个验证-token-并转化为-userid-的拦截器">一个验证 token 并转化为 userID 的拦截器</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="has-image main-article">
+    <header class="article-header">
+        <div class="article-image">
+            <a href="/p/grpc%E6%8B%A6%E6%88%AA%E5%99%A8%E5%9C%A8jwt%E9%AA%8C%E8%AF%81%E5%9C%BA%E6%99%AF%E4%B8%8B%E7%9A%84%E4%BD%BF%E7%94%A8/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230224023552733.png" loading="lazy" alt="Featured image of post gRPC拦截器在JWT验证场景下的使用" />
+                
+            </a>
+        </div>
+    
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/grpc/" >
+                gRPC
+            </a>
+        
+            <a href="/categories/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" >
+                微服务
+            </a>
+        
+            <a href="/categories/golang/" >
+                Golang
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/grpc%E6%8B%A6%E6%88%AA%E5%99%A8%E5%9C%A8jwt%E9%AA%8C%E8%AF%81%E5%9C%BA%E6%99%AF%E4%B8%8B%E7%9A%84%E4%BD%BF%E7%94%A8/">gRPC拦截器在JWT验证场景下的使用</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Feb 24, 2023</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 5 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p>今天在复习之前的项目时，看到这个知识点觉得还是有必要记录一下的，因为：</p>
+<ol>
+<li>平时自己看官方文档或者写 Web 方面的 Demo 项目，很少会去专门考虑身份验证这个问题。一般写着玩的 API 都不会太重视安全问题，难得复习到这一点。</li>
+<li>JWT Token 在 Web 中是一种常见的身份验证方式，也是 Web 开发中安全相关的重要知识。</li>
+</ol>
+<p>本文所分享的使用 gRPC 拦截器和 Context 的使用场景是：解析 Token 并带着用户信息取执行各个请求。</p>
+</blockquote>
+<p>本文从以下三个步骤展开分享：</p>
+<ol>
+<li>通过用户 ID 生成 Token</li>
+<li>验证 Token 得到用户 ID</li>
+<li>通过 gRPC 拦截器和 Context 把 Token 验证转为公共的逻辑</li>
+</ol>
+<h2 id="jwt-token原理">JWT Token原理</h2>
+<h3 id="jwt-的一些概念">JWT 的一些概念</h3>
+<blockquote>
+<p><a class="link" href="https://jwt.io/"  target="_blank" rel="noopener"
+    >https://jwt.io/</a></p>
+</blockquote>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230222234847804.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20230222234847804"
+	
+	
+></p>
+<p>这张图片包含了 JWT 最重要的一些概念。在 <strong>Encoded</strong> 中，红色和紫色字段是通过 <strong>Base64</strong> 编码而来，对应 <strong>HEADER</strong> 和 <strong>PAYLOAD</strong> 字段，实际上就是明文，任何人都能通过 Base64 解码得到。</p>
+<p>而蓝色字段则是通过加密生成的。</p>
+<p>Decoded中的字段和含义如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#75715e">// HEADER
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;alg&#34;</span>: <span style="color:#e6db74">&#34;HS256&#34;</span>,	<span style="color:#75715e">// 使用的算法类型
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;typ&#34;</span>: <span style="color:#e6db74">&#34;JWT&#34;</span>		<span style="color:#75715e">// 类型是 JWT
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// PAYLOAD 包含很多默认字段
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;sub&#34;</span>: <span style="color:#e6db74">&#34;1234567890&#34;</span>,	<span style="color:#75715e">// 这个 JWT 颁发给 1234567890 可以理解为用户 ID
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;John Doe&#34;</span>,	<span style="color:#75715e">// 用户的名字
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;iat&#34;</span>: <span style="color:#ae81ff">1516239022</span>,	<span style="color:#75715e">// 颁发的时间
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;exp&#34;</span>: <span style="color:#ae81ff">1516239922</span>,	<span style="color:#75715e">// 过期时间
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;iss&#34;</span>: <span style="color:#e6db74">&#34;auth&#34;</span>			<span style="color:#75715e">// 颁发机构
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h3 id="rsa-非对称加密">RSA 非对称加密</h3>
+<p>上文中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;alg&#34;</span>: <span style="color:#e6db74">&#34;HS256&#34;</span>,	<span style="color:#75715e">// 使用的算法类型
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;typ&#34;</span>: <span style="color:#e6db74">&#34;JWT&#34;</span>		<span style="color:#75715e">// 类型是 JWT
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><p>有个字段表示加密使用的算法，这里我们使用 RSA 非对称加密。加解密过程如下：</p>
+<ol>
+<li>B 将明文使用 Hash 算法运算得到摘要</li>
+<li>摘要使用 B 的私钥进行签名，也就是加密</li>
+<li>签名连同明文发给 A</li>
+<li>A 先将明文用同样的 Hash 算法计算摘要</li>
+<li>再使用 B 的公钥，从签名中解出摘要，也就是解密</li>
+<li>对比 Hash(明文) 和 解密(签名) 的摘要是否相同</li>
+</ol>
+<p><strong>B 的私钥只有 B 自己知道</strong>，<strong>B 的公钥所有人都能知道</strong>。<strong>通过签名和验证签名，保证消息确实是 B 所发的，而 Hash 算法则保证明文没有被篡改过</strong>。</p>
+<p>这里还有一个问题，就是如何证明公钥确实是 B 的公钥，而不是其他人的呢？这就是 CA 的作用了。</p>
+<p>通过上述方法，服务器将 JWT 带的信息，如用户ID、用户名、过期时间等信息，从 token 解出来，证明这个 token 确实是自己的服务器所颁发的，并且它的信息也是没有被修改过的。因此，用户身份的安全性就在于有没有保护好自己的 token 不被别人窃取。当然，这种行为存在难度。</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230223001741312.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20230223001741312"
+	
+	
+></p>
+<h2 id="golang-实现-jwt-的-token-颁发和验证">Golang 实现 JWT 的 token 颁发和验证</h2>
+<p>这里我们使用 <code>&quot;github.com/dgrijalva/jwt-go&quot;</code> 这个库来实现，加密方式使用 2048位的 RSA，通过在线的 RSA 公私钥生成网站可以获取公钥文件和私钥文件的 demo。</p>
+<h3 id="生成-jwt">生成 JWT</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">token</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;crypto/rsa&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;github.com/dgrijalva/jwt-go&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;time&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">JWTTokenGen</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">privateKey</span>  <span style="color:#f92672">*</span><span style="color:#a6e22e">rsa</span>.<span style="color:#a6e22e">PrivateKey</span>		<span style="color:#75715e">// 私钥
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">issue</span>       <span style="color:#66d9ef">string</span>				<span style="color:#75715e">// 颁发机构
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">nowTimeFunc</span> <span style="color:#66d9ef">func</span>() <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Time</span>	<span style="color:#75715e">// 生成时间
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewJWTTokenGen</span>(<span style="color:#a6e22e">issue</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">privateKey</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">rsa</span>.<span style="color:#a6e22e">PrivateKey</span>) <span style="color:#f92672">*</span><span style="color:#a6e22e">JWTTokenGen</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">JWTTokenGen</span>{
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">privateKey</span>:  <span style="color:#a6e22e">privateKey</span>,
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">issue</span>:       <span style="color:#a6e22e">issue</span>,
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">nowTimeFunc</span>: <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Now</span>,		<span style="color:#75715e">// 颁发时使用当前时间
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">j</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">JWTTokenGen</span>) <span style="color:#a6e22e">GenerateToken</span>(<span style="color:#a6e22e">accountID</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">expire</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Duration</span>) (<span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">nowSec</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">j</span>.<span style="color:#a6e22e">nowTimeFunc</span>().<span style="color:#a6e22e">Unix</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 使用 NewWithClaims 生成
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 使用 SHA512 做 hash
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">token</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">jwt</span>.<span style="color:#a6e22e">NewWithClaims</span>(<span style="color:#a6e22e">jwt</span>.<span style="color:#a6e22e">SigningMethodRS512</span>, <span style="color:#a6e22e">jwt</span>.<span style="color:#a6e22e">StandardClaims</span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// StandardClaims 就对应 jwt.io 中 body 的内容字段
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>		<span style="color:#a6e22e">Issuer</span>:    <span style="color:#a6e22e">j</span>.<span style="color:#a6e22e">issue</span>,
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">IssuedAt</span>:  <span style="color:#a6e22e">nowSec</span>,
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">ExpiresAt</span>: <span style="color:#a6e22e">nowSec</span> <span style="color:#f92672">+</span> int64(<span style="color:#a6e22e">expire</span>.<span style="color:#a6e22e">Seconds</span>()),
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">Subject</span>:   <span style="color:#a6e22e">accountID</span>,
+</span></span><span style="display:flex;"><span>	})
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 把 token 使用私钥签名后 以字符串形式返回
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">token</span>.<span style="color:#a6e22e">SignedString</span>(<span style="color:#a6e22e">j</span>.<span style="color:#a6e22e">privateKey</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>上文中 <code>*rsa.PrivateKey	</code> 读取方式如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 其中 *rsa.PrivateKey 从 私钥文件中读取
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 使用 jwt.ParseRSAPrivateKeyFromPEM 加载
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">pkFile</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Open</span>(<span style="color:#f92672">*</span><span style="color:#a6e22e">privateKeyFile</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">pkBytes</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">ioutil</span>.<span style="color:#a6e22e">ReadAll</span>(<span style="color:#a6e22e">pkFile</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">privateKey</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">jwt</span>.<span style="color:#a6e22e">ParseRSAPrivateKeyFromPEM</span>(<span style="color:#a6e22e">pkBytes</span>)
+</span></span></code></pre></div><h3 id="验证-jwt">验证 JWT</h3>
+<p>验证 JWT 是颁发 JWT 的反过程。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// Package token 验证token 解析 accountID.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#f92672">package</span> <span style="color:#a6e22e">token</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;crypto/rsa&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;github.com/dgrijalva/jwt-go&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// JWTTokenVerifier 实现 token verify接口.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">JWTTokenVerifier</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">PublicKey</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">rsa</span>.<span style="color:#a6e22e">PublicKey</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Verify 用自己的公钥去验证 token 是否有效.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">jwtv</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">JWTTokenVerifier</span>) <span style="color:#a6e22e">Verify</span>(<span style="color:#a6e22e">token</span> <span style="color:#66d9ef">string</span>) (<span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 使用 ParseWithClaims 解出 token 信息 这里就是所谓的 claim
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 函数签名为 func ParseWithClaims(tokenString string, claims Claims, keyFunc Keyfunc) (*Token, error)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 第三个参数作用是获得验签的公钥 这里直接返回公钥
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">t</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">jwt</span>.<span style="color:#a6e22e">ParseWithClaims</span>(<span style="color:#a6e22e">token</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">jwt</span>.<span style="color:#a6e22e">StandardClaims</span>{}, <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">token</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">jwt</span>.<span style="color:#a6e22e">Token</span>) (<span style="color:#66d9ef">interface</span>{}, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">jwtv</span>.<span style="color:#a6e22e">PublicKey</span>, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>	})
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;cannot parse token: %v\n&#34;</span>, <span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 如果没有通过验证
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> !<span style="color:#a6e22e">t</span>.<span style="color:#a6e22e">Valid</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;token not valid\n&#34;</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 解出其中的 claim 字段并验证
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">claim</span>, <span style="color:#a6e22e">ok</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">t</span>.<span style="color:#a6e22e">Claims</span>.(<span style="color:#f92672">*</span><span style="color:#a6e22e">jwt</span>.<span style="color:#a6e22e">StandardClaims</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> !<span style="color:#a6e22e">ok</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;token claim is not standard claim\n&#34;</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span><span style="color:#a6e22e">claim</span>.<span style="color:#a6e22e">Valid</span>(); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;claim not valid: %v\n&#34;</span>, <span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 这里的 claim.Subject 就是构造 token 是填入的 accountID
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// token := jwt.NewWithClaims(jwt.SigningMethodRS512, jwt.StandardClaims{
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//	Issuer:    j.issue,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//	IssuedAt:  nowSec,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//	ExpiresAt: nowSec + int64(expire.Seconds()),
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//	Subject:   accountID,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">// })
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">claim</span>.<span style="color:#a6e22e">Subject</span>, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>上文中的公钥通过下面方法读取：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 其中 *rsa.PublicKey 也是通过文件读取 再由 jwt.ParseRSAPublicKeyFromPEM 加载
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">f</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Open</span>(<span style="color:#a6e22e">publicKeyFile</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">b</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">ioutil</span>.<span style="color:#a6e22e">ReadAll</span>(<span style="color:#a6e22e">f</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">pubKey</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">jwt</span>.<span style="color:#a6e22e">ParseRSAPublicKeyFromPEM</span>(<span style="color:#a6e22e">b</span>)
+</span></span></code></pre></div><h2 id="使用-grpc-拦截器--context-机制将验证接入公共逻辑">使用 gRPC 拦截器 + Context 机制将验证接入公共逻辑</h2>
+<p>对于后端所有的服务，我们都需要验证这条请求是否合法，例如：是不是已经登录的用户发起的请求、token有没有过期或者是否正确。这项工作可以统一在 API 的外部入口处进行，在进入内部微服务后，使用包含用户 id 的 context 在不同微服务之前实现请求身份的标识。</p>
+<blockquote>
+<p>默认情况下，从内部入口（如微服务网关）进入的请求没有问题，那么在内部的微服务中就是安全的，因为内部微服务不会向外暴露接口。</p>
+</blockquote>
+<h3 id="引入-grpc-interceptor">引入 gRPC Interceptor</h3>
+<p>gRPC Interceptor 就理解为 gin 中的 middleware，拦截请求做一些处理之后再放行。</p>
+<p>在 NewServer 时会有一些选项：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// func NewServer(opt ...ServerOption) *Server
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 接收一个 ServerOption 列表
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// type ServerOption interface {
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//	apply(*serverOptions)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// }
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// serverOption 是一种实现
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// type serverOption struct {
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//	grpc.EmptyServerOption
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//	apply func(*serverOptions)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">grpc</span>.<span style="color:#a6e22e">NewServer</span>([]<span style="color:#a6e22e">grpc</span>.<span style="color:#a6e22e">ServerOption</span><span style="color:#f92672">...</span>)
+</span></span></code></pre></div><p>而 <code>UnaryInterceptor</code> 返回的 <code>ServerOption</code> 是其中的一种实现，这里我们就用最简单的 <code>UnaryInterceptor</code> 演示：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// func UnaryInterceptor(i UnaryServerInterceptor) ServerOption
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 参数是一个函数 签名如下：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// type UnaryServerInterceptor func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (resp interface{}, err error)
+</span></span></span></code></pre></div><p>也就是说，我们只需要定义好 <code>UnaryServerInterceptor</code> 这个函数，把它交给 <code>UnaryInterceptor</code>，再把 <code>UnaryInterceptor</code> 交给 <code>ServerOption</code> 列表，最后在 <code>NewServer</code> 时把 <code>ServerOption</code> 列表传入，我们的 gRPC Server 就包含我们自定义的这个拦截器了。</p>
+<h3 id="一个验证-token-并转化为-userid-的拦截器">一个验证 token 并转化为 userID 的拦截器</h3>
+<h4 id="1-构造-unaryserverinterceptor">1. 构造 UnaryServerInterceptor</h4>
+<p>也就是实现这样一个函数：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">auth</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;context&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">jwt</span> <span style="color:#e6db74">&#34;github.com/dgrijalva/jwt-go&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;google.golang.org/grpc&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;google.golang.org/grpc/codes&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;google.golang.org/grpc/metadata&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;google.golang.org/grpc/status&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;io/ioutil&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;os&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;strings&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">ImpersonateAccountHeader</span> = <span style="color:#e6db74">&#34;impersonate-account-id&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">authorizationHeader</span> = <span style="color:#e6db74">&#34;authorization&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">bearerPrefix</span> = <span style="color:#e6db74">&#34;Bearer &#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">tokenVerify</span> <span style="color:#66d9ef">interface</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Verify</span>(<span style="color:#a6e22e">token</span> <span style="color:#66d9ef">string</span>) (<span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">error</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">interceptor</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 需要一个 tokenVerify 接口的实现
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 我们之前实现了一个 JWT 的验证器 直接用就行
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// type JWTTokenVerifier struct {
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//	PublicKey *rsa.PublicKey
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">// }
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">verifier</span> <span style="color:#a6e22e">tokenVerify</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// HandleRequest 作为请求拦截处理器，返回的handler是接下来需要做的处理函数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 实现 grpc.UnaryServerInterceptor 函数：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// type UnaryServerInterceptor func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (resp interface{}, err error)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">i</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">interceptor</span>) <span style="color:#a6e22e">HandleRequest</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>,
+</span></span><span style="display:flex;"><span>									<span style="color:#a6e22e">req</span> <span style="color:#66d9ef">interface</span>{},
+</span></span><span style="display:flex;"><span>									<span style="color:#a6e22e">info</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">grpc</span>.<span style="color:#a6e22e">UnaryServerInfo</span>,
+</span></span><span style="display:flex;"><span>									<span style="color:#a6e22e">handler</span> <span style="color:#a6e22e">grpc</span>.<span style="color:#a6e22e">UnaryHandler</span>) (<span style="color:#a6e22e">resp</span> <span style="color:#66d9ef">interface</span>{}, <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>)  {
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 0. 先检查是否加入特殊身份标识
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//    如果有就证明 context 中的 token 已经解出 以 userID 形式在 context 中传递
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//    否则从 token 中解出
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">accountID</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">impersonationFromContext</span>(<span style="color:#a6e22e">ctx</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">accountID</span> <span style="color:#f92672">!=</span> <span style="color:#e6db74">&#34;&#34;</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">handler</span>(<span style="color:#a6e22e">ContextWithAccountID</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">id</span>.<span style="color:#a6e22e">AccountID</span>(<span style="color:#a6e22e">accountID</span>)), <span style="color:#a6e22e">req</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 1. 在这之前已将token加入context
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//    从最初的context中拿到token
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">tkn</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tokenFromContext</span>(<span style="color:#a6e22e">ctx</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">status</span>.<span style="color:#a6e22e">Error</span>(<span style="color:#a6e22e">codes</span>.<span style="color:#a6e22e">Unauthenticated</span>, <span style="color:#e6db74">&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 2. 验证token 拿到 accountID
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">accountID</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">i</span>.<span style="color:#a6e22e">verifier</span>.<span style="color:#a6e22e">Verify</span>(<span style="color:#a6e22e">tkn</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">status</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#a6e22e">codes</span>.<span style="color:#a6e22e">Unauthenticated</span>, <span style="color:#e6db74">&#34;token not valid: %v&#34;</span>, <span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 3. 将 accountID 放入 context 中，交给后续的请求执行
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">// 	  拦截器捕获 context 取出token
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//    验证 token 获取 accountID
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//	  将 accountID 放进 context
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">//	  把新的 context 传下去才真正交给后面的微服务执行
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">handler</span>(<span style="color:#a6e22e">ContextWithAccountID</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">id</span>.<span style="color:#a6e22e">AccountID</span>(<span style="color:#a6e22e">accountID</span>)), <span style="color:#a6e22e">req</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// impersonationFromContext 判断是否需要验证 token 或是 context 中已经验证完
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">impersonationFromContext</span>(<span style="color:#a6e22e">c</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>) <span style="color:#66d9ef">string</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">m</span>, <span style="color:#a6e22e">ok</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">metadata</span>.<span style="color:#a6e22e">FromIncomingContext</span>(<span style="color:#a6e22e">c</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> !<span style="color:#a6e22e">ok</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">imp</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>[<span style="color:#a6e22e">ImpersonateAccountHeader</span>]
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> len(<span style="color:#a6e22e">imp</span>) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">imp</span>[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// tokenFromContext 从 context 中拿到 token
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">tokenFromContext</span>(<span style="color:#a6e22e">c</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>) (<span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">m</span>, <span style="color:#a6e22e">ok</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">metadata</span>.<span style="color:#a6e22e">FromIncomingContext</span>(<span style="color:#a6e22e">c</span>)	<span style="color:#75715e">// 查看请求有没有数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> !<span style="color:#a6e22e">ok</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#a6e22e">status</span>.<span style="color:#a6e22e">Error</span>(<span style="color:#a6e22e">codes</span>.<span style="color:#a6e22e">Unauthenticated</span>, <span style="color:#e6db74">&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">tkn</span> <span style="color:#f92672">:=</span> <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">v</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">m</span>[<span style="color:#a6e22e">authorizationHeader</span>] {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">strings</span>.<span style="color:#a6e22e">HasPrefix</span>(<span style="color:#a6e22e">v</span>, <span style="color:#a6e22e">bearerPrefix</span>) {
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">tkn</span> = <span style="color:#a6e22e">v</span>[len(<span style="color:#a6e22e">bearerPrefix</span>):]
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">tkn</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;&#34;</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#a6e22e">status</span>.<span style="color:#a6e22e">Error</span>(<span style="color:#a6e22e">codes</span>.<span style="color:#a6e22e">Unauthenticated</span>, <span style="color:#e6db74">&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tkn</span>, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">accountIDKey</span> <span style="color:#66d9ef">struct</span> {}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// ContextWithAccountID 将accountID写入context.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">ContextWithAccountID</span>(<span style="color:#a6e22e">c</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">aid</span> <span style="color:#a6e22e">id</span>.<span style="color:#a6e22e">AccountID</span>) <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">WithValue</span>(<span style="color:#a6e22e">c</span>, <span style="color:#a6e22e">accountIDKey</span>{}, <span style="color:#a6e22e">aid</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="2-将构造好的-unaryserverinterceptor-交给-unaryinterceptor">2. 将构造好的 UnaryServerInterceptor 交给 UnaryInterceptor</h4>
+<p>根据自己的情况实现上文中的 <code>type tokenVerify interface {}</code>，并构造出 <code>type interceptor struct {}</code>，然后把 <code>UnaryServerInterceptor</code> 交给 <code>UnaryInterceptor</code> 获得 <code>ServerOption</code>：</p>
+<pre tabindex="0"><code>serverOption := grpc.UnaryInterceptor(interceptor.HandleRequest)
+</code></pre><h4 id="3-grpc-在-newserver-时加入拦截器选项">3. gRPC 在 NewServer 时加入拦截器选项</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">gRPCOpts</span> []<span style="color:#a6e22e">grpc</span>.<span style="color:#a6e22e">ServerOption</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">gRPCOpts</span> = append(<span style="color:#a6e22e">gRPCOpts</span>, <span style="color:#a6e22e">serverOption</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">s</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">grpc</span>.<span style="color:#a6e22e">NewServer</span>(<span style="color:#a6e22e">gRPCOpts</span><span style="color:#f92672">...</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">RegisterServiceServer</span>(<span style="color:#a6e22e">s</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">Service</span>{})
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">s</span>.<span style="color:#a6e22e">Serve</span>()
+</span></span></code></pre></div><p>加入后注册自己的服务，启动。这样我们的拦截器就加进去了，任何调用这个 gRPC 服务的请求都会经过这个拦截器的验证。</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/grpc/">gRPC</a>
+        
+            <a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/">微服务</a>
+        
+            <a href="/tags/golang/">Golang</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    <section class="article-lastmod">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+        <span>
+            最后更新于 Feb 24, 2023 02:31 CST
+        </span>
+    </section><script src="https://utteranc.es/client.js"
+    repo="lizonglingo/lizonglingo.github.io"
+    issue-term="pathname"
+    label="Comment"
+    theme="github-light"
+    crossorigin="anonymous"
+    async>
+    </script>
+</footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/influxdb-go-client%E7%9A%84%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">InfluxDB Go Client的使用说明</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/gorm%E7%9A%84%E5%B8%B8%E8%A7%81%E5%9D%91/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">gorm的常见坑</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/sinan-ml-based-and-qos-aware-resource-management-for-cloud-microservices/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Sinan: ML-Based and QoS-Aware Resource Management for Cloud Microservices</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/characterizing-microservice-dependency-and-performance-alibaba-trace-analysis/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Characterizing microservice dependency and performance: Alibaba trace analysis</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/3milebeach-a-tracer-with-teeth/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">3MileBeach: A Tracer with Teeth</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 fmt.Println(&#34;Li Duo&#34;)
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

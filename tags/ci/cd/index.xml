@@ -6,12 +6,12 @@
         <description>Recent content in CI/CD on fmt.Println(&#34;Li Duo&#34;)</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-CN</language><atom:link href="https://lizonglingo.github.io/tags/ci/cd/index.xml" rel="self" type="application/rss+xml" /><item>
-        <title>CI-自动构建镜像</title>
-        <link>https://lizonglingo.github.io/p/ci-%E8%87%AA%E5%8A%A8%E6%9E%84%E5%BB%BA%E9%95%9C%E5%83%8F/</link>
+        <title>CI/CD-自动构建镜像</title>
+        <link>https://lizonglingo.github.io/p/ci/cd-%E8%87%AA%E5%8A%A8%E6%9E%84%E5%BB%BA%E9%95%9C%E5%83%8F/</link>
         <pubDate>Wed, 25 Jan 2023 22:59:33 +0800</pubDate>
         
-        <guid>https://lizonglingo.github.io/p/ci-%E8%87%AA%E5%8A%A8%E6%9E%84%E5%BB%BA%E9%95%9C%E5%83%8F/</guid>
-        <description>&lt;img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/20230126175426.png" alt="Featured image of post CI-自动构建镜像" /&gt;&lt;h1 id=&#34;ci-自动构建镜像&#34;&gt;CI-自动构建镜像&lt;/h1&gt;
+        <guid>https://lizonglingo.github.io/p/ci/cd-%E8%87%AA%E5%8A%A8%E6%9E%84%E5%BB%BA%E9%95%9C%E5%83%8F/</guid>
+        <description>&lt;img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/20230126175426.png" alt="Featured image of post CI/CD-自动构建镜像" /&gt;&lt;h1 id=&#34;ci-自动构建镜像&#34;&gt;CI-自动构建镜像&lt;/h1&gt;
 &lt;p&gt;CI/CD 已经成为目前开发工作中必须掌握的技能。利用 CI/CD 工具能够大幅提高软件发布和交付速度，同时自动化流程能最大限度减少人工过多参与导致的不确定性。&lt;/p&gt;
 &lt;p&gt;本文从 CI 工作流中的镜像自动化构建开始，探索 CI/CD 如何实现 DevOps 理念。通过使用 Github Action 和 Docker Hub 实现镜像自动化构建和发布，开启 CI/CD 学习之路。&lt;/p&gt;
 &lt;blockquote&gt;

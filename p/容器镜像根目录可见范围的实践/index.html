@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='在使用容器过程中，我们都知道进入容器后，根目录会变化。在容器中看不到容器外的目录和文件，这本质上是命名空间隔离带来的能力。 对于容器镜像的结构'>
+<title>容器镜像根目录可见范围的实践</title>
+
+<link rel='canonical' href='https://lizonglingo.github.io/p/%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E6%A0%B9%E7%9B%AE%E5%BD%95%E5%8F%AF%E8%A7%81%E8%8C%83%E5%9B%B4%E7%9A%84%E5%AE%9E%E8%B7%B5/'>
+
+<link rel="stylesheet" href="/scss/style.min.811a71d93d8df406268b1c66d015cd3f2252f454f25ac10a683e6f7b5ad9d92d.css"><meta property='og:title' content='容器镜像根目录可见范围的实践'>
+<meta property='og:description' content='在使用容器过程中，我们都知道进入容器后，根目录会变化。在容器中看不到容器外的目录和文件，这本质上是命名空间隔离带来的能力。 对于容器镜像的结构'>
+<meta property='og:url' content='https://lizonglingo.github.io/p/%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E6%A0%B9%E7%9B%AE%E5%BD%95%E5%8F%AF%E8%A7%81%E8%8C%83%E5%9B%B4%E7%9A%84%E5%AE%9E%E8%B7%B5/'>
+<meta property='og:site_name' content='fmt.Println(&#34;Li Duo&#34;)'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='Kubernetes' /><meta property='article:tag' content='docker' /><meta property='article:tag' content='操作系统' /><meta property='article:tag' content='笔记' /><meta property='article:tag' content='云原生' /><meta property='article:published_time' content='2023-07-09T23:35:19&#43;08:00'/><meta property='article:modified_time' content='2023-07-10T00:00:02&#43;08:00'/><meta property='og:image' content='https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092351270.png' />
+<meta name="twitter:title" content="容器镜像根目录可见范围的实践">
+<meta name="twitter:description" content="在使用容器过程中，我们都知道进入容器后，根目录会变化。在容器中看不到容器外的目录和文件，这本质上是命名空间隔离带来的能力。 对于容器镜像的结构"><meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content='https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092351270.png' />
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-SPJXNM3WZ6"></script>
+<script>
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'G-SPJXNM3WZ6', { 'anonymize_ip': false });
+}
+</script>
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/1634453613659.jpeg" width="300" height="300" class="site-logo" loading="lazy" alt="Avatar">
+                
+                </a>
+                
+                    <span class="emoji">👋</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">fmt.Println(&#34;Li Duo&#34;)</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://github.com/lizonglingo'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                        
+                        <span>主页</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E5%85%B3%E4%BA%8E/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                        
+                        <span>关于</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/archives/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                        
+                        <span>归档</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+                
+                <li >
+                    <a href='/%E9%93%BE%E6%8E%A5/' >
+                        
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                        
+                        <span>链接</span>
+                    </a>
+                </li>
+                
+            
+        
+        
+            
+        
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>暗色模式</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                <form action="/search/" class="search-form widget" >
+        <p>
+            <label>搜索</label>
+            <input name="keyword" required placeholder="输入关键词..." />
+        
+            <button title="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+            </button>
+        </p>
+    </form>
+            
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ul>
+    <li><a href="#mount--命名空间">mount  命名空间</a></li>
+    <li><a href="#环境">环境</a></li>
+    <li><a href="#实践">实践</a>
+      <ul>
+        <li><a href="#pivot_root">pivot_root</a></li>
+        <li><a href="#step1-创建新的命名空间">Step1 创建新的命名空间</a></li>
+        <li><a href="#step2-为-pivot_root-命令准备-new_root-和-put_old">Step2 为 pivot_root 命令准备 new_root 和 put_old</a></li>
+        <li><a href="#step3-执行-pivot_root-并查看根目录的改变">Step3 执行 pivot_root 并查看根目录的改变</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="has-image main-article">
+    <header class="article-header">
+        <div class="article-image">
+            <a href="/p/%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E6%A0%B9%E7%9B%AE%E5%BD%95%E5%8F%AF%E8%A7%81%E8%8C%83%E5%9B%B4%E7%9A%84%E5%AE%9E%E8%B7%B5/">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092351270.png" loading="lazy" alt="Featured image of post 容器镜像根目录可见范围的实践" />
+                
+            </a>
+        </div>
+    
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/kubernetes/" >
+                Kubernetes
+            </a>
+        
+            <a href="/categories/docker/" >
+                docker
+            </a>
+        
+            <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" >
+                操作系统
+            </a>
+        
+            <a href="/categories/%E7%AC%94%E8%AE%B0/" >
+                笔记
+            </a>
+        
+            <a href="/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/" >
+                云原生
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E6%A0%B9%E7%9B%AE%E5%BD%95%E5%8F%AF%E8%A7%81%E8%8C%83%E5%9B%B4%E7%9A%84%E5%AE%9E%E8%B7%B5/">容器镜像根目录可见范围的实践</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Jul 09, 2023</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 4 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>在使用容器过程中，我们都知道进入容器后，根目录会变化。在容器中看不到容器外的目录和文件，这本质上是命名空间隔离带来的能力。</p>
+<p>对于容器镜像的结构，通常我们用只读层、读写层来表示不同层级在读写能力上的限制。使用 Docker 或者 Kubernetes 时，使用挂载 “卷” 来进行数据持久化，也就是保留容器中数据的变化，实现读写能力。而容器中本身带有的文件、目录，在销毁容器、重启容器后，它们又会恢复到最初的样子。</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092139782.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20230709213920094"
+	
+	
+></p>
+<p>本文使用Linux自带的一些工具来模拟容器中文件系统隔离的特性，将进程的根目录进行替换，替换成我们想给它指定的目录。</p>
+<h2 id="mount--命名空间">mount  命名空间</h2>
+<p>mount 命名空间隔离了每个进程可以看到的挂载目录。不同 mount 命名空间中的进程看到、控制的目录都可以是不同的。</p>
+<p>mount 命名空间中有两个重要的概念：</p>
+<ul>
+<li>“共享子树”，它用来解决挂载、卸载事件在不同的 mount namespace 中<strong>自动、可控</strong>的传递；</li>
+<li>“对等组”，对等组是一组挂载点，本次实践涉及到共享子树中 <code>MS_SHARED</code> 和 <code>MS_PRIVATE</code> 两种传递类型，它们之间的含义是相反的，前者会和对等组共享挂载和卸载。</li>
+</ul>
+<p>其中，我觉得难理解的、重要的地方就是 <code>MS_SHARED</code> 和 <code>MS_PRIVATE</code> 这两种不同的挂载点传递类型：</p>
+<ul>
+<li><code>MS_SHARED</code>：该挂载点和它的“对等组”共享挂载和卸载事件。当一个挂载点被删除或者添加到namespace中，这些事件会被传递到它的对等组。</li>
+<li><code>MS_PRIVATE</code>:  和共享挂载相反，标记为private的事件不会传递到任何的对等组。</li>
+</ul>
+<p>这样一来，就能够控制容器中的文件系统的挂载是不是可以影响到其他mount 命名空间了。</p>
+<h2 id="环境">环境</h2>
+<ul>
+<li>OS：Ubuntu22.04 5.19.0-46-generic</li>
+<li>需要使用的命令：<code>pivot_root</code>，<code>unshare</code>，<code>mount</code> 等</li>
+</ul>
+<h2 id="实践">实践</h2>
+<p>我们先看一下 OS 本身的根目录：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@dev:/# ls
+</span></span><span style="display:flex;"><span>bin   cdrom  etc   lib    lib64   lost+found  mnt             opt   root  sbin  srv       sys  usr  workplace
+</span></span><span style="display:flex;"><span>boot  dev    home  lib32  libx32  media       namespace-feat  proc  run   snap  swapfile  tmp  var
+</span></span></code></pre></div><p>我们最终要将这个 ssh 连接的 <code>bash</code> 进程的 <code>mount</code> 命名空间根目录变为在网上下载的 Ubuntu22.04 的 <code>base</code> 版本的目录。这里将其<a class="link" href="https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cdimage/ubuntu-base/releases/22.04/release/"  target="_blank" rel="noopener"
+    >下载</a>并进行解压。</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092149186.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20230709214918828"
+	
+	
+></p>
+<p>我这里把他解压放在这个目录中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@dev:/workplace/namespace-feat/mock-rootfs# ls
+</span></span><span style="display:flex;"><span>ubuntu-base-22.04-base-amd64
+</span></span></code></pre></div><h3 id="pivot_root">pivot_root</h3>
+<p>我们使用 <code>pivot_root</code> 可以实现容器中根目录可见性的效果：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@dev:/# pivot_root -h
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Usage:
+</span></span><span style="display:flex;"><span> pivot_root <span style="color:#f92672">[</span>options<span style="color:#f92672">]</span> new_root put_old
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Change the root filesystem.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Options:
+</span></span><span style="display:flex;"><span> -h, --help     display this help
+</span></span><span style="display:flex;"><span> -V, --version  display version
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>For more details see pivot_root<span style="color:#f92672">(</span>8<span style="color:#f92672">)</span>.
+</span></span></code></pre></div><h4 id="特性">特性</h4>
+<ul>
+<li><code>pivot_root</code>命令用于将<strong>当前进程的</strong>根目录替换为指定目录；</li>
+<li>它需要两个参数，分别用于保存当前 mount 命名空间内进程的根挂载，和设置当前进程新的根挂载。分别叫做 <code>put_old</code> 和  <code>new_root</code> ；</li>
+<li>挂载之后，它不会自动改变当前进程的根目录，可以使用 <code>chdir(&quot;/&quot;)</code> 显式更改到新的根目录。</li>
+</ul>
+<h4 id="注意">注意</h4>
+<ol>
+<li><code>new_root</code>和<code>put_old</code>都必须是目录；</li>
+<li><code>new_root</code>和<code>put_old</code>不在同一个<code>mount namespace</code>中；</li>
+<li><code>put_old</code>必须是<code>new_root</code>，或者是<code>new_root</code>的子目录；</li>
+<li><code>new_root</code>必须是<code>mount point</code>，且不能是当前<code>mount namespace</code>的 “/”。</li>
+</ol>
+<blockquote>
+<p><strong>chroot 和 pivot_root区别</strong></p>
+<ul>
+<li>
+<p>chroot只改变当前进程的 “/”</p>
+</li>
+<li>
+<p>pivot_root改变当前mount namespace的“/”</p>
+</li>
+</ul>
+</blockquote>
+<h3 id="step1-创建新的命名空间">Step1 创建新的命名空间</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@dev:/workplace/namespace-feat/mock-rootfs# unshare -m
+</span></span></code></pre></div><p><code>unshare -m</code> 创建一个新的 mount 命名空间，并让当前进程进入。</p>
+<h3 id="step2-为-pivot_root-命令准备-new_root-和-put_old">Step2 为 pivot_root 命令准备 new_root 和 put_old</h3>
+<p>创建 put_old 对应的目录：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@dev:/workplace/namespace-feat/mock-rootfs# mkdir -p ubuntu-base-22.04-base-amd64/.old
+</span></span></code></pre></div><p>执行命令，但是会出现错误：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@dev:/workplace/namespace-feat/mock-rootfs# pivot_root ubuntu-base-22.04-base-amd64/ ubuntu-base-22.04-base-amd64/.old/
+</span></span><span style="display:flex;"><span>pivot_root: failed to change root from <span style="color:#e6db74">`</span>ubuntu-base-22.04-base-amd64/<span style="color:#e6db74">&#39; to `ubuntu-base-22.04-base-amd64/.old/&#39;</span>: Device or resource busy
+</span></span></code></pre></div><p>这是为什么呢？上文提到过，new_root 和 put_old 必须在不同的 mount 命名空间中。而我们的<code>ubuntu-base-22.04-base-amd64/</code> 和<code>ubuntu-base-22.04-base-amd64/.old/</code>文件夹，都处于执行<code>unshare -m</code>之前的挂载命名空间的挂载目录中。</p>
+<p>所以，我们需要再将<code>ubuntu-base-22.04-base-amd64/</code>挂载一次，因为我们之前执行了<code>unshare -m</code>，当前命令行正处于新的命名空间，因此，挂载后它就处于新的 mount 命名空间了：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@dev:/workplace/namespace-feat/mock-rootfs# mount --bind ubuntu-base-22.04-base-amd64/ ubuntu-base-22.04-base-amd64/
+</span></span></code></pre></div><h3 id="step3-执行-pivot_root-并查看根目录的改变">Step3 执行 pivot_root 并查看根目录的改变</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>root@dev:/workplace/namespace-feat/mock-rootfs# pivot_root ubuntu-base-22.04-base-amd64/ ubuntu-base-22.04-base-amd64/.old/
+</span></span><span style="display:flex;"><span>root@dev:/workplace/namespace-feat/mock-rootfs# ls
+</span></span><span style="display:flex;"><span>ubuntu-base-22.04-base-amd64
+</span></span><span style="display:flex;"><span>root@dev:/workplace/namespace-feat/mock-rootfs# cd /
+</span></span><span style="display:flex;"><span>root@dev:/# ls
+</span></span><span style="display:flex;"><span>bin   dev  home  lib32  libx32  mnt  proc  run   srv  tmp  var
+</span></span><span style="display:flex;"><span>boot  etc  lib   lib64  media   opt  root  sbin  sys  usr
+</span></span></code></pre></div><p>这样就可以成功切换了。上文提到，pivot_root 切换根目录后，不会自动切换目录。我们手动切到根目录查看文件，再与另一个终端进行对比：</p>
+<p><img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092351270.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20230709235112766"
+	
+	
+></p>
+<p>执行 pivot_root 后，实现了当前进程根目录的切换，就像我们进入容器中，查看根目录下的文件一样，同时宿主机（另一个终端）的根目录没有受到影响。</p>
+<blockquote>
+<p>Ref:</p>
+<p><a class="link" href="https://mp.weixin.qq.com/s?__biz=MzU3NjY5MjY2Ng==&amp;mid=2247486468&amp;idx=1&amp;sn=5e2e537115146348d7bc137ddf4a31ff&amp;chksm=fd1144d1ca66cdc771294afd20f6324c9c49214042362aa622e5809c0c8f9f834aeca4a50bcb&amp;scene=178&amp;cur_album_id=2810774774825123840#rd"  target="_blank" rel="noopener"
+    >容器镜像原理-根目录的替换</a></p>
+<p><a class="link" href="https://cloud.tencent.com/developer/article/1518101"  target="_blank" rel="noopener"
+    >黄东升: mount namespace和共享子树</a></p>
+<p><a class="link" href="https://www.cnblogs.com/sparkdev/p/9045563.html"  target="_blank" rel="noopener"
+    >sparkdev</a></p>
+</blockquote>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/kubernetes/">Kubernetes</a>
+        
+            <a href="/tags/docker/">docker</a>
+        
+            <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
+        
+            <a href="/tags/%E7%AC%94%E8%AE%B0/">笔记</a>
+        
+            <a href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/">云原生</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    <section class="article-lastmod">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+        <span>
+            最后更新于 Jul 10, 2023 00:00 CST
+        </span>
+    </section></footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="has-image">
+    <a href="/p/cri-dockerd%E5%9C%A8kubernetes1.24%E5%90%8E%E7%BB%A7%E7%BB%AD%E4%BD%BF%E7%94%A8docker%E4%BD%9C%E4%B8%BA%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6/">
+        
+        
+            <div class="article-image">
+                
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230111161434207.png" loading="lazy" data-key="" data-hash="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230111161434207.png"/>
+                
+            </div>
+        
+
+        <div class="article-details">
+            <h2 class="article-title">cri-dockerd，在kubernetes1.24后继续使用Docker作为容器运行时</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="has-image">
+    <a href="/p/%E6%9E%84%E5%BB%BA%E5%BA%94%E7%94%A8%E6%97%B6%E5%A6%82%E4%BD%95%E7%BC%A9%E5%B0%8F%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E7%9A%84%E4%BD%93%E7%A7%AF/">
+        
+        
+            <div class="article-image">
+                
+                    <img src="/post-images/image-20230113160652452.png" loading="lazy" data-key="" data-hash="/post-images/image-20230113160652452.png"/>
+                
+            </div>
+        
+
+        <div class="article-details">
+            <h2 class="article-title">构建应用时如何缩小容器镜像的体积</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E8%AE%B0%E4%B8%80%E6%AC%A1kubernetes%E4%BD%BF%E7%94%A8ciliumcoredns%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E5%A4%B1%E8%B4%A5%E7%9A%84%E6%8E%92%E9%94%99/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">记一次Kubernetes使用Cilium，coredns健康检查失败的排错</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/sinan-ml-based-and-qos-aware-resource-management-for-cloud-microservices/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Sinan: ML-Based and QoS-Aware Resource Management for Cloud Microservices</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/ieee-cloud-21-%E4%BA%91%E4%B8%8A%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E7%9B%B8%E5%85%B3%E5%90%88%E8%BE%91/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">IEEE CLOUD 21 云上资源管理相关合辑</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2018 - 
+        
+        2023 fmt.Println(&#34;Li Duo&#34;)
+    </section>
+    
+    <section class="powerby">
+        
+            自认为是幻象波普星的来客 <br/>
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.16.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

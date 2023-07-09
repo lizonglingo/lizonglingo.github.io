@@ -6,7 +6,145 @@
         <description>Recent content in 云原生 on fmt.Println(&#34;Li Duo&#34;)</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-CN</language>
-        <lastBuildDate>Thu, 26 Jan 2023 17:51:33 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Sun, 09 Jul 2023 23:35:19 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>容器镜像根目录可见范围的实践</title>
+        <link>https://lizonglingo.github.io/p/%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E6%A0%B9%E7%9B%AE%E5%BD%95%E5%8F%AF%E8%A7%81%E8%8C%83%E5%9B%B4%E7%9A%84%E5%AE%9E%E8%B7%B5/</link>
+        <pubDate>Sun, 09 Jul 2023 23:35:19 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E6%A0%B9%E7%9B%AE%E5%BD%95%E5%8F%AF%E8%A7%81%E8%8C%83%E5%9B%B4%E7%9A%84%E5%AE%9E%E8%B7%B5/</guid>
+        <description>&lt;img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092351270.png" alt="Featured image of post 容器镜像根目录可见范围的实践" /&gt;&lt;p&gt;在使用容器过程中，我们都知道进入容器后，根目录会变化。在容器中看不到容器外的目录和文件，这本质上是命名空间隔离带来的能力。&lt;/p&gt;
+&lt;p&gt;对于容器镜像的结构，通常我们用只读层、读写层来表示不同层级在读写能力上的限制。使用 Docker 或者 Kubernetes 时，使用挂载 “卷” 来进行数据持久化，也就是保留容器中数据的变化，实现读写能力。而容器中本身带有的文件、目录，在销毁容器、重启容器后，它们又会恢复到最初的样子。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092139782.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230709213920094&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;本文使用Linux自带的一些工具来模拟容器中文件系统隔离的特性，将进程的根目录进行替换，替换成我们想给它指定的目录。&lt;/p&gt;
+&lt;h2 id=&#34;mount--命名空间&#34;&gt;mount  命名空间&lt;/h2&gt;
+&lt;p&gt;mount 命名空间隔离了每个进程可以看到的挂载目录。不同 mount 命名空间中的进程看到、控制的目录都可以是不同的。&lt;/p&gt;
+&lt;p&gt;mount 命名空间中有两个重要的概念：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;“共享子树”，它用来解决挂载、卸载事件在不同的 mount namespace 中&lt;strong&gt;自动、可控&lt;/strong&gt;的传递；&lt;/li&gt;
+&lt;li&gt;“对等组”，对等组是一组挂载点，本次实践涉及到共享子树中 &lt;code&gt;MS_SHARED&lt;/code&gt; 和 &lt;code&gt;MS_PRIVATE&lt;/code&gt; 两种传递类型，它们之间的含义是相反的，前者会和对等组共享挂载和卸载。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;其中，我觉得难理解的、重要的地方就是 &lt;code&gt;MS_SHARED&lt;/code&gt; 和 &lt;code&gt;MS_PRIVATE&lt;/code&gt; 这两种不同的挂载点传递类型：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;MS_SHARED&lt;/code&gt;：该挂载点和它的“对等组”共享挂载和卸载事件。当一个挂载点被删除或者添加到namespace中，这些事件会被传递到它的对等组。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MS_PRIVATE&lt;/code&gt;:  和共享挂载相反，标记为private的事件不会传递到任何的对等组。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这样一来，就能够控制容器中的文件系统的挂载是不是可以影响到其他mount 命名空间了。&lt;/p&gt;
+&lt;h2 id=&#34;环境&#34;&gt;环境&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;OS：Ubuntu22.04 5.19.0-46-generic&lt;/li&gt;
+&lt;li&gt;需要使用的命令：&lt;code&gt;pivot_root&lt;/code&gt;，&lt;code&gt;unshare&lt;/code&gt;，&lt;code&gt;mount&lt;/code&gt; 等&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;实践&#34;&gt;实践&lt;/h2&gt;
+&lt;p&gt;我们先看一下 OS 本身的根目录：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@dev:/# ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;bin   cdrom  etc   lib    lib64   lost+found  mnt             opt   root  sbin  srv       sys  usr  workplace
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;boot  dev    home  lib32  libx32  media       namespace-feat  proc  run   snap  swapfile  tmp  var
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;我们最终要将这个 ssh 连接的 &lt;code&gt;bash&lt;/code&gt; 进程的 &lt;code&gt;mount&lt;/code&gt; 命名空间根目录变为在网上下载的 Ubuntu22.04 的 &lt;code&gt;base&lt;/code&gt; 版本的目录。这里将其&lt;a class=&#34;link&#34; href=&#34;https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cdimage/ubuntu-base/releases/22.04/release/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;下载&lt;/a&gt;并进行解压。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092149186.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230709214918828&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;我这里把他解压放在这个目录中：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@dev:/workplace/namespace-feat/mock-rootfs# ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ubuntu-base-22.04-base-amd64
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;pivot_root&#34;&gt;pivot_root&lt;/h3&gt;
+&lt;p&gt;我们使用 &lt;code&gt;pivot_root&lt;/code&gt; 可以实现容器中根目录可见性的效果：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@dev:/# pivot_root -h
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Usage:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; pivot_root &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;options&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; new_root put_old
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Change the root filesystem.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Options:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; -h, --help     display this help
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; -V, --version  display version
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;For more details see pivot_root&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;8&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;特性&#34;&gt;特性&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;pivot_root&lt;/code&gt;命令用于将&lt;strong&gt;当前进程的&lt;/strong&gt;根目录替换为指定目录；&lt;/li&gt;
+&lt;li&gt;它需要两个参数，分别用于保存当前 mount 命名空间内进程的根挂载，和设置当前进程新的根挂载。分别叫做 &lt;code&gt;put_old&lt;/code&gt; 和  &lt;code&gt;new_root&lt;/code&gt; ；&lt;/li&gt;
+&lt;li&gt;挂载之后，它不会自动改变当前进程的根目录，可以使用 &lt;code&gt;chdir(&amp;quot;/&amp;quot;)&lt;/code&gt; 显式更改到新的根目录。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;注意&#34;&gt;注意&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;new_root&lt;/code&gt;和&lt;code&gt;put_old&lt;/code&gt;都必须是目录；&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;new_root&lt;/code&gt;和&lt;code&gt;put_old&lt;/code&gt;不在同一个&lt;code&gt;mount namespace&lt;/code&gt;中；&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;put_old&lt;/code&gt;必须是&lt;code&gt;new_root&lt;/code&gt;，或者是&lt;code&gt;new_root&lt;/code&gt;的子目录；&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;new_root&lt;/code&gt;必须是&lt;code&gt;mount point&lt;/code&gt;，且不能是当前&lt;code&gt;mount namespace&lt;/code&gt;的 “/”。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;chroot 和 pivot_root区别&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;chroot只改变当前进程的 “/”&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;pivot_root改变当前mount namespace的“/”&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;step1-创建新的命名空间&#34;&gt;Step1 创建新的命名空间&lt;/h3&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@dev:/workplace/namespace-feat/mock-rootfs# unshare -m
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;unshare -m&lt;/code&gt; 创建一个新的 mount 命名空间，并让当前进程进入。&lt;/p&gt;
+&lt;h3 id=&#34;step2-为-pivot_root-命令准备-new_root-和-put_old&#34;&gt;Step2 为 pivot_root 命令准备 new_root 和 put_old&lt;/h3&gt;
+&lt;p&gt;创建 put_old 对应的目录：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@dev:/workplace/namespace-feat/mock-rootfs# mkdir -p ubuntu-base-22.04-base-amd64/.old
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;执行命令，但是会出现错误：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@dev:/workplace/namespace-feat/mock-rootfs# pivot_root ubuntu-base-22.04-base-amd64/ ubuntu-base-22.04-base-amd64/.old/
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;pivot_root: failed to change root from &lt;span style=&#34;color:#e6db74&#34;&gt;`&lt;/span&gt;ubuntu-base-22.04-base-amd64/&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39; to `ubuntu-base-22.04-base-amd64/.old/&amp;#39;&lt;/span&gt;: Device or resource busy
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这是为什么呢？上文提到过，new_root 和 put_old 必须在不同的 mount 命名空间中。而我们的&lt;code&gt;ubuntu-base-22.04-base-amd64/&lt;/code&gt; 和&lt;code&gt;ubuntu-base-22.04-base-amd64/.old/&lt;/code&gt;文件夹，都处于执行&lt;code&gt;unshare -m&lt;/code&gt;之前的挂载命名空间的挂载目录中。&lt;/p&gt;
+&lt;p&gt;所以，我们需要再将&lt;code&gt;ubuntu-base-22.04-base-amd64/&lt;/code&gt;挂载一次，因为我们之前执行了&lt;code&gt;unshare -m&lt;/code&gt;，当前命令行正处于新的命名空间，因此，挂载后它就处于新的 mount 命名空间了：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@dev:/workplace/namespace-feat/mock-rootfs# mount --bind ubuntu-base-22.04-base-amd64/ ubuntu-base-22.04-base-amd64/
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;step3-执行-pivot_root-并查看根目录的改变&#34;&gt;Step3 执行 pivot_root 并查看根目录的改变&lt;/h3&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@dev:/workplace/namespace-feat/mock-rootfs# pivot_root ubuntu-base-22.04-base-amd64/ ubuntu-base-22.04-base-amd64/.old/
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@dev:/workplace/namespace-feat/mock-rootfs# ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ubuntu-base-22.04-base-amd64
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@dev:/workplace/namespace-feat/mock-rootfs# cd /
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;root@dev:/# ls
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;bin   dev  home  lib32  libx32  mnt  proc  run   srv  tmp  var
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;boot  etc  lib   lib64  media   opt  root  sbin  sys  usr
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这样就可以成功切换了。上文提到，pivot_root 切换根目录后，不会自动切换目录。我们手动切到根目录查看文件，再与另一个终端进行对比：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092351270.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+		alt=&#34;image-20230709235112766&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;p&gt;执行 pivot_root 后，实现了当前进程根目录的切换，就像我们进入容器中，查看根目录下的文件一样，同时宿主机（另一个终端）的根目录没有受到影响。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Ref:&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://mp.weixin.qq.com/s?__biz=MzU3NjY5MjY2Ng==&amp;amp;mid=2247486468&amp;amp;idx=1&amp;amp;sn=5e2e537115146348d7bc137ddf4a31ff&amp;amp;chksm=fd1144d1ca66cdc771294afd20f6324c9c49214042362aa622e5809c0c8f9f834aeca4a50bcb&amp;amp;scene=178&amp;amp;cur_album_id=2810774774825123840#rd&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;容器镜像原理-根目录的替换&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://cloud.tencent.com/developer/article/1518101&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;黄东升: mount namespace和共享子树&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.cnblogs.com/sparkdev/p/9045563.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;sparkdev&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        </item>
+        <item>
         <title>Loadbalancer与Ingress</title>
         <link>https://lizonglingo.github.io/p/loadbalancer%E4%B8%8Eingress/</link>
         <pubDate>Thu, 26 Jan 2023 17:51:33 +0800</pubDate>

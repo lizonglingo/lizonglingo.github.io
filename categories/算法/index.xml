@@ -6,7 +6,60 @@
         <description>Recent content in 算法 on fmt.Println(&#34;Li Duo&#34;)</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-CN</language>
-        <lastBuildDate>Sat, 25 Mar 2023 21:17:37 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/categories/%E7%AE%97%E6%B3%95/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Thu, 13 Apr 2023 19:19:01 +0800</lastBuildDate><atom:link href="https://lizonglingo.github.io/categories/%E7%AE%97%E6%B3%95/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Leetcode数组技巧(前缀和及差分数组)</title>
+        <link>https://lizonglingo.github.io/p/leetcode%E6%95%B0%E7%BB%84%E6%8A%80%E5%B7%A7%E5%89%8D%E7%BC%80%E5%92%8C%E5%8F%8A%E5%B7%AE%E5%88%86%E6%95%B0%E7%BB%84/</link>
+        <pubDate>Thu, 13 Apr 2023 19:19:01 +0800</pubDate>
+        
+        <guid>https://lizonglingo.github.io/p/leetcode%E6%95%B0%E7%BB%84%E6%8A%80%E5%B7%A7%E5%89%8D%E7%BC%80%E5%92%8C%E5%8F%8A%E5%B7%AE%E5%88%86%E6%95%B0%E7%BB%84/</guid>
+        <description>&lt;img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092351270.png" alt="Featured image of post Leetcode数组技巧(前缀和及差分数组)" /&gt;&lt;h2 id=&#34;数组前缀&#34;&gt;数组前缀&lt;/h2&gt;
+&lt;p&gt;前缀和主要适用的场景是原始数组不会被修改的情况下，频繁查询某个区间的累加和。通常，求解某个数组区间的和需要遍历做累加，如果涉及到频繁多次求和，就会增加时间开销。&lt;/p&gt;
+&lt;p&gt;前缀和这种方法，一次遍历后构造前缀和数组，能以 O(1) 的时间求解数组的区间和。&lt;/p&gt;
+&lt;p&gt;常见有一维数组和二维数组两种使用方式。&lt;/p&gt;
+&lt;h3 id=&#34;例题1-区域和检索---数组不可变-力扣303&#34;&gt;例题1 区域和检索 - 数组不可变 力扣303&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://leetcode.cn/problems/range-sum-query-immutable/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://leetcode.cn/problems/range-sum-query-immutable/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://labuladong.github.io/algo/di-yi-zhan-da78c/shou-ba-sh-48c1d/xiao-er-me-f69af/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://labuladong.github.io/algo/di-yi-zhan-da78c/shou-ba-sh-48c1d/xiao-er-me-f69af/&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;这道题常规思路是遍历求前缀和，时间复杂度是&lt;code&gt;O(N)&lt;/code&gt;，但是有&lt;code&gt;O(1)&lt;/code&gt;的方法：构造一个前缀和数组，构造完后无需遍历直接求解。&lt;/p&gt;
+&lt;h3 id=&#34;例题2-二维区域和检索---矩阵不可变-力扣304&#34;&gt;例题2 二维区域和检索 - 矩阵不可变 力扣304&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://leetcode.cn/problems/range-sum-query-2d-immutable/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://leetcode.cn/problems/range-sum-query-2d-immutable/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://labuladong.github.io/algo/di-yi-zhan-da78c/shou-ba-sh-48c1d/xiao-er-me-f69af/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://labuladong.github.io/algo/di-yi-zhan-da78c/shou-ba-sh-48c1d/xiao-er-me-f69af/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://leetcode.cn/problems/range-sum-query-2d-immutable/solution/er-wei-qian-zhui-he-jian-dan-tui-dao-tu-sqekv/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://leetcode.cn/problems/range-sum-query-2d-immutable/solution/er-wei-qian-zhui-he-jian-dan-tui-dao-tu-sqekv/&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;常规思路还是遍历，但是会超时。较好的方法是参照上一题目的前缀和数组做。&lt;/p&gt;
+&lt;p&gt;对于使用前缀和求解，有两种方式：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;依然是从一维角度，&lt;strong&gt;构造时分别对矩阵的每一行做一个前缀和数组&lt;/strong&gt;，然后计算时，遍历每一行，每行&lt;code&gt;O(1)&lt;/code&gt;的时间做行和的累加，得到矩阵和。这样的时间是&lt;code&gt;O(行数)&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;从二维角度，构造时对每个从&lt;code&gt;(0,0)&lt;/code&gt;开始的矩形求前缀和，然后进行子矩阵前缀和的加减，这样每次求前缀和的时间只有&lt;code&gt;O(1)&lt;/code&gt;。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;差分数组&#34;&gt;差分数组&lt;/h2&gt;
+&lt;p&gt;差分数组和前缀和思想非常类似，前缀和表示数组区间的和，而构造差分数组多用来表示不同数组区间的差值。主要适用场景是&lt;strong&gt;频繁对原始数组的某个区间的元素进行增减&lt;/strong&gt;。&lt;/p&gt;
+&lt;h3 id=&#34;例题1-航班预订统计-力扣1109&#34;&gt;例题1 航班预订统计 力扣1109&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://leetcode.cn/problems/corporate-flight-bookings/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://leetcode.cn/problems/corporate-flight-bookings/&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;本题要抽象成差分数组做。&lt;/p&gt;
+&lt;h3 id=&#34;例题2-拼车-力扣1094&#34;&gt;例题2 拼车 力扣1094&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://leetcode.cn/problems/car-pooling/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://leetcode.cn/problems/car-pooling/&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;本题在纸上画一下车站和上下乘客容量，就能发现这也可以用差分数组做。需要注意：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;乘客在下车的站点就要把容量加上。&lt;/li&gt;
+&lt;li&gt;注意题目条件，比如站台最大数量。&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+        <item>
         <title>笔试中常用的Golang库</title>
         <link>https://lizonglingo.github.io/p/%E7%AC%94%E8%AF%95%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84golang%E5%BA%93/</link>
         <pubDate>Sat, 25 Mar 2023 21:17:37 +0800</pubDate>

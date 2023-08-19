@@ -10,10 +10,10 @@
 <meta property='og:description' content='输入输出库 fmt fmt.Scan() fmt.Scan()多用来获取已知长度、已知数量的变量输入。从os.Stdin中获取数据。 它将碰到第一个空格或换行符之前的内容'>
 <meta property='og:url' content='https://lizonglingo.github.io/p/%E7%AC%94%E8%AF%95%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84golang%E5%BA%93/'>
 <meta property='og:site_name' content='fmt.Println(&#34;Li Duo&#34;)'>
-<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='笔记' /><meta property='article:tag' content='Golang' /><meta property='article:tag' content='算法' /><meta property='article:published_time' content='2023-03-25T21:17:37&#43;08:00'/><meta property='article:modified_time' content='2023-07-28T15:03:18&#43;08:00'/><meta property='og:image' content='https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092351270.png' />
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='笔记' /><meta property='article:tag' content='Golang' /><meta property='article:tag' content='算法' /><meta property='article:published_time' content='2023-03-25T21:17:37&#43;08:00'/><meta property='article:modified_time' content='2023-07-28T15:03:18&#43;08:00'/><meta property='og:image' content='https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230819104021757.png' />
 <meta name="twitter:title" content="笔试中常用的Golang库">
 <meta name="twitter:description" content="输入输出库 fmt fmt.Scan() fmt.Scan()多用来获取已知长度、已知数量的变量输入。从os.Stdin中获取数据。 它将碰到第一个空格或换行符之前的内容"><meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content='https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092351270.png' />
+    <meta name="twitter:image" content='https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230819104021757.png' />
     <link rel="shortcut icon" href="/favicon.ico" />
 
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-SPJXNM3WZ6"></script>
@@ -315,7 +315,7 @@ if (!doNotTrack) {
         <div class="article-image">
             <a href="/p/%E7%AC%94%E8%AF%95%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84golang%E5%BA%93/">
                 
-                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092351270.png" loading="lazy" alt="Featured image of post 笔试中常用的Golang库" />
+                    <img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230819104021757.png" loading="lazy" alt="Featured image of post 笔试中常用的Golang库" />
                 
             </a>
         </div>
@@ -595,7 +595,7 @@ if (!doNotTrack) {
 </span></span></span></code></pre></div><h4 id="parseinthttpscsopensourcegooglegogogo1206srcstrconvatoigol202"><a class="link" href="https://cs.opensource.google/go/go/&#43;/go1.20.6:src/strconv/atoi.go;l=202"  target="_blank" rel="noopener"
     >ParseInt</a></h4>
 <ul>
-<li>灵活的将正数类型转为字符串：<code>func ParseInt(s string, base int, bitSize int) (i int64, err error)</code></li>
+<li>灵活的将字符串转为正整数：<code>func ParseInt(s string, base int, bitSize int) (i int64, err error)</code></li>
 <li>三个参数的含义依次是：
 <ul>
 <li>要转换的字符串</li>
@@ -632,6 +632,77 @@ if (!doNotTrack) {
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">// int64, -354634382
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e">// int64, -3546343826724305832
+</span></span></span></code></pre></div><h4 id="parsefloathttpspkggodevstrconvparsefloat"><a class="link" href="https://pkg.go.dev/strconv#ParseFloat"  target="_blank" rel="noopener"
+    >ParseFloat</a></h4>
+<ul>
+<li>用于将字符串转化为 float 类型：<code>func ParseFloat(s string, bitSize int) (float64, error)</code></li>
+<li>参数：
+<ul>
+<li><code>s</code>：将要转化的字符串</li>
+<li><code>bitSize</code>：可选 32 或 64 代表转化为 float32 还是 float64</li>
+</ul>
+</li>
+</ul>
+<h4 id="formatfloathttpspkggodevstrconvformatfloat"><a class="link" href="https://pkg.go.dev/strconv#FormatFloat"  target="_blank" rel="noopener"
+    >FormatFloat</a></h4>
+<ul>
+<li>用于将 float 转化为字符串类型：<code>func FormatFloat(f float64, fmt byte, prec, bitSize int) string</code></li>
+<li>参数说明：
+<ul>
+<li><code>f</code>：所需要转化的浮点数</li>
+<li><code>fmt</code>：格式，有 &lsquo;b&rsquo;,&rsquo;e&rsquo;,&lsquo;E&rsquo;,&lsquo;f&rsquo;,&lsquo;g&rsquo;,&lsquo;G&rsquo;,&lsquo;x&rsquo;,&lsquo;X&rsquo; 这些选项，一般使用 &lsquo;f&rsquo; 表示没有指数</li>
+<li>prec：表示精度，小数点后保留几位</li>
+<li>bitSize：有 32 和 64 两种选项，表示 float32 或 float64 类型</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;strconv&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">f</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">3.1415926</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">s</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">strconv</span>.<span style="color:#a6e22e">FormatiFloat</span>(<span style="color:#a6e22e">f</span>, <span style="color:#e6db74">&#39;f&#39;</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">64</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">s</span>) 
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 3.14
+</span></span></span></code></pre></div><h4 id="formatinthttpspkggodevstrconvformatint"><a class="link" href="https://pkg.go.dev/strconv#FormatInt"  target="_blank" rel="noopener"
+    >FormatInt</a></h4>
+<ul>
+<li>将 Int 为字符串类型：<code>func FormatInt(i int64, base int) string</code></li>
+<li>参数说明：
+<ul>
+<li><code>i</code>：表示要转化的浮点数</li>
+<li><code>base</code>：进制，可选 2到36</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;strconv&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">v</span> <span style="color:#f92672">:=</span> int64(<span style="color:#f92672">-</span><span style="color:#ae81ff">42</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">s10</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">strconv</span>.<span style="color:#a6e22e">FormatInt</span>(<span style="color:#a6e22e">v</span>, <span style="color:#ae81ff">10</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;%T, %v\n&#34;</span>, <span style="color:#a6e22e">s10</span>, <span style="color:#a6e22e">s10</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">s16</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">strconv</span>.<span style="color:#a6e22e">FormatInt</span>(<span style="color:#a6e22e">v</span>, <span style="color:#ae81ff">16</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;%T, %v\n&#34;</span>, <span style="color:#a6e22e">s16</span>, <span style="color:#a6e22e">s16</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Output:
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// string, -42
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// string, -2a
 </span></span></span></code></pre></div>
 </section>
 

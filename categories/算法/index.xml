@@ -65,7 +65,7 @@
         <pubDate>Sat, 25 Mar 2023 21:17:37 +0800</pubDate>
         
         <guid>https://lizonglingo.github.io/p/%E7%AC%94%E8%AF%95%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84golang%E5%BA%93/</guid>
-        <description>&lt;img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/202307092351270.png" alt="Featured image of post 笔试中常用的Golang库" /&gt;&lt;h2 id=&#34;输入输出库&#34;&gt;输入输出库&lt;/h2&gt;
+        <description>&lt;img src="https://picgo-lzl.oss-cn-beijing.aliyuncs.com/image-20230819104021757.png" alt="Featured image of post 笔试中常用的Golang库" /&gt;&lt;h2 id=&#34;输入输出库&#34;&gt;输入输出库&lt;/h2&gt;
 &lt;h3 id=&#34;fmt&#34;&gt;fmt&lt;/h3&gt;
 &lt;h4 id=&#34;fmtscan&#34;&gt;fmt.Scan()&lt;/h4&gt;
 &lt;p&gt;&lt;code&gt;fmt.Scan()&lt;/code&gt;多用来获取已知长度、已知数量的变量输入。从&lt;code&gt;os.Stdin&lt;/code&gt;中获取数据。&lt;/p&gt;
@@ -266,7 +266,7 @@
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;parseinthttpscsopensourcegooglegogogo1206srcstrconvatoigol202&#34;&gt;&lt;a class=&#34;link&#34; href=&#34;https://cs.opensource.google/go/go/&amp;#43;/go1.20.6:src/strconv/atoi.go;l=202&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;ParseInt&lt;/a&gt;&lt;/h4&gt;
 &lt;ul&gt;
-&lt;li&gt;灵活的将正数类型转为字符串：&lt;code&gt;func ParseInt(s string, base int, bitSize int) (i int64, err error)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;灵活的将字符串转为正整数：&lt;code&gt;func ParseInt(s string, base int, bitSize int) (i int64, err error)&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;三个参数的含义依次是：
 &lt;ul&gt;
 &lt;li&gt;要转换的字符串&lt;/li&gt;
@@ -303,6 +303,77 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// int64, -354634382
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// int64, -3546343826724305832
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;parsefloathttpspkggodevstrconvparsefloat&#34;&gt;&lt;a class=&#34;link&#34; href=&#34;https://pkg.go.dev/strconv#ParseFloat&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;ParseFloat&lt;/a&gt;&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;用于将字符串转化为 float 类型：&lt;code&gt;func ParseFloat(s string, bitSize int) (float64, error)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;参数：
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;s&lt;/code&gt;：将要转化的字符串&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;bitSize&lt;/code&gt;：可选 32 或 64 代表转化为 float32 还是 float64&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;formatfloathttpspkggodevstrconvformatfloat&#34;&gt;&lt;a class=&#34;link&#34; href=&#34;https://pkg.go.dev/strconv#FormatFloat&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;FormatFloat&lt;/a&gt;&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;用于将 float 转化为字符串类型：&lt;code&gt;func FormatFloat(f float64, fmt byte, prec, bitSize int) string&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;参数说明：
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;f&lt;/code&gt;：所需要转化的浮点数&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;fmt&lt;/code&gt;：格式，有 &amp;lsquo;b&amp;rsquo;,&amp;rsquo;e&amp;rsquo;,&amp;lsquo;E&amp;rsquo;,&amp;lsquo;f&amp;rsquo;,&amp;lsquo;g&amp;rsquo;,&amp;lsquo;G&amp;rsquo;,&amp;lsquo;x&amp;rsquo;,&amp;lsquo;X&amp;rsquo; 这些选项，一般使用 &amp;lsquo;f&amp;rsquo; 表示没有指数&lt;/li&gt;
+&lt;li&gt;prec：表示精度，小数点后保留几位&lt;/li&gt;
+&lt;li&gt;bitSize：有 32 和 64 两种选项，表示 float32 或 float64 类型&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-golang&#34; data-lang=&#34;golang&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;package&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;import&lt;/span&gt; (
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;fmt&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;strconv&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;f&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;3.1415926&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;s&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;strconv&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;FormatiFloat&lt;/span&gt;(&lt;span style=&#34;color:#a6e22e&#34;&gt;f&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;f&amp;#39;&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;64&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;fmt&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Println&lt;/span&gt;(&lt;span style=&#34;color:#a6e22e&#34;&gt;s&lt;/span&gt;) 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 3.14
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;formatinthttpspkggodevstrconvformatint&#34;&gt;&lt;a class=&#34;link&#34; href=&#34;https://pkg.go.dev/strconv#FormatInt&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;FormatInt&lt;/a&gt;&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;将 Int 为字符串类型：&lt;code&gt;func FormatInt(i int64, base int) string&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;参数说明：
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;i&lt;/code&gt;：表示要转化的浮点数&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;base&lt;/code&gt;：进制，可选 2到36&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;package&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;import&lt;/span&gt; (
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;fmt&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;strconv&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;v&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;:=&lt;/span&gt; int64(&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;42&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;s10&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;strconv&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;FormatInt&lt;/span&gt;(&lt;span style=&#34;color:#a6e22e&#34;&gt;v&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;10&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;fmt&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Printf&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;%T, %v\n&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;s10&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;s10&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;s16&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;strconv&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;FormatInt&lt;/span&gt;(&lt;span style=&#34;color:#a6e22e&#34;&gt;v&lt;/span&gt;, &lt;span style=&#34;color:#ae81ff&#34;&gt;16&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;fmt&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Printf&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;%T, %v\n&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;s16&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;s16&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// Output:
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// string, -42
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// string, -2a
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
         </item>
         <item>
